@@ -23,12 +23,16 @@ var CTLAT = (function () {
 	map.setCenter(latLng);
     }
 
+
+    function timeDiffString(t0, t1) {
+    }
+
     
     function getFriends() {
 	var xhr = new XMLHttpRequest;	
 	xhr.open('GET', 'friends.php', true);
 	xhr.onreadystatechange = function () {
-	    var i, data, friend, keys, timestamp, buddy;
+	    var i, data, friend, keys, timestamp;
 	    if (xhr.readyState === 4) {
 		$('#buddies').empty();
 		data = JSON.parse(xhr.responseText);
@@ -36,18 +40,18 @@ var CTLAT = (function () {
 		for (i = 0; i < keys.length; ++i) {
 		    userid = keys[i];
 		    friend = data[userid];
+		    timestamp = new Date(friend.timestamp * 1000).toLocaleString();
 		    if (userid !== userId) {
-			buddy = $('<span>' + userid + '</span>')
+			$('#buddies').append($('<span>' + userid + '</span>')
 			    .addClass('buddy')
 			    .attr('data-lat', friend.lat)
 			    .attr('data-lng', friend.lng)
 			    .attr('data-timestamp', friend.timestamp)
+			    .attr('title', 'last update: ' + timestamp)
 			    .click(function() {
 				centerMapOn(this.lat, this.lng);
-			    }.bind(friend));
-			$('#buddies').append(buddy);
+			    }.bind(friend)));
 		    }
-		    timestamp = new Date(friend.timestamp);
 		    placeMarker(userid, friend.lat, friend.lng, timestamp);
 		}
 	    }
@@ -57,13 +61,23 @@ var CTLAT = (function () {
     
     
     function setPosition(pos) {
-	var xhr;
+	var xhr, timestamp;
 	lat = pos.coords.latitude;
 	lng  = pos.coords.longitude;
+	timestamp = Math.floor(pos.timestamp / 1000);
 	map.setCenter(new google.maps.LatLng(lat, lng));
 	// send own location to server
 	xhr = new XMLHttpRequest;
-	xhr.open('GET', 'setloc.php?userid=' + userId + '&lat=' + lat + '&lng=' + lng, true);
+	xhr.open('GET', 'setloc.php' +
+		 '?userid=' + userId + 
+		 '&lat=' + lat + 
+		 '&lng=' + lng + 
+		 '&accuracy=' + pos.coords.accuracy + 
+		 '&heading=' + pos.coords.heading + 
+		 '&speed=' + pos.coords.speed + 
+		 '&altitude=' + pos.coords.altitude + 
+		 '&altitudeaccuracy=' + pos.coords.altitudeAccuracy + 
+		 '&timestamp=' + timestamp, true);
 	xhr.onreadystatechange = function () {
 	    var data;
 	    if (xhr.readyState === 4) {
@@ -92,7 +106,7 @@ var CTLAT = (function () {
 
 	    // init Google Maps
 	    google.maps.visualRefresh = true;
-	    map = new google.maps.Map(document.getElementById('map-canvas'), { zoom: 14 });
+	    map = new google.maps.Map(document.getElementById('map-canvas'), { zoom: 13 });
 
 	    // start polling
 	    watchId = navigator.geolocation.watchPosition(setPosition);

@@ -22,13 +22,28 @@ if (!preg_match("/^\\d+\\.\\d+$/", $lng)) {
 }
 $lng = floatval($lng);
 
+$timestamp = $_GET["timestamp"];
+if (!preg_match("/^\\d+$/", $timestamp)) {
+   $res["error"] = "bad timestamp";
+   goto end;
+}
+$timestamp = intval($timestamp);
+
+$accuracy = intval($_GET["accuracy"]);
+$altitude = floatval($_GET["altitude"]);
+$altitudeaccuracy = intval($_GET["altitudeaccuracy"]);
+$heading = floatval($_GET["heading"]);
+$speed = floatval($_GET["speed"]);
+
 if ($dbh) {
-   $dbh->exec("INSERT INTO locations (userid, timestamp, lat, lng) VALUES('$userid', DATETIME('now'), $lat, $lng)");
+   $dbh->exec("INSERT INTO locations (userid, timestamp, lat, lng, accuracy, altitude, altitudeaccuracy, heading, speed) " .
+              "VALUES('$userid', $timestamp, $lat, $lng, $accuracy, $altitude, $altitudeaccuracy, $heading, $speed)");
    $res["id"] = $dbh->lastInsertId();
    $res["status"] = "ok";
    $res["userid"] = $userid;
    $res["lat"] = $lat;
    $res["lng"] = $lng;
+   $res["timestamp"] = $timestamp;
 }
 else {
    $res["status"] = $dbh->errorInfo();
