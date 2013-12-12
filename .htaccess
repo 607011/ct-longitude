@@ -1,0 +1,4 @@
+AuthType Basic
+AuthName "c't Latitude & Longitude ;-)"
+AuthUserFile /var/www/.htpasswd-ctlat
+require valid-user
