@@ -1,20 +1,23 @@
 var CTLAT = (function () {
     var MaxAge = Infinity,
-    PollingInterval = 30 * 1000,
-    map,
+    MaxDistance = 100 * 1000 /* meters */,
+    PollingInterval = 30 * 1000 /* milliseconds */, 
+    map = null,
+    circle = null,
     markers = {},
     me = { id: undefined, lat: undefined, lng: undefined },
-    watchId,
-    pollingId;
+    watchId = undefined,
+    pollingId = undefined;
     
 
     function placeMarker(userid, lat, lng, timestamp) {
+	var url = (userid === me.id)
+	    ? 'http://mt.google.com/vt/icon?psize=10&font=fonts/Roboto-Bold.ttf&color=ff115511&name=icons/spotlight/spotlight-waypoint-a.png&ax=43&ay=50&text=' + userid + '&scale=1'
+	    :  'http://mt.google.com/vt/icon?psize=10&font=fonts/Roboto-Bold.ttf&color=ff551111&name=icons/spotlight/spotlight-waypoint-b.png&ax=43&ay=50&text=' + userid + '&scale=1';
 	if (typeof markers[userid] === 'undefined') {
 	    markers[userid] = new google.maps.Marker({
 		title: userid + ' (' + timestamp.toLocaleString() + ')',
-		icon: {
-		    url: 'http://mt.google.com/vt/icon?psize=10&font=fonts/Roboto-Bold.ttf&color=ff551111&name=icons/spotlight/spotlight-waypoint-b.png&ax=43&ay=50&text=' + userid + '&scale=1'
-		},
+		icon: { url: url },
 		animation: google.maps.Animation.DROP,
 		map: map
 	    });
@@ -24,7 +27,7 @@ var CTLAT = (function () {
 
 
     function highlightFriend(userid) {
-	var m = markers[userid];
+	var m = markers[userid], accuracy;
 	if (typeof m !== 'object')
 	    return;
 	$.each(markers, function(i, marker) {
@@ -32,6 +35,19 @@ var CTLAT = (function () {
 	});
 	centerMapOn(m.getPosition().lat(), m.getPosition().lng());
 	m.setAnimation(google.maps.Animation.BOUNCE);
+	accuracy = parseInt($('#buddy-' + userid).attr('data-accuracy'));
+	if (!circle) {
+	    circle = new google.maps.Circle({
+		map: map,
+		strokeColor: '#f00',
+		strokeOpacity: 0.7,
+		strokeWeight: 2,
+		fillColor: '#f00',
+		fillOpacity: 0.1
+	    });
+	}
+	circle.setRadius(accuracy);
+	circle.setCenter(m.getPosition());
     }
 
 
@@ -52,15 +68,17 @@ var CTLAT = (function () {
 		    var timestamp = new Date(friend.timestamp * 1000).toLocaleString();
 		    friend.id = userid;
 		    if (friend.id !== me.id) {
-			$('#buddies').append($('<span>' + userid + '</span>')
-			    .addClass('buddy')
-			    .attr('data-lat', friend.lat)
-			    .attr('data-lng', friend.lng)
-			    .attr('data-timestamp', friend.timestamp)
-			    .attr('title', 'last update: ' + timestamp)
-			    .click(function() {
-				highlightFriend(friend.id);
-			    }.bind(friend)));
+			$('#buddies')
+			    .append($('<span>' + userid + '</span>')
+				    .addClass('buddy').attr('id', 'buddy-' + friend.id)
+				    .attr('data-lat', friend.lat)
+				    .attr('data-lng', friend.lng)
+				    .attr('data-accuracy', friend.accuracy)
+				    .attr('data-timestamp', friend.timestamp)
+				    .attr('title', 'last update: ' + timestamp)
+				    .click(function() {
+					highlightFriend(friend.id);
+				    }.bind(friend)));
 			placeMarker(userid, friend.lat, friend.lng, timestamp);
 		    }
 		});
@@ -106,8 +124,8 @@ var CTLAT = (function () {
 	    map: map,
 	    position: new google.maps.LatLng(60, 105),
 	    content: msg
-	};
-	var infowindow = new google.maps.InfoWindow(options);
+	},
+	infowindow = new google.maps.InfoWindow(options);
 	map.setCenter(options.position);
     }
 
