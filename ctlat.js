@@ -1,8 +1,9 @@
 var CTLAT = (function () {
     var MaxAge = Infinity,
-    map = null,
+    PollingInterval = 30 * 1000,
+    map,
     markers = {},
-    userId, lat, lng,
+    me = { id: undefined, lat: undefined, lng: undefined },
     watchId,
     pollingId;
     
@@ -11,6 +12,10 @@ var CTLAT = (function () {
 	if (typeof markers[userid] === 'undefined') {
 	    markers[userid] = new google.maps.Marker({
 		title: userid + ' (' + timestamp.toLocaleString() + ')',
+		icon: {
+		    url: 'http://mt.google.com/vt/icon?psize=10&font=fonts/Roboto-Bold.ttf&color=ff551111&name=icons/spotlight/spotlight-waypoint-b.png&ax=43&ay=50&text=' + userid + '&scale=1'
+		},
+		animation: google.maps.Animation.DROP,
 		map: map
 	    });
 	}
@@ -18,30 +23,35 @@ var CTLAT = (function () {
     }
 
 
+    function highlightFriend(userid) {
+	var m = markers[userid];
+	if (typeof m !== 'object')
+	    return;
+	$.each(markers, function(i, marker) {
+	    marker.setAnimation(google.maps.Animation.NONE);
+	});
+	centerMapOn(m.getPosition().lat(), m.getPosition().lng());
+	m.setAnimation(google.maps.Animation.BOUNCE);
+    }
+
+
     function centerMapOn(lat, lng) {
-	var latLng = new google.maps.LatLng(lat, lng);
-	map.setCenter(latLng);
+	map.setCenter(new google.maps.LatLng(lat, lng));
     }
 
 
-    function timeDiffString(t0, t1) {
-    }
-
-    
     function getFriends() {
 	var xhr = new XMLHttpRequest;	
 	xhr.open('GET', 'friends.php', true);
 	xhr.onreadystatechange = function () {
-	    var i, data, friend, keys, timestamp;
+	    var data;
 	    if (xhr.readyState === 4) {
 		$('#buddies').empty();
 		data = JSON.parse(xhr.responseText);
-		keys = Object.keys(data);
-		for (i = 0; i < keys.length; ++i) {
-		    userid = keys[i];
-		    friend = data[userid];
-		    timestamp = new Date(friend.timestamp * 1000).toLocaleString();
-		    if (userid !== userId) {
+		$.each(data, function(userid, friend) {
+		    var timestamp = new Date(friend.timestamp * 1000).toLocaleString();
+		    friend.id = userid;
+		    if (friend.id !== me.id) {
 			$('#buddies').append($('<span>' + userid + '</span>')
 			    .addClass('buddy')
 			    .attr('data-lat', friend.lat)
@@ -49,11 +59,11 @@ var CTLAT = (function () {
 			    .attr('data-timestamp', friend.timestamp)
 			    .attr('title', 'last update: ' + timestamp)
 			    .click(function() {
-				centerMapOn(this.lat, this.lng);
+				highlightFriend(friend.id);
 			    }.bind(friend)));
+			placeMarker(userid, friend.lat, friend.lng, timestamp);
 		    }
-		    placeMarker(userid, friend.lat, friend.lng, timestamp);
-		}
+		});
 	    }
 	};
 	xhr.send(null);
@@ -61,29 +71,29 @@ var CTLAT = (function () {
     
     
     function setPosition(pos) {
-	var xhr, timestamp;
-	lat = pos.coords.latitude;
-	lng  = pos.coords.longitude;
-	timestamp = Math.floor(pos.timestamp / 1000);
-	map.setCenter(new google.maps.LatLng(lat, lng));
+	var xhr;
+	me.lat = pos.coords.latitude;
+	me.lng  = pos.coords.longitude;
+	me.timestamp = Math.floor(pos.timestamp / 1000);
+	map.setCenter(new google.maps.LatLng(me.lat, me.lng));
 	// send own location to server
 	xhr = new XMLHttpRequest;
 	xhr.open('GET', 'setloc.php' +
-		 '?userid=' + userId + 
-		 '&lat=' + lat + 
-		 '&lng=' + lng + 
+		 '?userid=' + me.id + 
+		 '&lat=' + me.lat + 
+		 '&lng=' + me.lng + 
 		 '&accuracy=' + pos.coords.accuracy + 
 		 '&heading=' + pos.coords.heading + 
 		 '&speed=' + pos.coords.speed + 
 		 '&altitude=' + pos.coords.altitude + 
 		 '&altitudeaccuracy=' + pos.coords.altitudeAccuracy + 
-		 '&timestamp=' + timestamp, true);
+		 '&timestamp=' + me.timestamp, true);
 	xhr.onreadystatechange = function () {
 	    var data;
 	    if (xhr.readyState === 4) {
 		data = JSON.parse(xhr.responseText);
-		if (data.status === 'ok' && data.userid === userId) {
-		    // ...
+		if (data.status === 'ok' && data.userid === me.id) {
+		    placeMarker(data.userid, data.lat, data.lng, new Date(data.timestamp * 1000).toLocaleString());
 		}
 	    }
 	};
@@ -99,9 +109,9 @@ var CTLAT = (function () {
 	    xhr = new XMLHttpRequest;
 	    xhr.open('GET', 'me.php', false);
 	    xhr.send(null);
-	    userId = xhr.responseText;
-	    $('#userid').text(userId).click(function() {
-		centerMapOn(lat, lng);
+	    me.id = xhr.responseText;
+	    $('#userid').text(me.id).click(function() {
+		centerMapOn(me.lat, me.lng);
 	    });
 
 	    // init Google Maps
@@ -110,7 +120,7 @@ var CTLAT = (function () {
 
 	    // start polling
 	    watchId = navigator.geolocation.watchPosition(setPosition);
-	    pollingId = setInterval(getFriends, 10 * 1000);
+	    pollingId = setInterval(getFriends, PollingInterval);
 	    getFriends();
 	}
     };
