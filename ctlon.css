@@ -36,3 +36,63 @@ html, body, #map-canvas {
     right: 0;
     margin-right: 0.5em;
 }
+
+.barberpole {
+  background-color: transparent;
+  background-image: -webkit-linear-gradient(-45deg, rgba(255, 154, 26, 1) 25%, transparent 25%, transparent 50%, rgba(255, 154, 26, 1) 50%, rgba(255, 154, 26, 1) 75%, transparent 75%, transparent);
+  background-image: -moz-linear-gradient(-45deg, rgba(255, 154, 26, 1) 25%, transparent 25%, transparent 50%, rgba(255, 154, 26, 1) 50%, rgba(255, 154, 26, 1) 75%, transparent 75%, transparent);
+  background-image: linear-gradient(-45deg, rgba(255, 154, 26, 1) 25%, transparent 25%, transparent 50%, rgba(255, 154, 26, 1) 50%, rgba(255, 154, 26, 1) 75%, transparent 75%, transparent);
+  -webkit-background-size: 24px 24px;
+  -moz-background-size: 24px 24px;
+  -o-background-size: 24px 24px;
+  background-size: 24px 24px;
+  -webkit-box-shadow: inset 0 6px 0 rgba(255, 255, 255, .2);
+  -moz-box-shadow: inset 0 6px 0 rgba(255, 255, 255, .2);
+  -ms-box-shadow: inset 0 6px 0 rgba(255, 255, 255, .2);
+  box-shadow: inset 0 6px 0 rgba(255, 255, 255, .2);
+  -webkit-animation: move 0.5s linear infinite;
+  -moz-animation: move 0.5s linear infinite;
+  -o-animation: move 0.5s linear infinite;
+  animation: move 0.5s linear infinite;
+  background-position: 0 0;
+}
+
+@-webkit-keyframes move {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: 24px 0;
+  }
+}
+
+@-moz-keyframes move {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: 24px 0;
+  }
+}
+
+@-ms-keyframes move {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: 24px 0;
+  }
+}
+
+@keyframes move {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: 24px 0;
+  }
+}

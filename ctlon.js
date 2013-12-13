@@ -12,6 +12,17 @@ var CTLON = (function () {
     pollingId = undefined;
     
 
+
+    function showProgressInfo() {
+	$('#info-bar').addClass('barberpole');
+    }
+    
+
+    function hideProgressInfo() {
+	$('#info-bar').removeClass('barberpole');
+    }
+
+
     function placeMarker(userid, lat, lng, timestamp) {
 	var url = (userid === me.id)
 	    ? 'http://mt.google.com/vt/icon?psize=10&font=fonts/Roboto-Bold.ttf&color=ff115511&name=icons/spotlight/spotlight-waypoint-a.png&ax=43&ay=50&text=' + userid + '&scale=1'
@@ -61,6 +72,7 @@ var CTLON = (function () {
     function getFriends() {
 	if (getFriendsPending)
 	    return;
+	showProgressInfo();
 	getFriendsPending = true;
 	var xhr = new XMLHttpRequest;	
 	xhr.open('GET', 'friends.php', true);
@@ -70,6 +82,7 @@ var CTLON = (function () {
 									  map.getBounds().getSouthWest()) / 2;
 	    $('#range').html((1e-3 * range).toFixed(3) + '&nbsp;km');
 	    if (xhr.readyState === 4) {
+		hideProgressInfo();
 		setTimeout(function() { getFriendsPending = false; }, 1000);
 		$('#buddies').empty();
 		data = JSON.parse(xhr.responseText);
