@@ -5,5 +5,5 @@ pwdfile=.htpasswd
 exec<$fname
 while read line
 do
-    htpasswd -b -s $pwdfile $line $line
+    htpasswd -b -s $pwdfile $line ct_$line
 done

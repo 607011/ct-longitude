@@ -1,32 +1,49 @@
-html, body, #map-canvas {
+* {
     margin: 0;
     padding: 0;
+}
+
+html, body {
     height: 100%;
     font-family: monospace;
 }
 
-#info-bar {
+#map-canvas {
+    position: absolute;
+    top: 0;
+    bottom: 44px;
+    left: 0;
+    right: 0;
+}
+
+#info-bar-container {
     display: block;
-    position: fixed;
+    position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 20pt;
+    height: 44px;
+    background-color: #333;
+}
+
+#info-bar {
+    vertical-align: middle;
+    line-height: 44px;
+    display: inline-block;
+    margin: 0 4px;
     font-size: 14pt;
-    background-color: rgba(0, 0, 0, 0.8);
-    color: rgba(255, 255, 255, 0.8);
+    color: #fff;
     text-shadow: rgba(0, 0, 0, 0.95) 1px 1px 0;
-    padding: 0.5ex 0.5em;
 }
 
 #userid, #buddies {
     display: inline-block;
-    padding: 2px;
 }
 
 .buddy {
-    margin-right: 1em;
+    padding: 0 0.5em;
     cursor: pointer;
+    display: inline-block;
 }
 
 #range {

@@ -4,6 +4,7 @@ var CTLON = (function () {
     var MaxDistance = 20 * 1000 /* meters */,
     PollingInterval = 30 * 1000 /* milliseconds */, 
     getFriendsPending = false,
+    geocoder = new google.maps.Geocoder(),
     map = null,
     circle = null,
     markers = {},
@@ -14,12 +15,12 @@ var CTLON = (function () {
 
 
     function showProgressInfo() {
-	$('#info-bar').addClass('barberpole');
+	$('#info-bar-container').addClass('barberpole');
     }
     
 
     function hideProgressInfo() {
-	$('#info-bar').removeClass('barberpole');
+	$('#info-bar-container').removeClass('barberpole');
     }
 
 
@@ -40,8 +41,7 @@ var CTLON = (function () {
 				 var options = {
 				     map: map,
 				     position: new google.maps.LatLng(lat, lng),
-				     content: '<strong>' + userid + '</strong><br/>' +
-					 'Letztes Update: ' + timestamp
+				     content: '<strong>' + userid + '</strong><br/>' + timestamp
 				 },
 				 infowindow = new google.maps.InfoWindow(options);
 				 map.setCenter(options.position);
@@ -57,13 +57,18 @@ var CTLON = (function () {
     }
 
 
+    function stopAnimations() {
+	$.each(markers, function(i, marker) {
+	    marker.setAnimation(google.maps.Animation.NONE);
+	});
+    }
+
+
     function highlightFriend(userid) {
 	var m = markers[userid], accuracy;
 	if (typeof m !== 'object')
 	    return;
-	$.each(markers, function(i, marker) {
-	    marker.setAnimation(google.maps.Animation.NONE);
-	});
+	stopAnimations();
 	centerMapOn(m.getPosition().lat(), m.getPosition().lng());
 	m.setAnimation(google.maps.Animation.BOUNCE);
 	accuracy = parseInt($('#buddy-' + userid).attr('data-accuracy'));
@@ -97,9 +102,9 @@ var CTLON = (function () {
 	xhr.open('GET', 'friends.php', true);
 	xhr.onreadystatechange = function () {
 	    var data,
-	    range = google.maps.geometry.spherical.computeDistanceBetween(map.getBounds().getNorthEast(),
-									  map.getBounds().getSouthWest()) / 2;
-	    $('#range').html((1e-3 * range).toFixed(3) + '&nbsp;km');
+	    ne = map.getBounds().getNorthEast(),
+	    sw = map.getBounds().getSouthWest(),
+	    range = google.maps.geometry.spherical.computeDistanceBetween(ne, sw) / 2;
 	    if (xhr.readyState === 4) {
 		hideProgressInfo();
 		setTimeout(function() { getFriendsPending = false; }, 1000);
@@ -185,6 +190,7 @@ var CTLON = (function () {
 	    me.id = xhr.responseText;
 	    $('#userid').text(me.id).click(function() {
 		centerMapOn(me.latLng.lat(), me.latLng.lng());
+		stopAnimations();
 		hideCircle();
 	    });
 
