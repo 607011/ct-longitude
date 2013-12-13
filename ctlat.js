@@ -100,6 +100,17 @@ var CTLAT = (function () {
 	xhr.send(null);
     }
 
+
+    function noGeolocation(msg) {
+	var options = {
+	    map: map,
+	    position: new google.maps.LatLng(60, 105),
+	    content: msg
+	};
+	var infowindow = new google.maps.InfoWindow(options);
+	map.setCenter(options.position);
+    }
+
     
     return {
 	init: function () {
@@ -119,9 +130,16 @@ var CTLAT = (function () {
 	    map = new google.maps.Map(document.getElementById('map-canvas'), { zoom: 13 });
 
 	    // start polling
-	    watchId = navigator.geolocation.watchPosition(setPosition);
-	    pollingId = setInterval(getFriends, PollingInterval);
-	    getFriends();
+	    if (navigator.geolocation) {
+		watchId = navigator.geolocation.watchPosition(setPosition, function() {
+		    noGeolocation('Dein Browser stellt keine Standortabfragen zur Verf&uuml;gung.');
+		});
+		pollingId = setInterval(getFriends, PollingInterval);
+		getFriends();
+	    }
+	    else {
+		noGeolocation('Standortabfrage fehlgeschlagen.');
+	    }
 	}
     };
 })();
