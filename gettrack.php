@@ -9,6 +9,10 @@ if (!preg_match("/^\\w+$/", $userid)) {
    goto end;
 }
 
+$format = $_GET["format"];
+if (!$format)
+   $format = "json";
+
 // TODO: validate t0
 $t0 = intval($_GET["t0"]);
 
@@ -22,15 +26,20 @@ if ($dbh) {
    	 "  AND timestamp < $t1 " .
 	 "ORDER BY timestamp ASC";
    $rows = $dbh->query($q);
-   // $res["query"] = $q;
-   $res["userid"] = $userid;
-   $res["data"] = array();
-   foreach($rows as $row)  {
-      	$res["data"][] = array(
+
+   switch($format) {
+   case "json":
+      // $res["query"] = $q;
+      $res["userid"] = $userid;
+         $res["data"] = array();
+	    foreach($rows as $row)  {
+	       	$res["data"][] = array(
 		       "timestamp" => intval($row[0]),
 		       "lat" => floatval($row[1]),
 		       "lng" => floatval($row[2])
-        );
+		       );
+		       }
+      break;
    }
 }
 

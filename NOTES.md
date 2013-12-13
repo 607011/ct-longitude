@@ -1,9 +1,15 @@
 FEATURES
 ========
 
- * Kreis um gewaehlten User anzeigen, der die Genauigkeit der Position anzeigt
+ * User-Leiste scrollbar machen
+
  * Avatar per Drag'n'Drop in Browser laden
  * Avatar pro User in Datenbanktabelle 'buddies' speichern
  * Markierungen der Freunde zeigen den jeweiligen Avatar
- * Tracks anzeigen
- * Trackanzeige auf Zeitraum begrenzen
+
+
+ * Track-Anwendung:
+   - Tracks anzeigen
+   - Trackanzeige auf Zeitraum begrenzen
+
+

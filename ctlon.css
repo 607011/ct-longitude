@@ -5,7 +5,7 @@
 
 html, body {
     height: 100%;
-    font-family: monospace;
+    font-family: Helvetica, Arial, Verdana, sans-serif;
 }
 
 #map-canvas {
@@ -32,12 +32,16 @@ html, body {
     display: inline-block;
     margin: 0 4px;
     font-size: 14pt;
-    color: #fff;
-    text-shadow: rgba(0, 0, 0, 0.95) 1px 1px 0;
+    color: #ddd;
+    text-shadow: #000 1px 1px 0;
 }
 
 #userid, #buddies {
     display: inline-block;
+}
+
+#userid {
+    border-right: 1px solid #ddd;
 }
 
 .buddy {
@@ -58,14 +62,14 @@ html, body {
   background-image: -webkit-linear-gradient(-45deg, rgba(255, 154, 26, 1) 25%, transparent 25%, transparent 50%, rgba(255, 154, 26, 1) 50%, rgba(255, 154, 26, 1) 75%, transparent 75%, transparent);
   background-image: -moz-linear-gradient(-45deg, rgba(255, 154, 26, 1) 25%, transparent 25%, transparent 50%, rgba(255, 154, 26, 1) 50%, rgba(255, 154, 26, 1) 75%, transparent 75%, transparent);
   background-image: linear-gradient(-45deg, rgba(255, 154, 26, 1) 25%, transparent 25%, transparent 50%, rgba(255, 154, 26, 1) 50%, rgba(255, 154, 26, 1) 75%, transparent 75%, transparent);
-  -webkit-background-size: 24px 24px;
-  -moz-background-size: 24px 24px;
-  -o-background-size: 24px 24px;
-  background-size: 24px 24px;
-  -webkit-box-shadow: inset 0 6px 0 rgba(255, 255, 255, .2);
-  -moz-box-shadow: inset 0 6px 0 rgba(255, 255, 255, .2);
-  -ms-box-shadow: inset 0 6px 0 rgba(255, 255, 255, .2);
-  box-shadow: inset 0 6px 0 rgba(255, 255, 255, .2);
+  -webkit-background-size: 44px 44px;
+  -moz-background-size: 44px 44px;
+  -o-background-size: 44px 44px;
+  background-size: 44px 44px;
+  -webkit-box-shadow: inset 0 22px 0 rgba(255, 255, 255, .2);
+  -moz-box-shadow: inset 0 22px 0 rgba(255, 255, 255, .2);
+  -ms-box-shadow: inset 0 22px 0 rgba(255, 255, 255, .2);
+  box-shadow: inset 0 22px 0 rgba(255, 255, 255, .2);
   -webkit-animation: move 0.5s linear infinite;
   -moz-animation: move 0.5s linear infinite;
   -o-animation: move 0.5s linear infinite;
@@ -112,3 +116,18 @@ html, body {
     background-position: 24px 0;
   }
 }
+
+
+/* iPhone / iPod Touch */
+@media screen and (max-device-width: 480px){
+    body {
+        -webkit-text-size-adjust: none;
+        font-family: Helvetica, Arial, Verdana, sans-serif;
+    }
+}
+/* iPhone mit Retina Display */
+@media only screen and (max-device-width: 480px) and (-webkit-min-device-pixel-ratio: 2) { }
+/* iPad */
+@media only screen and (min-device-width: 768px) and (max-device-width: 1024px) and (orientation : landscape) {}
+/* */
+@media only screen and (min-device-width: 768px) and (max-device-width: 1024px) and (orientation : portrait) {}

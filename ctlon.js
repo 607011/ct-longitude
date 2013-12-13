@@ -10,9 +10,9 @@ var CTLON = (function () {
     markers = {},
     me = { id: undefined, latLng: null },
     watchId = undefined,
+    selectedUser = undefined,
     pollingId = undefined;
     
-
 
     function showProgressInfo() {
 	$('#info-bar-container').addClass('barberpole');
@@ -68,6 +68,7 @@ var CTLON = (function () {
 	var m = markers[userid], accuracy;
 	if (typeof m !== 'object')
 	    return;
+	selectedUser = userid;
 	stopAnimations();
 	centerMapOn(m.getPosition().lat(), m.getPosition().lng());
 	m.setAnimation(google.maps.Animation.BOUNCE);
@@ -141,7 +142,8 @@ var CTLON = (function () {
 	var xhr;
 	me.timestamp = Math.floor(pos.timestamp / 1000);
 	me.latLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
-	map.setCenter(me.latLng);
+	if (!selectedUser)
+	    map.setCenter(me.latLng);
 	// send own location to server
 	xhr = new XMLHttpRequest;
 	xhr.open('GET', 'setloc.php' +
@@ -159,7 +161,8 @@ var CTLON = (function () {
 	    if (xhr.readyState === 4) {
 		data = JSON.parse(xhr.responseText);
 		if (data.status === 'ok' && data.userid === me.id) {
-		    placeMarker(data.userid, data.lat, data.lng, new Date(data.timestamp * 1000).toLocaleString());
+		    placeMarker(data.userid, data.lat, data.lng,
+				new Date(data.timestamp * 1000).toLocaleString());
 		    getFriends();
 		}
 	    }
