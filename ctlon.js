@@ -1,11 +1,13 @@
-var CTLAT = (function () {
-    var MaxAge = Infinity,
-    MaxDistance = 100 * 1000 /* meters */,
+var CTLON = (function () {
+    "use strict";
+
+    var MaxDistance = 20 * 1000 /* meters */,
     PollingInterval = 30 * 1000 /* milliseconds */, 
+    getFriendsPending = false,
     map = null,
     circle = null,
     markers = {},
-    me = { id: undefined, lat: undefined, lng: undefined },
+    me = { id: undefined, latLng: null },
     watchId = undefined,
     pollingId = undefined;
     
@@ -57,29 +59,39 @@ var CTLAT = (function () {
 
 
     function getFriends() {
+	if (getFriendsPending)
+	    return;
+	getFriendsPending = true;
 	var xhr = new XMLHttpRequest;	
 	xhr.open('GET', 'friends.php', true);
 	xhr.onreadystatechange = function () {
-	    var data;
+	    var data,
+	    range = google.maps.geometry.spherical.computeDistanceBetween(map.getBounds().getNorthEast(),
+									  map.getBounds().getSouthWest()) / 2;
+	    $('#range').html((1e-3 * range).toFixed(3) + '&nbsp;km');
 	    if (xhr.readyState === 4) {
+		setTimeout(function() { getFriendsPending = false; }, 1000);
 		$('#buddies').empty();
 		data = JSON.parse(xhr.responseText);
 		$.each(data, function(userid, friend) {
-		    var timestamp = new Date(friend.timestamp * 1000).toLocaleString();
+		    var timestamp = new Date(friend.timestamp * 1000).toLocaleString(), range = MaxDistance, ne, sw;
 		    friend.id = userid;
+		    friend.latLng = new google.maps.LatLng(friend.lat, friend.lng);
 		    if (friend.id !== me.id) {
-			$('#buddies')
-			    .append($('<span>' + userid + '</span>')
-				    .addClass('buddy').attr('id', 'buddy-' + friend.id)
-				    .attr('data-lat', friend.lat)
-				    .attr('data-lng', friend.lng)
-				    .attr('data-accuracy', friend.accuracy)
-				    .attr('data-timestamp', friend.timestamp)
-				    .attr('title', 'last update: ' + timestamp)
-				    .click(function() {
-					highlightFriend(friend.id);
-				    }.bind(friend)));
-			placeMarker(userid, friend.lat, friend.lng, timestamp);
+			if (google.maps.geometry.spherical.computeDistanceBetween(me.latLng, friend.latLng) < range) {
+			    $('#buddies')
+				.append($('<span>' + userid + '</span>')
+					.addClass('buddy').attr('id', 'buddy-' + friend.id)
+					.attr('data-lat', friend.lat)
+					.attr('data-lng', friend.lng)
+					.attr('data-accuracy', friend.accuracy)
+					.attr('data-timestamp', friend.timestamp)
+					.attr('title', 'last update: ' + timestamp)
+					.click(function() {
+					    highlightFriend(friend.id);
+					}.bind(friend)));
+			    placeMarker(userid, friend.lat, friend.lng, timestamp);
+			}
 		    }
 		});
 	    }
@@ -90,16 +102,15 @@ var CTLAT = (function () {
     
     function setPosition(pos) {
 	var xhr;
-	me.lat = pos.coords.latitude;
-	me.lng  = pos.coords.longitude;
 	me.timestamp = Math.floor(pos.timestamp / 1000);
-	map.setCenter(new google.maps.LatLng(me.lat, me.lng));
+	me.latLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
+	map.setCenter(me.latLng);
 	// send own location to server
 	xhr = new XMLHttpRequest;
 	xhr.open('GET', 'setloc.php' +
 		 '?userid=' + me.id + 
-		 '&lat=' + me.lat + 
-		 '&lng=' + me.lng + 
+		 '&lat=' + me.latLng.lat() + 
+		 '&lng=' + me.latLng.lng() + 
 		 '&accuracy=' + pos.coords.accuracy + 
 		 '&heading=' + pos.coords.heading + 
 		 '&speed=' + pos.coords.speed + 
@@ -112,6 +123,7 @@ var CTLAT = (function () {
 		data = JSON.parse(xhr.responseText);
 		if (data.status === 'ok' && data.userid === me.id) {
 		    placeMarker(data.userid, data.lat, data.lng, new Date(data.timestamp * 1000).toLocaleString());
+		    getFriends();
 		}
 	    }
 	};
@@ -132,7 +144,7 @@ var CTLAT = (function () {
     
     return {
 	init: function () {
-	    var xhr;
+	    var xhr, mapOptions;
 
 	    // get http basic auth user
 	    xhr = new XMLHttpRequest;
@@ -140,12 +152,16 @@ var CTLAT = (function () {
 	    xhr.send(null);
 	    me.id = xhr.responseText;
 	    $('#userid').text(me.id).click(function() {
-		centerMapOn(me.lat, me.lng);
+		centerMapOn(me.latLng.lat(), me.latLng.lng());
 	    });
 
 	    // init Google Maps
 	    google.maps.visualRefresh = true;
-	    map = new google.maps.Map(document.getElementById('map-canvas'), { zoom: 13 });
+	    mapOptions = {
+		bounds_changed: function() { getFriends(); },
+		zoom: 13
+	    };
+	    map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
 
 	    // start polling
 	    if (navigator.geolocation) {
@@ -153,7 +169,6 @@ var CTLAT = (function () {
 		    noGeolocation('Dein Browser stellt keine Standortabfragen zur Verf&uuml;gung.');
 		});
 		pollingId = setInterval(getFriends, PollingInterval);
-		getFriends();
 	    }
 	    else {
 		noGeolocation('Standortabfrage fehlgeschlagen.');
@@ -162,4 +177,4 @@ var CTLAT = (function () {
     };
 })();
 
-google.maps.event.addDomListener(window, 'load', CTLAT.init);
+google.maps.event.addDomListener(window, 'load', CTLON.init);

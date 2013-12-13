@@ -3,11 +3,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-    <title>c't Latitude (and Longitude)</title>
-    <link rel="stylesheet" href="ctlat.css" />
+    <title>c't Longitude</title>
+    <link rel="stylesheet" href="ctlon.css" />
     <script src="jquery-2.0.3.min.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?v=3&sensor=false"></script>
-    <script src="ctlat.js" type="text/javascript"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3&libraries=geometry&sensor=false"></script>
+    <script src="ctlon.js" type="text/javascript"></script>
   </head>
   <body>
     <div id="map-canvas"></div>
@@ -15,6 +15,7 @@
       <span id="userid" class="buddy">?</span>
       &#x2588;
       <span id="buddies">?</span>
+      <span id="range">?</span>
     </div>
   </body>
 </html>

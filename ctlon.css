@@ -29,3 +29,10 @@ html, body, #map-canvas {
     margin-right: 1em;
     cursor: pointer;
 }
+
+#range {
+    position: absolute;
+    display: inline-block;
+    right: 0;
+    margin-right: 0.5em;
+}
