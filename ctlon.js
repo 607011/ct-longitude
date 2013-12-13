@@ -29,13 +29,31 @@ var CTLON = (function () {
 	    :  'http://mt.google.com/vt/icon?psize=10&font=fonts/Roboto-Bold.ttf&color=ff551111&name=icons/spotlight/spotlight-waypoint-b.png&ax=43&ay=50&text=' + userid + '&scale=1';
 	if (typeof markers[userid] === 'undefined') {
 	    markers[userid] = new google.maps.Marker({
-		title: userid + ' (' + timestamp.toLocaleString() + ')',
+		title: userid + ' (' + timestamp + ')',
 		icon: { url: url },
 		animation: google.maps.Animation.DROP,
 		map: map
 	    });
+	    google.maps.event
+		.addListener(markers[userid], 'click',
+			     function() {
+				 var options = {
+				     map: map,
+				     position: new google.maps.LatLng(lat, lng),
+				     content: '<strong>' + userid + '</strong><br/>' +
+					 'Letztes Update: ' + timestamp
+				 },
+				 infowindow = new google.maps.InfoWindow(options);
+				 map.setCenter(options.position);
+			     });
 	}
 	markers[userid].setPosition(new google.maps.LatLng(lat, lng));
+    }
+
+
+    function hideCircle() {
+	if (circle)
+	    circle.setVisible(false);
     }
 
 
@@ -61,6 +79,7 @@ var CTLON = (function () {
 	}
 	circle.setRadius(accuracy);
 	circle.setCenter(m.getPosition());
+	circle.setVisible(true);
     }
 
 
@@ -166,6 +185,7 @@ var CTLON = (function () {
 	    me.id = xhr.responseText;
 	    $('#userid').text(me.id).click(function() {
 		centerMapOn(me.latLng.lat(), me.latLng.lng());
+		hideCircle();
 	    });
 
 	    // init Google Maps
