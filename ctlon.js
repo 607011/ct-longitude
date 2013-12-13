@@ -2,7 +2,7 @@ var CTLON = (function () {
     "use strict";
 
     var MaxDistance = 20 * 1000 /* meters */,
-    PollingInterval = 30 * 1000 /* milliseconds */, 
+    PollingInterval = 60 * 1000 /* milliseconds */, 
     getFriendsPending = false,
     geocoder = new google.maps.Geocoder(),
     map = null,
@@ -174,7 +174,7 @@ var CTLON = (function () {
     function noGeolocation(msg) {
 	var options = {
 	    map: map,
-	    position: new google.maps.LatLng(60, 105),
+	    position: new google.maps.LatLng(51.0, 10.333333),
 	    content: msg
 	},
 	infowindow = new google.maps.InfoWindow(options);

@@ -24,30 +24,55 @@ html, body {
     right: 0;
     height: 44px;
     background-color: #333;
+    overflow: hidden;
 }
 
 #info-bar {
+    position: absolute;
     vertical-align: middle;
     line-height: 44px;
     display: inline-block;
-    margin: 0 4px;
-    font-size: 14pt;
+    font-size: 16px;
     color: #ddd;
+    left: 0;
+    right: 0;
     text-shadow: #000 1px 1px 0;
+}
+
+#extras-icon {
+    position: absolute;
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    top: 6px;
+    right: 6px;
+    background-image: url(img/extras.png);
+    cursor: pointer;
 }
 
 #userid, #buddies {
     display: inline-block;
+    overflow: hidden;
+}
+
+#buddies {
+    position: absolute;
+    right: 44px;
+    left: 44px;
 }
 
 #userid {
-    border-right: 1px solid #ddd;
+    width: 44px;
+    border-right: 1px solid #999;
 }
 
 .buddy {
-    padding: 0 0.5em;
     cursor: pointer;
     display: inline-block;
+    width: 44px;
+    overflow: hidden;
+    text-align: center;
+    border-right: 1px solid #666;
 }
 
 #range {
