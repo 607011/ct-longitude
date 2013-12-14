@@ -1,7 +1,35 @@
+// Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
+// All rights reserved.
+
+
+//#region utility functions
+Number.prototype.clamp = function (a, b) { return (this < a) ? a : ((this > b) ? b : this); };
+String.prototype.trimmed = function () { return this.replace(/^\s+/, '').replace(/\s+$/, ''); };
+//#endregion
+
+
+jQuery.fn.enableHorizontalSlider = function () {
+    var div = this;
+    this.on({
+	mousedown: function(e) {
+	    $(document).bind({
+		selectstart: function () { return false; }
+	    });
+	},
+	mouseup: function(e) {
+	    $(document).unbind('selectstart');
+	},
+	mousemove: function(e) {
+	}
+    });
+    return this;
+};
+
+
 var CTLON = (function () {
     "use strict";
 
-    var MaxDistance = 20 * 1000 /* meters */,
+    var MaxDistance = 200 * 1000 /* meters */,
     PollingInterval = 60 * 1000 /* milliseconds */, 
     getFriendsPending = false,
     geocoder = new google.maps.Geocoder(),
@@ -106,7 +134,7 @@ var CTLON = (function () {
 	    var data,
 	    ne = map.getBounds().getNorthEast(),
 	    sw = map.getBounds().getSouthWest(),
-	    range = computeDistanceBetween(ne, sw) / 2;
+	    range = Math.max(computeDistanceBetween(ne, sw) / 2, MaxDistance);
 	    if (xhr.readyState === 4) {
 		hideProgressInfo();
 		setTimeout(function() { getFriendsPending = false; }, 1000);
@@ -114,6 +142,7 @@ var CTLON = (function () {
 		data = JSON.parse(xhr.responseText);
 		$.each(data, function(userid, friend) {
 		    var timestamp = new Date(friend.timestamp * 1000).toLocaleString(), range = MaxDistance, ne, sw;
+		    console.log(userid);
 		    friend.id = userid;
 		    friend.latLng = new google.maps.LatLng(friend.lat, friend.lng);
 		    if (me.latLng === null) // location queries disabled, use first friend's position for range calculation
@@ -143,6 +172,7 @@ var CTLON = (function () {
 	var xhr;
 	me.timestamp = Math.floor(pos.timestamp / 1000);
 	me.latLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
+	$('#userid').attr('data-lat', pos.coords.latitude).attr('data-lng', pos.coords.longitude);
 	if (!selectedUser)
 	    map.setCenter(me.latLng);
 	// send own location to server
@@ -196,7 +226,10 @@ var CTLON = (function () {
 		centerMapOn(me.latLng.lat(), me.latLng.lng());
 		stopAnimations();
 		hideCircle();
+		selectedUser = null;
 	    });
+
+	    $('#buddies').enableHorizontalSlider();
 
 	    // init Google Maps
 	    google.maps.visualRefresh = true;
