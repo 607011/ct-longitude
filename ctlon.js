@@ -11,7 +11,8 @@ var CTLON = (function () {
     me = { id: undefined, latLng: null },
     watchId = undefined,
     selectedUser = undefined,
-    pollingId = undefined;
+    pollingId = undefined,
+    computeDistanceBetween = function() {};
     
 
     function showProgressInfo() {
@@ -105,7 +106,7 @@ var CTLON = (function () {
 	    var data,
 	    ne = map.getBounds().getNorthEast(),
 	    sw = map.getBounds().getSouthWest(),
-	    range = google.maps.geometry.spherical.computeDistanceBetween(ne, sw) / 2;
+	    range = computeDistanceBetween(ne, sw) / 2;
 	    if (xhr.readyState === 4) {
 		hideProgressInfo();
 		setTimeout(function() { getFriendsPending = false; }, 1000);
@@ -115,21 +116,21 @@ var CTLON = (function () {
 		    var timestamp = new Date(friend.timestamp * 1000).toLocaleString(), range = MaxDistance, ne, sw;
 		    friend.id = userid;
 		    friend.latLng = new google.maps.LatLng(friend.lat, friend.lng);
-		    if (friend.id !== me.id) {
-			if (google.maps.geometry.spherical.computeDistanceBetween(me.latLng, friend.latLng) < range) {
-			    $('#buddies')
-				.append($('<span>' + userid + '</span>')
-					.addClass('buddy').attr('id', 'buddy-' + friend.id)
-					.attr('data-lat', friend.lat)
-					.attr('data-lng', friend.lng)
-					.attr('data-accuracy', friend.accuracy)
-					.attr('data-timestamp', friend.timestamp)
-					.attr('title', 'last update: ' + timestamp)
+		    if (me.latLng === null) // location queries disabled, use first friend's position for range calculation
+			me.latLng = friend.latLng;
+		    if (friend.id !== me.id && computeDistanceBetween(me.latLng, friend.latLng) < range) {
+			$('#buddies')
+			    .append($('<span>' + userid + '</span>')
+				    .addClass('buddy').attr('id', 'buddy-' + friend.id)
+				    .attr('data-lat', friend.lat)
+				    .attr('data-lng', friend.lng)
+				    .attr('data-accuracy', friend.accuracy)
+				    .attr('data-timestamp', friend.timestamp)
+				    .attr('title', 'last update: ' + timestamp)
 					.click(function() {
 					    highlightFriend(friend.id);
 					}.bind(friend)));
-			    placeMarker(userid, friend.lat, friend.lng, timestamp);
-			}
+			placeMarker(userid, friend.lat, friend.lng, timestamp);
 		    }
 		});
 	    }
@@ -204,16 +205,19 @@ var CTLON = (function () {
 		zoom: 13
 	    };
 	    map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+	    computeDistanceBetween = google.maps.geometry.spherical.computeDistanceBetween;
 
 	    // start polling
 	    if (navigator.geolocation) {
 		watchId = navigator.geolocation.watchPosition(setPosition, function() {
 		    noGeolocation('Dein Browser stellt keine Standortabfragen zur Verf&uuml;gung.');
+		    getFriends();
 		});
 		pollingId = setInterval(getFriends, PollingInterval);
 	    }
 	    else {
 		noGeolocation('Standortabfrage fehlgeschlagen.');
+		getFriends();
 	    }
 	}
     };
