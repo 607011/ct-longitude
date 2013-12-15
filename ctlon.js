@@ -2,24 +2,41 @@
 // All rights reserved.
 
 
-//#region utility functions
-Number.prototype.clamp = function (a, b) { return (this < a) ? a : ((this > b) ? b : this); };
-String.prototype.trimmed = function () { return this.replace(/^\s+/, '').replace(/\s+$/, ''); };
-//#endregion
-
-
 jQuery.fn.enableHorizontalSlider = function () {
-  var div = this;
-  this.on({
+  "use strict";
+  var el = this, t0, x0, mouseX0, dx, mouseDown = false;
+  el.css('position', 'relative');
+  $(window).resize(function () {
+    var oversize = el.parent().width() - el.width();
+    if (oversize > el.position().left && el.position().left < 0)
+        el.css('left', Math.min(0, oversize) + 'px');
+  });
+  this.bind({
     mousedown: function (e) {
-      $(document).bind({
-        selectstart: function () { return false; }
-      });
-    },
-    mouseup: function (e) {
-      $(document).unbind('selectstart');
+      mouseX0 = e.clientX;
+      mouseDown = true;
+      t0 = Date.now();
+      x0 = el.position().left;
+      $(document).bind('selectstart', function () { return false; });
     },
     mousemove: function (e) {
+      var oversize;
+      if (mouseDown) {
+        oversize = el.width() - el.parent().width();
+        dx = Math.min(e.clientX - mouseX0 + x0, 0);
+        if (oversize > 0) {
+          dx = Math.max(el.parent().width() - el.width(), dx);
+          el.css('left', dx + 'px');
+        }
+      }
+    },
+    mouseup: function (e) {
+      var dt = Date.now() - t0, pixelsPerSec = dx / dt * 1000;
+      mouseDown = false;
+      $(document).unbind('selectstart');
+    },
+    mouseout: function () {
+      mouseDown = false;
     }
   });
   return this;
@@ -40,7 +57,7 @@ var CTLON = (function () {
   watchId = undefined,
   selectedUser = undefined,
   pollingId = undefined,
-  computeDistanceBetween = function () { };
+  computeDistanceBetween = function () { return 0; };
 
 
   function showProgressInfo() {
@@ -55,8 +72,8 @@ var CTLON = (function () {
 
   function placeMarker(userid, lat, lng, timestamp) {
     var url = (userid === me.id)
-        ? 'http://mt.google.com/vt/icon?psize=10&font=fonts/Roboto-Bold.ttf&color=ff115511&name=icons/spotlight/spotlight-waypoint-a.png&ax=43&ay=50&text=' + userid + '&scale=1'
-        : 'http://mt.google.com/vt/icon?psize=10&font=fonts/Roboto-Bold.ttf&color=ff551111&name=icons/spotlight/spotlight-waypoint-b.png&ax=43&ay=50&text=' + userid + '&scale=1';
+        ? 'http://mt.google.com/vt/icon?psize=10&font=fonts/Roboto-Bold.ttf&ax=43&ay=50&scale=1&color=ff115511&name=icons/spotlight/spotlight-waypoint-a.png&text=' + userid
+        : 'http://mt.google.com/vt/icon?psize=10&font=fonts/Roboto-Bold.ttf&ax=43&ay=50&scale=1&color=ff551111&name=icons/spotlight/spotlight-waypoint-b.png&text=' + userid;
     if (typeof markers[userid] === 'undefined') {
       markers[userid] = new google.maps.Marker({
         title: userid + ' (' + timestamp + ')',
@@ -143,7 +160,7 @@ var CTLON = (function () {
         friend.id = userid;
         friend.latLng = new google.maps.LatLng(friend.lat, friend.lng);
         if (me.latLng === null) // location queries disabled, use first friend's position for range calculation
-          me.latLng = friend.latLng;
+          me.latLng = new google.maps.LatLng(friend.lat, friend.lng);
         if (friend.id !== me.id && computeDistanceBetween(me.latLng, friend.latLng) < range) {
           $('#buddies')
               .append($('<span>' + userid + '</span>')
@@ -184,8 +201,7 @@ var CTLON = (function () {
     }).done(function (data) {
       data = JSON.parse(data);
       if (data.status === 'ok' && data.userid === me.id) {
-        placeMarker(data.userid, data.lat, data.lng,
-        new Date(data.timestamp * 1000).toLocaleString());
+        placeMarker(data.userid, data.lat, data.lng, new Date(data.timestamp * 1000).toLocaleString());
         getFriends();
       }
     });
@@ -195,7 +211,7 @@ var CTLON = (function () {
   function noGeolocation(msg) {
     var options = {
       map: map,
-      position: new google.maps.LatLng(51.0, 10.333333),
+      position: new google.maps.LatLng(51.0, 10.333),
       content: msg
     },
     infowindow = new google.maps.InfoWindow(options);

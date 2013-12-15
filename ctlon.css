@@ -29,14 +29,34 @@ html, body {
 
 #info-bar {
   position: absolute;
-  vertical-align: middle;
   line-height: 44px;
   display: inline-block;
   font-size: 16px;
   color: #ddd;
   left: 0;
   right: 0;
+  -webkit-text-shadow: #000 1px 1px 0;
   text-shadow: #000 1px 1px 0;
+  overflow: hidden;
+}
+
+#userid {
+  display: inline-block;
+  overflow: hidden;
+  width: 43px;
+  border-right: 1px solid #999;
+}
+
+#menu-container {
+  position: absolute;
+  display: inline-block;
+  top: 0;
+  right: 0;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  white-space: nowrap;
+  border-left: 1px solid #999;
 }
 
 #extras-icon {
@@ -50,28 +70,25 @@ html, body {
   cursor: pointer;
 }
 
-#userid, #buddies {
-  display: inline-block;
-  overflow: hidden;
-}
-
-#buddies {
+#buddy-container {
   position: absolute;
   right: 44px;
   left: 44px;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
-#userid {
-  width: 44px;
-  border-right: 1px solid #999;
+#buddies {
+  display: inline-block;
+  text-wrap: none;
 }
 
 .buddy {
   cursor: pointer;
   display: inline-block;
-  width: 44px;
   overflow: hidden;
   text-align: center;
+  width: 43px;
   border-right: 1px solid #666;
 }
 
