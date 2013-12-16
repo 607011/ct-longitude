@@ -98,7 +98,6 @@ jQuery.fn.enableHorizontalSlider = function () {
             animStart = null;
         };
       mouseDown = false;
-      console.log('pixelsPerSec = ' + pixelsPerSec);
       if (Math.abs(pixelsPerSec) > 0) {
         elapsed = 0;
         duration = Math.abs(Math.floor(dt / dx * 1000));
@@ -126,7 +125,7 @@ var CTLON = (function () {
     getFriendsPending = false,
     geocoder = new google.maps.Geocoder(),
     map = null,
-    circle = null, polyline = null,
+    circle = null, polyline = null, infoWindow = null,
     markers = {},
     me = { id: undefined, latLng: null },
     watchId = undefined,
@@ -202,8 +201,16 @@ var CTLON = (function () {
     }
     circle.setRadius(accuracy);
     circle.setCenter(m.getPosition());
-    circle.setVisible(true);
-    if (localStorage.getItem('show-tracks') === 'yes') {
+    circle.setVisible($('#show-accuracy').val() === YES);
+    if (infoWindow === null)
+      infoWindow = new google.maps.InfoWindow();
+    infoWindow.setOptions({
+      map: map,
+      position: m.getPosition(),
+      content: '<p><strong>' + userid + '</strong><br/>' + $('#buddy-' + userid).attr('data-last-update') + '</p>' +
+        '<p id="address"></p>'
+    });
+    if (localStorage.getItem('show-tracks') === YES) {
       var t1 = Date.now() / 1000, t0 = t1 - 24 * 60 * 60;
       $.ajax({
         url: 'gettrack.php' +
@@ -230,6 +237,10 @@ var CTLON = (function () {
           polyline.setPath(path);
         }
         else {
+          if (polyline) {
+            polyline.setMap(null);
+            polyline = null;
+          }
           console.warn(data.error);
         }
       });
@@ -275,6 +286,7 @@ var CTLON = (function () {
                 .attr('data-lng', friend.lng)
                 .attr('data-accuracy', friend.accuracy)
                 .attr('data-timestamp', friend.timestamp)
+                .attr('data-last-update', timestamp)
                 .attr('title', 'last update: ' + timestamp)
               .click(function () {
                 highlightFriend(friend.id);
@@ -291,7 +303,7 @@ var CTLON = (function () {
     $('#userid').attr('data-lat', pos.coords.latitude).attr('data-lng', pos.coords.longitude);
     if (!selectedUser)
       map.setCenter(me.latLng);
-    if ($('#incognito').val() === 'no') {
+    if ($('#incognito').val() === NO) {
       // send own location to server
       $.ajax({
         url: 'setloc.php?userid=' + me.id +
@@ -373,8 +385,12 @@ var CTLON = (function () {
       };
 
       // get http basic auth user
-      $.ajax({ url: 'me.php' }).done(function (data) {
-        me.id = data;
+      $.ajax({
+        url: 'me.php',
+        accepts: 'json'
+      }).done(function (data) {
+        data = JSON.parse(data);
+        me.id = data.userid;
         $('#userid').text(me.id).click(function () {
           highlightFriend(me.id);
           stopAnimations();
@@ -387,7 +403,7 @@ var CTLON = (function () {
 
         $('#show-tracks').change(function (e) {
           localStorage.setItem('show-tracks', $(e.target).val());
-          highlightFriend(selectedUser);
+          polyline.setVisible($('#show-tracks').val() === YES);
         })
           .children('option').removeAttr('selected')
           .filter('[value=' + (localStorage.getItem('show-tracks') || NO) + ']').attr('selected', true);
@@ -400,7 +416,7 @@ var CTLON = (function () {
           })
         })
           .children('option').removeAttr('selected')
-          .filter('[value=' + (localStorage.getItem('share-my-tracks') || NO) + ']').attr('selected', true);
+          .filter('[value=' + (data.sharetracks || 'no') + ']').attr('selected', true);
 
         $('#incognito').change(function (e) {
           localStorage.setItem('incognito', $(e.target).val());
@@ -410,6 +426,7 @@ var CTLON = (function () {
 
         $('#show-accuracy').change(function (e) {
           localStorage.setItem('show-accuracy', $(e.target).val());
+          circle.setVisible($('#show-accuracy').val() === YES);
         })
           .children('option').removeAttr('selected')
           .filter('[value=' + (localStorage.getItem('show-accuracy') || NO) + ']').attr('selected', true);

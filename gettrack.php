@@ -3,6 +3,12 @@ include('globals.php');
 
 $res = array();
 
+if (!isset($_SERVER['PHP_AUTH_USER'])) {
+    $res['status'] = 'error';
+    $res['error'] = 'no authenticated user';
+    goto end;
+}
+
 $userid = $_GET['userid'];
 if (!preg_match('/^\\w+$/', $userid)) {
     $res['error'] = 'bad userid';
@@ -17,13 +23,16 @@ $t0 = isset($_GET['t0']) ? intval($_GET['t0']) : 'STRFTIME("%s", "now", "localti
 $t1 = isset($_GET['t1']) ? intval($_GET['t1']) : 'STRFTIME("%s", "now", "localtime")';
 
 if ($dbh) {
-    $q = "SELECT sharetracks FROM buddies WHERE userid = '$userid'";
-    $rows = $dbh->query($q);
-    $row = $rows->fetch();
-    if (!$row[0]) {
-        $res['error'] = 'user does not share tracks';
-        $res['status'] = 'error';
-        goto end;
+    
+    if ($userid != $_SERVER['PHP_AUTH_USER']) {
+        $q = "SELECT sharetracks FROM buddies WHERE userid = '$userid'";
+        $rows = $dbh->query($q);
+        $row = $rows->fetch();
+        if (!$row[0]) {
+            $res['error'] = 'user does not share tracks';
+            $res['status'] = 'error';
+            goto end;
+        }
     }
     
     $q = "SELECT timestamp, lat, lng FROM locations " .

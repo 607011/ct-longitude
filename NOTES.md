@@ -22,3 +22,4 @@ Fehler
  * User-Leiste scrollt nicht auf dem iPhone
  * Symbol des gewählten Users in den Vordergrund bringen
  * Kreis um Symbol wandert nicht bei Standortänderungen mit
+ * Daten in InfoWindow für angemeldeten User sind unvollständig
