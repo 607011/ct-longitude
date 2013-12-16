@@ -258,11 +258,6 @@ var CTLON = (function () {
   }
 
 
-  function centerMapOn(lat, lng) {
-    map.setCenter(new google.maps.LatLng(lat, lng));
-  }
-
-
   function getFriends() {
     if (getFriendsPending)
       return;
