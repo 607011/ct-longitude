@@ -1,52 +1,52 @@
 ﻿<?php
-include("globals.php");
+include('globals.php');
 $res = array();
 
-$userid = $_GET["userid"];
-if (!preg_match("/^\\w+$/", $userid)) {
-   $res["error"] = "bad userid";
-   goto end;
+$userid = $_GET['userid'];
+if (!preg_match('/^\\w+$/', $userid)) {
+    $res['error'] = 'bad userid';
+    goto end;
 }
 
-$lat = $_GET["lat"];
-if (!preg_match("/^\\d+\\.\\d+$/", $lat)) {
-   $res["error"] = "bad latitude";
-   goto end;
+$lat = $_GET['lat'];
+if (!preg_match('/^\\d+\\.\\d+$/', $lat)) {
+    $res['error'] = 'bad latitude';
+    goto end;
 }
 $lat = floatval($lat);
 
-$lng = $_GET["lng"];
-if (!preg_match("/^\\d+\\.\\d+$/", $lng)) {
-   $res["error"] = "bad longitude";
-   goto end;
+$lng = $_GET['lng'];
+if (!preg_match('/^\\d+\\.\\d+$/', $lng)) {
+    $res['error'] = 'bad longitude';
+    goto end;
 }
 $lng = floatval($lng);
 
-$timestamp = $_GET["timestamp"];
-if (!preg_match("/^\\d+$/", $timestamp)) {
-   $res["error"] = "bad timestamp";
-   goto end;
+$timestamp = $_GET['timestamp'];
+if (!preg_match('/^\\d+$/', $timestamp)) {
+    $res['error'] = 'bad timestamp';
+    goto end;
 }
 $timestamp = intval($timestamp);
 
-$accuracy = intval($_GET["accuracy"]);
-$altitude = floatval($_GET["altitude"]);
-$altitudeaccuracy = intval($_GET["altitudeaccuracy"]);
-$heading = floatval($_GET["heading"]);
-$speed = floatval($_GET["speed"]);
+$accuracy = intval($_GET['accuracy']);
+$altitude = floatval($_GET['altitude']);
+$altitudeaccuracy = intval($_GET['altitudeaccuracy']);
+$heading = floatval($_GET['heading']);
+$speed = floatval($_GET['speed']);
 
 if ($dbh) {
-   $dbh->exec("INSERT INTO locations (userid, timestamp, lat, lng, accuracy, altitude, altitudeaccuracy, heading, speed) " .
-              "VALUES('$userid', $timestamp, $lat, $lng, $accuracy, $altitude, $altitudeaccuracy, $heading, $speed)");
-   $res["id"] = $dbh->lastInsertId();
-   $res["status"] = "ok";
-   $res["userid"] = $userid;
-   $res["lat"] = $lat;
-   $res["lng"] = $lng;
-   $res["timestamp"] = $timestamp;
+    $dbh->exec("INSERT INTO locations (userid, timestamp, lat, lng, accuracy, altitude, altitudeaccuracy, heading, speed) " .
+               "VALUES('$userid', $timestamp, $lat, $lng, $accuracy, $altitude, $altitudeaccuracy, $heading, $speed)");
+    $res['id'] = $dbh->lastInsertId();
+    $res['status'] = 'ok';
+    $res['userid'] = $userid;
+    $res['lat'] = $lat;
+    $res['lng'] = $lng;
+    $res['timestamp'] = $timestamp;
 }
 else {
-   $res["status"] = $dbh->errorInfo();
+    $res['status'] = $dbh->errorInfo();
 }
 
 end:
