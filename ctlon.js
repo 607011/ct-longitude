@@ -1,11 +1,38 @@
 // Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 // All rights reserved.
 
+(function () {
+  "use strict";
+  var timerId;
+  if (typeof window.requestAnimationFrame !== 'function')
+    window.requestAnimationFrame = (function () {
+      return window.requestAnimationFrame ||
+        window.webkitRequestAnimationFrame ||
+        window.mozRequestAnimationFrame ||
+        window.oRequestAnimationFrame ||
+        window.msRequestAnimationFrame ||
+        function (callback) {
+          timerId = window.setTimeout(callback, 1000 / 60);
+        };
+    })();
+
+  if (typeof window.cancelAnimationFrame !== 'function')
+    window.cancelAnimationFrame = (function () {
+      return window.requestAnimationFrame ||
+        window.webkitRequestAnimationFrame ||
+        window.mozRequestAnimationFrame ||
+        window.oRequestAnimationFrame ||
+        window.msRequestAnimationFrame ||
+        function () {
+          window.clearTimeout(timerId);
+        };
+    })();
+})();
 
 jQuery.fn.enableHorizontalSlider = function () {
   "use strict";
-  var el = this, t0, x0, mouseX0, dx, mouseDown = false;
-  el.css('position', 'relative');
+  var el = this, t0, x0, mouseX0, dx, mouseDown = false, animId = null;
+  el.css('position', 'relative').parent().css('overflow', 'hidden');
   $(window).resize(function () {
     var oversize = el.parent().width() - el.width();
     if (oversize > el.position().left && el.position().left < 0)
@@ -18,21 +45,57 @@ jQuery.fn.enableHorizontalSlider = function () {
       t0 = Date.now();
       x0 = el.position().left;
       $(document).bind('selectstart', function () { return false; });
+      if (animId) {
+        cancelAnimationFrame(animId);
+        // TODO
+      }
     },
     mousemove: function (e) {
-      var oversize;
+      var oversize, xoff;
       if (mouseDown) {
         oversize = el.width() - el.parent().width();
-        dx = Math.min(e.clientX - mouseX0 + x0, 0);
+        dx = e.clientX - mouseX0;
+        xoff = Math.min(dx + x0, 0);
         if (oversize > 0) {
-          dx = Math.max(el.parent().width() - el.width(), dx);
-          el.css('left', dx + 'px');
+          xoff = Math.max(el.parent().width() - el.width(), xoff);
+          el.css('left', xoff + 'px');
         }
       }
     },
     mouseup: function (e) {
-      var dt = Date.now() - t0, pixelsPerSec = dx / dt * 1000;
+      var dt = Date.now() - t0, pixelsPerSec = dx / dt * 1000,
+        duration, elapsed, animStart = null,
+        /* t is the current time (or position) of the tween. This can be seconds or frames, steps, seconds, ms, whatever – as long as the unit is the same as is used for the total time [3].
+           b is the beginning value of the property.
+           c is the change between the beginning and destination value of the property.
+           d is the total time of the tween. */
+        easeInOutBack = function (t, b, c, d, s) {
+          if (typeof s === 'undefined') s = 1.70158;
+          if ((t /= d / 2) < 1) return c / 2 * (t * t * (((s *= (1.525)) + 1) * t - s)) + b;
+          return c / 2 * ((t -= 2) * t * (((s *= (1.525)) + 1) * t + s) + 2) + b;
+        },
+        easing = easeInOutBack,
+        val0, dVal, tweenTime,
+        update = function (timestamp) {
+          var ms;
+          if (animStart === null)
+            animStart = timestamp;
+          ms = timestamp - animStart;
+          elapsed += ms;
+          console.log(ms, easeInOutBack(elapsed, 0, 100, duration));
+          if (elapsed < duration)
+            requestAnimationFrame(update);
+          else
+            animStart = null;
+        };
       mouseDown = false;
+      console.log('pixelsPerSec = ' + pixelsPerSec);
+      if (Math.abs(pixelsPerSec) > 0) {
+        elapsed = 0;
+        duration = Math.abs(Math.floor(dt / dx * 1000));
+        console.log(duration);
+        requestAnimationFrame(update);
+      }
       $(document).unbind('selectstart');
     },
     mouseout: function () {
@@ -48,6 +111,8 @@ var CTLON = (function () {
 
   var MaxDistance = 200 * 1000 /* meters */,
   PollingInterval = 60 * 1000 /* milliseconds */,
+  MinWatchInterval = 30 * 1000 /* milliseconds */,
+  lastWatch = null,
   getFriendsPending = false,
   geocoder = new google.maps.Geocoder(),
   map = null,
@@ -181,6 +246,11 @@ var CTLON = (function () {
 
 
   function setPosition(pos) {
+    if (lastWatch === null)
+      lastWatch = Date.now();
+    if (Date.now() - lastWatch < MinWatchInterval)
+      return;
+    lastWatch = null;
     me.timestamp = Math.floor(pos.timestamp / 1000);
     me.latLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
     $('#userid').attr('data-lat', pos.coords.latitude).attr('data-lng', pos.coords.longitude);
@@ -229,7 +299,7 @@ var CTLON = (function () {
       xhr.send(null);
       me.id = xhr.responseText;
       $('#userid').text(me.id).click(function () {
-        centerMapOn(me.latLng.lat(), me.latLng.lng());
+        map.setCenter(me.latLng);
         stopAnimations();
         hideCircle();
         selectedUser = null;
@@ -250,16 +320,16 @@ var CTLON = (function () {
       if (navigator.geolocation) {
         watchId = navigator.geolocation.watchPosition(setPosition, function () {
           noGeolocation('Dein Browser stellt keine Standortabfragen zur Verf&uuml;gung.');
-          getFriends();
+          setTimeout(getFriends, 1000);
         });
         pollingId = setInterval(getFriends, PollingInterval);
       }
       else {
         noGeolocation('Standortabfrage fehlgeschlagen.');
-        getFriends();
+        setTimeout(getFriends, 1000);
       }
     }
   };
 })();
 
-google.maps.event.addDomListener(window, 'load', CTLON.init);
+$(document).ready(CTLON.init);
