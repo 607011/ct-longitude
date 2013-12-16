@@ -29,6 +29,18 @@
     })();
 })();
 
+jQuery.extend(jQuery.easing, {
+  easeInOutCubic: function (x, t, b, c, d) {
+    if ((t /= d / 2) < 1) return c / 2 * t * t * t + b;
+    return c / 2 * ((t -= 2) * t * t + 2) + b;
+  },
+  easeOutBack: function (x, t, b, c, d, s) {
+    if (s == undefined) s = 1.70158;
+    return c * ((t = t / d - 1) * t * ((s + 1) * t + s) + 1) + b;
+  },
+});
+
+
 jQuery.fn.enableHorizontalSlider = function () {
   "use strict";
   var el = this, t0, x0, mouseX0, dx, mouseDown = false, animId = null;
@@ -289,45 +301,71 @@ var CTLON = (function () {
   }
 
 
+  function showHideExtras() {
+    var extras = $('#extras');
+    if (extras.css('display') === 'none') {
+      extras.animate({
+        opacity: 1,
+        height: ($('#map-canvas').height()) + 'px'
+      },
+      {
+        start: function () { extras.css('display', 'block'); },
+        easing: 'easeInOutCubic',
+        duration: 350
+      });
+    }
+    else {
+      extras.animate({
+        opacity: 0,
+        height: 0
+      },
+      {
+        complete: function () { extras.css('display', 'none'); },
+        easing: 'easeInOutCubic',
+        duration: 350
+      });
+    }
+  }
+
+
   return {
     init: function () {
-      var xhr, mapOptions;
-
       // get http basic auth user
-      xhr = new XMLHttpRequest;
-      xhr.open('GET', 'me.php', false);
-      xhr.send(null);
-      me.id = xhr.responseText;
-      $('#userid').text(me.id).click(function () {
-        map.setCenter(me.latLng);
-        stopAnimations();
-        hideCircle();
-        selectedUser = null;
-      });
+      $.ajax({ url: 'me.php' }).done(function (data) {
+        var mapOptions;
 
-      $('#buddies').enableHorizontalSlider();
-
-      // init Google Maps
-      google.maps.visualRefresh = true;
-      mapOptions = {
-        bounds_changed: function () { getFriends(); },
-        zoom: 13
-      };
-      map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
-      computeDistanceBetween = google.maps.geometry.spherical.computeDistanceBetween;
-
-      // start polling
-      if (navigator.geolocation) {
-        watchId = navigator.geolocation.watchPosition(setPosition, function () {
-          noGeolocation('Dein Browser stellt keine Standortabfragen zur Verf&uuml;gung.');
-          setTimeout(getFriends, 1000);
+        me.id = data;
+        $('#userid').text(me.id).click(function () {
+          map.setCenter(me.latLng);
+          stopAnimations();
+          hideCircle();
+          selectedUser = null;
         });
-        pollingId = setInterval(getFriends, PollingInterval);
-      }
-      else {
-        noGeolocation('Standortabfrage fehlgeschlagen.');
-        setTimeout(getFriends, 1000);
-      }
+        $('#buddies').enableHorizontalSlider();
+        $('#extras-icon').click(showHideExtras);
+
+        // init Google Maps
+        google.maps.visualRefresh = true;
+        mapOptions = {
+          bounds_changed: function () { getFriends(); },
+          zoom: 13
+        };
+        map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+        computeDistanceBetween = google.maps.geometry.spherical.computeDistanceBetween;
+
+        // start polling
+        if (navigator.geolocation) {
+          watchId = navigator.geolocation.watchPosition(setPosition, function () {
+            noGeolocation('Dein Browser stellt keine Standortabfragen zur Verf&uuml;gung.');
+            setTimeout(getFriends, 1000);
+          });
+          pollingId = setInterval(getFriends, PollingInterval);
+        }
+        else {
+          noGeolocation('Standortabfrage fehlgeschlagen.');
+          setTimeout(getFriends, 1000);
+        }
+      });
     }
   };
 })();
