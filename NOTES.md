@@ -5,15 +5,7 @@ Features
  * Avatar pro User in Datenbanktabelle 'buddies' speichern
  * Markierungen der Freunde zeigen den jeweiligen Avatar
 
-
- * Track-Anwendung:
-   - Tracks anzeigen
-   - Trackanzeige auf Zeitraum begrenzen
-
- * Adresse des gewählten Users ausfindig machen (reverse geocoding)
-
- * Option: eigenen Track anderen Usern zugänglich machen
- 
+ * Trackanzeige auf Zeitraum begrenzen
 
 
 Fehler

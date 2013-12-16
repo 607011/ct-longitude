@@ -207,8 +207,19 @@ var CTLON = (function () {
     infoWindow.setOptions({
       map: map,
       position: m.getPosition(),
-      content: '<p><strong>' + userid + '</strong><br/>' + $('#buddy-' + userid).attr('data-last-update') + '</p>' +
+      content: '<p><strong>' + userid + '</strong><br/>' +
+        $('#buddy-' + userid).attr('data-last-update') + '</p>' +
         '<p id="address"></p>'
+    });
+    geocoder.geocode({ 'latLng': m.getPosition() }, function (results, status) {
+      if (status == google.maps.GeocoderStatus.OK) {
+        if (results[1]) {
+          $('#address').text(results[1].formatted_address);
+        }
+      }
+      else {
+        console.warn('Umgekehrtes Geocoding fehlgeschlagen: ' + status);
+      }
     });
     if (localStorage.getItem('show-tracks') === YES) {
       var t1 = Date.now() / 1000, t0 = t1 - 24 * 60 * 60;
