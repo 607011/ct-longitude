@@ -269,10 +269,14 @@ var CTLON = (function () {
       var ne = map.getBounds().getNorthEast(), sw = map.getBounds().getSouthWest(),
         range = Math.max(computeDistanceBetween(ne, sw) / 2, MaxDistance);
       data = JSON.parse(data);
+      if (data.status !== 'ok') {
+        console.error(data.error);
+        return;
+      }
       hideProgressInfo();
       setTimeout(function () { getFriendsPending = false; }, 1000);
       $('#buddies').empty();
-      $.each(data, function (userid, friend) {
+      $.each(data.users, function (userid, friend) {
         var timestamp = new Date(friend.timestamp * 1000).toLocaleString();
         friend.id = userid;
         friend.latLng = new google.maps.LatLng(friend.lat, friend.lng);
@@ -439,7 +443,7 @@ var CTLON = (function () {
         // start polling
         if (navigator.geolocation) {
           watchId = navigator.geolocation.watchPosition(setPosition, function () {
-            noGeolocation('Dein Browser stellt keine Standortabfragen zur Verf&uuml;gung.');
+            noGeolocation('Dein Browser stellt keine Standortabfragen zur Verfügung.');
             google.maps.event.addListenerOnce(map, 'idle', getFriends);
           });
           pollingId = setInterval(getFriends, PollingInterval);

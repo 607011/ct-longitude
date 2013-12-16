@@ -1,11 +1,19 @@
 <?php
 include('globals.php');
+
+$res = array();
+
+if (!isset($_SERVER['PHP_AUTH_USER'])) {
+    $res['status'] = 'error';
+    $res['error'] = 'no authenticated user';
+    goto end;
+}
+
 if ($dbh) {
     $rows = $dbh->query('SELECT userid, timestamp, lat, lng, accuracy, altitude, altitudeaccuracy, heading, speed ' .
                        'FROM locations GROUP BY userid ORDER BY timestamp DESC');
-    $result = array();
     foreach($rows as $row)  {
-        $result[$row[0]] = array(
+        $res['users'][$row[0]] = array(
          'timestamp' => intval($row[1]),
          'lat' => floatval($row[2]),
          'lng' => floatval($row[3]),
@@ -14,8 +22,12 @@ if ($dbh) {
          'altitudeaccuracy' => floatval($row[6]),
          'heading' => floatval($row[7]),
          'speed' => floatval($row[8])
-     );
+        );
     }
-    echo json_encode($result);
+    $res['status'] = 'ok';
 }
+
+end:
+echo json_encode($res);
+
 ?>
