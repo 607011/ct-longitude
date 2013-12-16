@@ -221,7 +221,13 @@ var CTLON = (function () {
         accepts: 'json'
       }).done(function (data) {
         var path = [];
-        data = JSON.parse(data);
+        try {
+          data = JSON.parse(data);
+        }
+        catch (e) {
+          console.error(e);
+          return;
+        }
         if (data.status === OK) {
           $.each(data.data, function (i, loc) {
             path.push(new google.maps.LatLng(loc.lat, loc.lng));
@@ -268,7 +274,13 @@ var CTLON = (function () {
     }).done(function (data) {
       var ne = map.getBounds().getNorthEast(), sw = map.getBounds().getSouthWest(),
         range = Math.max(computeDistanceBetween(ne, sw) / 2, MaxDistance);
-      data = JSON.parse(data);
+      try {
+        data = JSON.parse(data);
+      }
+      catch (e) {
+        console.error(e);
+        return;
+      }
       if (data.status !== 'ok') {
         console.error(data.error);
         return;
@@ -321,7 +333,13 @@ var CTLON = (function () {
          '&timestamp=' + me.timestamp,
         accepts: 'json'
       }).done(function (data) {
-        data = JSON.parse(data);
+        try {
+          data = JSON.parse(data);
+        }
+        catch (e) {
+          console.error(e);
+          return;
+        }
         if (data.status === 'ok' && data.userid === me.id) {
           if (lastWatch === null)
             lastWatch = Date.now();
@@ -393,7 +411,13 @@ var CTLON = (function () {
         url: 'me.php',
         accepts: 'json'
       }).done(function (data) {
-        data = JSON.parse(data);
+        try {
+          data = JSON.parse(data);
+        }
+        catch (e) {
+          console.error(e);
+          return;
+        }
         me.id = data.userid;
         $('#userid').text(me.id).click(function () {
           highlightFriend(me.id);
