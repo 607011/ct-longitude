@@ -4,12 +4,14 @@ $res = array();
 
 $userid = $_GET['userid'];
 if (!preg_match('/^\\w+$/', $userid)) {
+    $res['status'] = 'error';
     $res['error'] = 'bad userid';
     goto end;
 }
 
 $lat = $_GET['lat'];
 if (!preg_match('/^\\d+\\.\\d+$/', $lat)) {
+    $res['status'] = 'error';
     $res['error'] = 'bad latitude';
     goto end;
 }
@@ -17,13 +19,15 @@ $lat = floatval($lat);
 
 $lng = $_GET['lng'];
 if (!preg_match('/^\\d+\\.\\d+$/', $lng)) {
+    $res['status'] = 'error';
     $res['error'] = 'bad longitude';
     goto end;
 }
 $lng = floatval($lng);
 
-$timestamp = $_GET['timestamp'];
+$timestamp = isset($_GET['timestamp']) ? $_GET['timestamp'] : time();
 if (!preg_match('/^\\d+$/', $timestamp)) {
+    $res['status'] = 'error';
     $res['error'] = 'bad timestamp';
     goto end;
 }
@@ -46,7 +50,8 @@ if ($dbh) {
     $res['timestamp'] = $timestamp;
 }
 else {
-    $res['status'] = $dbh->errorInfo();
+    $res['status'] = 'error';
+    $res['error'] = $dbh->errorInfo();
 }
 
 end:

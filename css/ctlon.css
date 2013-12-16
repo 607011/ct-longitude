@@ -102,10 +102,26 @@ html, body {
   bottom: 44px;
   height: 0;
   opacity: 0;
-  background-color: rgba(0, 0, 0, 0.8);
-  color: #eee;
-  -webkit-text-shadow: #000 1px 1px 0;
-  text-shadow: #000 1px 1px 0;
+  background-color: rgba(204, 204, 204, 0.9);
+  color: #222;
+  -webkit-text-shadow: #fff 1px 1px 0;
+  text-shadow: #fff 1px 1px 0;
+  padding: 6px;
+}
+
+h1, h2, h3, p {
+  -webkit-text-shadow: #eee 1px 1px 0;
+  text-shadow: #eee 1px 1px 0;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+td, tr {
+  vertical-align: middle;
+  padding: 4px;
 }
 
 .barberpole {
