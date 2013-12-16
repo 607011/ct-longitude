@@ -29,15 +29,12 @@
     })();
 })();
 
+
 jQuery.extend(jQuery.easing, {
   easeInOutCubic: function (x, t, b, c, d) {
     if ((t /= d / 2) < 1) return c / 2 * t * t * t + b;
     return c / 2 * ((t -= 2) * t * t + 2) + b;
-  },
-  easeOutBack: function (x, t, b, c, d, s) {
-    if (s == undefined) s = 1.70158;
-    return c * ((t = t / d - 1) * t * ((s + 1) * t + s) + 1) + b;
-  },
+  }
 });
 
 
@@ -227,7 +224,7 @@ var CTLON = (function () {
       accepts: 'json'
     }).done(function (data) {
       var ne = map.getBounds().getNorthEast(), sw = map.getBounds().getSouthWest(),
-	    range = Math.max(computeDistanceBetween(ne, sw) / 2, MaxDistance);
+        range = Math.max(computeDistanceBetween(ne, sw) / 2, MaxDistance);
       data = JSON.parse(data);
       hideProgressInfo();
       setTimeout(function () { getFriendsPending = false; }, 1000);
@@ -260,7 +257,7 @@ var CTLON = (function () {
   function setPosition(pos) {
     if (lastWatch === null)
       lastWatch = Date.now();
-    if (Date.now() - lastWatch < MinWatchInterval)
+    else if (Date.now() - lastWatch < MinWatchInterval)
       return;
     lastWatch = null;
     me.timestamp = Math.floor(pos.timestamp / 1000);
@@ -284,7 +281,7 @@ var CTLON = (function () {
       data = JSON.parse(data);
       if (data.status === 'ok' && data.userid === me.id) {
         placeMarker(data.userid, data.lat, data.lng, new Date(data.timestamp * 1000).toLocaleString());
-        getFriends();
+        google.maps.event.addListenerOnce(map, 'idle', getFriends);
       }
     });
   }
@@ -309,7 +306,10 @@ var CTLON = (function () {
         height: ($('#map-canvas').height()) + 'px'
       },
       {
-        start: function () { extras.css('display', 'block'); },
+        start: function () {
+          extras.css('display', 'block');
+          $('#extras-icon').css('background-color', '#ccc');
+        },
         easing: 'easeInOutCubic',
         duration: 350
       });
@@ -320,7 +320,10 @@ var CTLON = (function () {
         height: 0
       },
       {
-        complete: function () { extras.css('display', 'none'); },
+        complete: function () {
+          extras.css('display', 'none');
+          $('#extras-icon').css('background-color', '');
+        },
         easing: 'easeInOutCubic',
         duration: 350
       });
@@ -331,7 +334,9 @@ var CTLON = (function () {
   return {
     init: function () {
       var mapOptions = {
-        bounds_changed: function () { getFriends(); },
+        bounds_changed: function () {
+          google.maps.event.addListenerOnce(map, 'idle', getFriends);
+        },
         zoom: 13
       };
 
@@ -349,7 +354,7 @@ var CTLON = (function () {
         $('#extras-icon').click(showHideExtras);
 
         // init Google Maps
-        // google.maps.visualRefresh = true;
+        google.maps.visualRefresh = true;
         map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
         computeDistanceBetween = google.maps.geometry.spherical.computeDistanceBetween;
 
@@ -357,13 +362,13 @@ var CTLON = (function () {
         if (navigator.geolocation) {
           watchId = navigator.geolocation.watchPosition(setPosition, function () {
             noGeolocation('Dein Browser stellt keine Standortabfragen zur Verf&uuml;gung.');
-            setTimeout(getFriends, 1000);
+            google.maps.event.addListenerOnce(map, 'idle', getFriends);
           });
           pollingId = setInterval(getFriends, PollingInterval);
         }
         else {
           noGeolocation('Standortabfrage fehlgeschlagen.');
-          setTimeout(getFriends, 1000);
+          google.maps.event.addListenerOnce(map, 'idle', getFriends);
         }
       });
     }

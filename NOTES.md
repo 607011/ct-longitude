@@ -1,7 +1,5 @@
-FEATURES
+Features
 ========
-
- * User-Leiste scrollbar machen
 
  * Avatar per Drag'n'Drop in Browser laden
  * Avatar pro User in Datenbanktabelle 'buddies' speichern
@@ -13,3 +11,8 @@ FEATURES
    - Trackanzeige auf Zeitraum begrenzen
 
 
+Fehler
+======
+
+ * User-Leiste scrollt nicht auf dem iPhone
+ * Symbol des gewählten Users in den Vordergrund bringen
