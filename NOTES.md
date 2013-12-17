@@ -3,9 +3,7 @@ Features
 
  * Markierungen der Freunde zeigen den jeweiligen Avatar
 
- * Trackanzeige auf Zeitraum begrenzen
- * Liste der User auf Aktualität des letzten Standorts begrenzen
-
+ * Seitenverhältnis des Avatar beim Skalieren beibehalten
 
 Fehler
 ======

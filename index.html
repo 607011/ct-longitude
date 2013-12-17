@@ -30,34 +30,54 @@
       <tbody> 
         <tr>
           <td>
-            <input type="checkbox" name="show-tracks" id="show-tracks" value="yes" />
+            <input type="checkbox" name="show-tracks" id="show-tracks" />
           </td>
           <td>
             <label for="show-tracks">Tracks anzeigen</label>
+            <div class="hint">Bei der Auswahl eines Users anzeigen, wo er in der Vergangenheit gewesen ist.</div>
           </td>
         </tr>
         <tr>
           <td>
-            <input type="checkbox" name="share-my-tracks" id="share-my-tracks" value="yes" />
+            <input type="checkbox" name="share-my-tracks" id="share-my-tracks" />
           </td>
           <td>
             <label for="share-my-tracks">Meine Tracks mit anderen teilen</label>
+            <div class="hint">Andere dürfen sehen, wo ich gewesen bin.</div>
           </td>
         </tr>
         <tr>
           <td>
-            <input type="checkbox" name="incognito" id="incognito" value="yes" />
+            <input type="checkbox" name="incognito" id="incognito" />
           </td>
           <td>
             <label for="incognito">Inkognito bleiben</label>
+            <div class="hint">Es werden keine Informationen über den eigenen Standort an den Server gesendet.</div>
           </td>
         </tr>
         <tr>
           <td>
-            <input type="checkbox" name="show-accuracy" id="show-accuracy" value="yes" />
+            <input type="checkbox" name="show-accuracy" id="show-accuracy" />
           </td>
           <td>
-            <label for="incognito">Standortgenauigkeit visualisieren</label>
+            <label for="show-accuracy">Standortgenauigkeit visualisieren</label>
+            <div class="hint">Einen Kreis um den Standort zeichnen, der die geschätzte Genauigkeit widerspiegelt.</div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <select name="max-location-age" id="max-location-age">
+              <option value="-1">keine</option>
+              <option value="300">5 Minuten</option>
+              <option value="1800">30 Minuten</option>
+              <option value="3600">1 Stunde</option>
+              <option value="7200">2 Stunden</option>
+              <option value="86400">24 Stunden</option>
+            </select>
+          </td>
+          <td>
+            <label for="max-location-age">Maximales Alter von Standortinformationen</label>
+            <div class="hint">Ältere Standorte (Markierungen, Tracks) werden nicht angezeigt.</div>
           </td>
         </tr>
       </tbody>
@@ -73,7 +93,6 @@
             <input type="file" name="avatar-file" id="avatar-file" />
             <br />
             <span style="font-size: smaller">optimales Bildmaß: 50 &times; 50 Pixel</span>
-            <div id="test"></div>
           </td>
         </tr>
       </tbody>

@@ -9,8 +9,12 @@ if (!isset($_SERVER['PHP_AUTH_USER'])) {
     goto end;
 }
 
+$maxage = isset($_REQUEST['maxage']) ? intval($_REQUEST['maxage']) : time();
+$t0 = time() - $maxage;
+
 if ($dbh) {
-    $rows = $dbh->query('SELECT locations.userid, locations.timestamp, locations.lat, locations.lng, locations.accuracy, locations.altitude, locations.altitudeaccuracy, locations.heading, locations.speed, buddies.avatar FROM locations, buddies WHERE locations.userid = buddies.userid GROUP BY locations.userid ORDER BY locations.timestamp DESC');
+    $q = "SELECT locations.userid, locations.timestamp, locations.lat, locations.lng, locations.accuracy, locations.altitude, locations.altitudeaccuracy, locations.heading, locations.speed, buddies.avatar FROM locations, buddies WHERE locations.timestamp > $t0 AND locations.userid = buddies.userid GROUP BY locations.userid ORDER BY locations.timestamp DESC";
+    $rows = $dbh->query($q);
     foreach($rows as $row)  {
         $res['users'][$row[0]] = array(
          'timestamp' => intval($row[1]),

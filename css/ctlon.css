@@ -108,6 +108,26 @@ html, body {
   padding: 6px;
 }
 
+#extras label {
+  font-weight: bold;
+}
+
+#extras .hint {
+  font-size: smaller;
+}
+
+#extras .hint:before {
+  content: '(';
+}
+
+#extras .hint:after {
+  content: ')';
+}
+
+#extras table td:first-child {
+  text-align: right;
+}
+
 #avatar {
   display: inline-block;
   width: 50px;

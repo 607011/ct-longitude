@@ -145,6 +145,14 @@ var CTLON = (function () {
   }
 
 
+  function removeAllMarkers() {
+    $.each(markers, function (i, marker) {
+      marker.setMap(null);
+    });
+    markers = {};
+  }
+
+
   function placeMarker(userid, lat, lng, timestamp) {
     var url = (userid === me.id)
         ? 'http://mt.google.com/vt/icon?psize=10&font=fonts/Roboto-Bold.ttf&ax=43&ay=50&scale=1&color=ff115511&name=icons/spotlight/spotlight-waypoint-a.png&text=' + userid
@@ -153,7 +161,6 @@ var CTLON = (function () {
       markers[userid] = new google.maps.Marker({
         title: userid + ' (' + timestamp + ')',
         icon: { url: url },
-        animation: google.maps.Animation.DROP,
         map: map
       });
       google.maps.event
@@ -185,9 +192,7 @@ var CTLON = (function () {
     if (typeof userid !== 'string')
       return;
     selectedUser = userid;
-    stopAnimations();
     map.setCenter(m.getPosition());
-    m.setAnimation(google.maps.Animation.BOUNCE);
     m.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
     accuracy = parseInt($('#buddy-' + userid).attr('data-accuracy'));
     if (circle === null) {
@@ -223,7 +228,8 @@ var CTLON = (function () {
       }
     });
     if ($('#show-tracks').is(':checked')) {
-      var t1 = Math.floor(Date.now() / 1000), t0 = t1 - 24 * 60 * 60;
+      var maxAge = parseInt($('#max-location-age').val()),
+        t1 = Math.floor(Date.now() / 1000), t0 = (maxAge < 0) ? 0 : t1 - maxAge;
       $.ajax({
         url: 'gettrack.php',
         type: 'POST',
@@ -273,12 +279,18 @@ var CTLON = (function () {
 
 
   function getFriends() {
+    var data = {}, maxAge;
     if (getFriendsPending)
       return;
     showProgressInfo();
     getFriendsPending = true;
+    maxAge = parseInt($('#max-location-age').val());
+    if (maxAge >= 0)
+      data.maxage = maxAge;
     $.ajax({
       url: 'friends.php',
+      type: 'POST',
+      data: data,
       accepts: 'json'
     }).done(function (data) {
       var ne = map.getBounds().getNorthEast(), sw = map.getBounds().getSouthWest(),
@@ -295,8 +307,11 @@ var CTLON = (function () {
         return;
       }
       hideProgressInfo();
+      removeAllMarkers();
       setTimeout(function () { getFriendsPending = false; }, 1000);
       $('#buddies').empty();
+      if (typeof data.users !== 'object')
+        return;
       $.each(data.users, function (userid, friend) {
         var timestamp = new Date(friend.timestamp * 1000).toLocaleString();
         friend.id = userid;
@@ -312,7 +327,7 @@ var CTLON = (function () {
                 .attr('data-accuracy', friend.accuracy)
                 .attr('data-timestamp', friend.timestamp)
                 .attr('data-last-update', timestamp)
-                .attr('title', 'last update: ' + timestamp)
+                .attr('title', 'Letzte Aktualisierung: ' + timestamp)
               .click(function () {
                 highlightFriend(friend.id);
               }.bind(friend)));
@@ -541,10 +556,12 @@ var CTLON = (function () {
         zoom: 13
       };
       preloadImages();
+
       // get http basic auth user
       $.ajax({
         url: 'me.php',
-        accepts: 'json'
+        accepts: 'json',
+        type: 'POST'
       }).done(function (data) {
         try {
           data = JSON.parse(data);
@@ -571,6 +588,7 @@ var CTLON = (function () {
         $('#show-tracks').change(function (e) {
           var checked = $('#show-tracks').is(':checked');
           localStorage.setItem('show-tracks', checked);
+          // TODO: get track for selectedUser
           if (polyline !== null)
             polyline.setVisible(checked);
         }).prop('checked', localStorage.getItem('show-tracks') === 'true');
@@ -592,9 +610,15 @@ var CTLON = (function () {
         $('#show-accuracy').change(function (e) {
           var checked = $('#show-accuracy').is(':checked')
           localStorage.setItem('show-accuracy', checked);
+          // TODO: show circle for selectedUser
           if (circle !== null)
             circle.setVisible(checked);
         }).prop('checked', localStorage.getItem('show-accuracy') === 'true');
+
+        $('#max-location-age').change(function (e) {
+          localStorage.setItem('max-location-age', $('#max-location-age').val());
+          getFriends();
+        }).children('option').filter('[value=' + (localStorage.getItem('max-location-age') || '1800') + ']').prop('selected', true);
 
         // init Google Maps
         google.maps.visualRefresh = true;
