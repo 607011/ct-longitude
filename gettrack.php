@@ -48,8 +48,8 @@ if ($dbh) {
     switch($format) {
         case 'json':
             $res['userid'] = $userid;
-            $res['query'] = $q;
-            $res['data'] = array();
+            // $res['query'] = $q;
+            $res['path'] = array();
             foreach($rows as $row)  {
                 $res['path'][] = array(
                  'timestamp' => intval($row[0]),

@@ -41,15 +41,8 @@ jQuery.extend(jQuery.easing, {
 
 jQuery.fn.enableHorizontalSlider = function () {
   "use strict";
-  var el = this, t0, x0, mouseX0, dx, mouseDown = false, animId = null;
-  el.css('position', 'relative').parent().css('overflow', 'hidden');
-  $(window).resize(function () {
-    var oversize = el.parent().width() - el.width();
-    if (oversize > el.position().left && el.position().left < 0)
-        el.css('left', Math.min(0, oversize) + 'px');
-  });
-  this.bind({
-    mousedown: function (e) {
+  var el = this, t0, x0, mouseX0, dx, mouseDown = false, animId = null,
+    touchstart = function (e) {
       mouseX0 = e.clientX;
       mouseDown = true;
       t0 = Date.now();
@@ -60,7 +53,7 @@ jQuery.fn.enableHorizontalSlider = function () {
         // TODO
       }
     },
-    mousemove: function (e) {
+    touchmove = function (e) {
       var oversize, xoff;
       if (mouseDown) {
         oversize = el.width() - el.parent().width();
@@ -72,7 +65,7 @@ jQuery.fn.enableHorizontalSlider = function () {
         }
       }
     },
-    mouseup: function (e) {
+    touchend = function (e) {
       var dt = Date.now() - t0, pixelsPerSec = dx / dt * 1000,
         duration, elapsed, animStart = null,
         /* t is the current time (or position) of the tween. This can be seconds or frames, steps, seconds, ms, whatever – as long as the unit is the same as is used for the total time [3].
@@ -106,7 +99,20 @@ jQuery.fn.enableHorizontalSlider = function () {
         requestAnimationFrame(update);
       }
       $(document).unbind('selectstart');
-    },
+    };
+  el.css('position', 'relative').parent().css('overflow', 'hidden');
+  $(window).resize(function () {
+    var oversize = el.parent().width() - el.width();
+    if (oversize > el.position().left && el.position().left < 0)
+        el.css('left', Math.min(0, oversize) + 'px');
+  });
+  this.bind({
+    mousedown: touchstart,
+    touchstart: touchstart,
+    mousemove: touchmove,
+    touchmove: touchmove,
+    touchend: touchend,
+    mouseup: touchend,
     mouseout: function () {
       mouseDown = false;
     }
@@ -186,6 +192,54 @@ var CTLON = (function () {
   }
 
 
+  function getTrack(userid) {
+    var maxAge = parseInt($('#max-waypoint-age').val()),
+      t1 = Math.floor(Date.now() / 1000), t0 = (maxAge < 0) ? 0 : t1 - maxAge;
+    if (!$('#show-tracks').is(':checked'))
+      return;
+    $.ajax({
+      url: 'gettrack.php',
+      type: 'POST',
+      accepts: 'json',
+      data: {
+        userid: userid,
+        t0: t0,
+        t1: t1
+      }
+    }).done(function (data) {
+      var path = [];
+      try {
+        data = JSON.parse(data);
+      }
+      catch (e) {
+        console.error(e);
+        return;
+      }
+      if (data.status === OK) {
+        $.each(data.path, function (i, loc) {
+          path.push(new google.maps.LatLng(loc.lat, loc.lng));
+        }); // XXX: path = $.map(data.path, ...) doesn't work. Why?
+        if (polyline === null)
+          polyline = new google.maps.Polyline({
+            map: map,
+            strokeColor: '#039',
+            strokeOpacity: 0.7,
+            strokeWeight: 2,
+            geodesic: true
+          });
+        polyline.setPath(path);
+      }
+      else {
+        if (polyline) {
+          polyline.setMap(null);
+          polyline = null;
+        }
+        console.warn(data.error);
+      }
+    });
+  }
+
+
   function highlightFriend(userid) {
     var m = markers[userid], accuracy;
     if (typeof m !== 'object')
@@ -229,48 +283,7 @@ var CTLON = (function () {
       }
     });
     if ($('#show-tracks').is(':checked')) {
-      var maxAge = parseInt($('#max-location-age').val()),
-        t1 = Math.floor(Date.now() / 1000), t0 = (maxAge < 0) ? 0 : t1 - maxAge;
-      $.ajax({
-        url: 'gettrack.php',
-        type: 'POST',
-        accepts: 'json',
-        data: {
-          userid: userid,
-          t0: t0,
-          t1: t1
-        }
-      }).done(function (data) {
-        var path = [];
-        try {
-          data = JSON.parse(data);
-        }
-        catch (e) {
-          console.error(e);
-          return;
-        }
-        if (data.status === OK) {
-          $.each(data.path, function (i, loc) {
-            path.push(new google.maps.LatLng(loc.lat, loc.lng));
-          }); // XXX: path = $.map(data.path, ...) doesn't work. Why?
-          if (polyline === null)
-            polyline = new google.maps.Polyline({
-              map: map,
-              strokeColor: '#039',
-              strokeOpacity: 0.7,
-              strokeWeight: 2,
-              geodesic: true
-            });
-          polyline.setPath(path);
-        }
-        else {
-          if (polyline) {
-            polyline.setMap(null);
-            polyline = null;
-          }
-          console.warn(data.error);
-        }
-      });
+      getTrack(userid);
     }
     else {
       if (polyline)
@@ -583,7 +596,8 @@ var CTLON = (function () {
         $('#show-tracks').change(function (e) {
           var checked = $('#show-tracks').is(':checked');
           localStorage.setItem('show-tracks', checked);
-          // TODO: get track for selectedUser
+          if (checked)
+            getTrack(selectedUser);
           if (polyline !== null)
             polyline.setVisible(checked);
         }).prop('checked', localStorage.getItem('show-tracks') === 'true');
@@ -614,6 +628,11 @@ var CTLON = (function () {
           localStorage.setItem('max-location-age', $('#max-location-age').val());
           getFriends();
         }).children('option').filter('[value=' + (localStorage.getItem('max-location-age') || '1800') + ']').prop('selected', true);
+
+        $('#max-waypoint-age').change(function (e) {
+          localStorage.setItem('max-waypoint-age', $('#max-waypoint-age').val());
+          getTrack(selectedUser);
+        }).children('option').filter('[value=' + (localStorage.getItem('max-waypoint-age') || '1800') + ']').prop('selected', true);
 
         // init Google Maps
         google.maps.visualRefresh = true;
