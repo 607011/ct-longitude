@@ -122,7 +122,7 @@ var CTLON = (function () {
     MaxDistance = 200 * 1000 /* meters */,
     PollingInterval = 60 * 1000 /* milliseconds */,
     MinWatchInterval = 30 * 1000 /* milliseconds */,
-    smartUploadAllowed = window.File && window.FileReader && window.XMLHttpRequest,
+    Avatar = { Width: 50, Height: 50 },
     lastWatch = null,
     getFriendsPending = false,
     geocoder = new google.maps.Geocoder(),
@@ -404,27 +404,25 @@ var CTLON = (function () {
               binary += String.fromCharCode(bytes[i]);
             return binary;
           })(new Uint8Array(e.target.result))),
-          img = (function () {
-            var img = new Image;
-            img.onload = function () {
-              var canvas = document.createElement('canvas'), ctx = canvas.getContext('2d');
-              canvas.width = 50;
-              canvas.height = 50;
-              ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, 50, 50);
-              dataUrl = canvas.toDataURL();
-              $.ajax({
-                url: 'setoption.php',
-                type: 'POST',
-                data: {
-                  option: 'avatar',
-                  value: dataUrl
-                }
-              }).done(function (data) {
-                avatar.empty().css('background-image', 'url(' + dataUrl + ')');
-              });
-            };
-            img.src = dataUrl;
-          })();
+          img = new Image;
+        img.onload = function () {
+          var canvas = document.createElement('canvas'), ctx = canvas.getContext('2d');
+          canvas.width = Avatar.Width;
+          canvas.height = Avatar.Height;
+          ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvas.width, canvas.height);
+          dataUrl = canvas.toDataURL();
+          $.ajax({
+            url: 'setoption.php',
+            type: 'POST',
+            data: {
+              option: 'avatar',
+              value: dataUrl
+            }
+          }).done(function (data) {
+            avatar.empty().css('background-image', 'url(' + dataUrl + ')');
+          });
+        };
+        img.src = dataUrl;
       }
     };
     reader.onerror = function (e) {
@@ -577,6 +575,8 @@ var CTLON = (function () {
           selectedUser = null;
         });
 
+        $('#avatar-max-width').text(Avatar.Width);
+        $('#avatar-max-height').text(Avatar.Height);
         $('#buddies').enableHorizontalSlider();
         $('#extras-icon').click(showHideExtras);
 
