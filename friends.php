@@ -10,8 +10,7 @@ if (!isset($_SERVER['PHP_AUTH_USER'])) {
 }
 
 if ($dbh) {
-    $rows = $dbh->query('SELECT userid, timestamp, lat, lng, accuracy, altitude, altitudeaccuracy, heading, speed ' .
-                       'FROM locations GROUP BY userid ORDER BY timestamp DESC');
+    $rows = $dbh->query('SELECT locations.userid, locations.timestamp, locations.lat, locations.lng, locations.accuracy, locations.altitude, locations.altitudeaccuracy, locations.heading, locations.speed, buddies.avatar FROM locations, buddies WHERE locations.userid = buddies.userid GROUP BY locations.userid ORDER BY locations.timestamp DESC');
     foreach($rows as $row)  {
         $res['users'][$row[0]] = array(
          'timestamp' => intval($row[1]),

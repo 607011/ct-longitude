@@ -15,7 +15,7 @@ if ($dbh) {
               ')');
    echo "Table 'locations' created.<br/>\n";
 
-   $dbh->exec('CREATE TABLE buddies (id INTEGER PRIMARY KEY AUTOINCREMENT, userid TEXT, sharetracks INTEGER, png BLOB)');
+   $dbh->exec('CREATE TABLE buddies (id INTEGER PRIMARY KEY AUTOINCREMENT, userid TEXT, sharetracks INTEGER, avatar TEXT)');
    echo "Table 'buddies' created.<br/>\n";
 }
 

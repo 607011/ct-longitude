@@ -9,21 +9,26 @@ if (!isset($_SERVER['PHP_AUTH_USER'])) {
     goto end;
 }
 
-$userid = $_GET['userid'];
+if (!isset($_REQUEST['userid'])) {
+    $res['error'] = 'userid is missing';
+    $res['status'] = 'error';
+    goto end;
+}
+
+$userid = $_REQUEST['userid'];
 if (!preg_match('/^\\w+$/', $userid)) {
     $res['error'] = 'bad userid';
     $res['status'] = 'error';
     goto end;
 }
 
-$format = isset($_GET['format'])? $_GET['format'] : 'json';
+$format = isset($_REQUEST['format'])? $_REQUEST['format'] : 'json';
 
-$t0 = isset($_GET['t0']) ? intval($_GET['t0']) : 'STRFTIME("%s", "now", "localtime") - 24 * 60 * 60';
+$t0 = isset($_REQUEST['t0']) ? intval($_REQUEST['t0']) : 'STRFTIME("%s", "now", "localtime") - 24 * 60 * 60';
 
-$t1 = isset($_GET['t1']) ? intval($_GET['t1']) : 'STRFTIME("%s", "now", "localtime")';
+$t1 = isset($_REQUEST['t1']) ? intval($_REQUEST['t1']) : 'STRFTIME("%s", "now", "localtime")';
 
 if ($dbh) {
-    
     if ($userid != $_SERVER['PHP_AUTH_USER']) {
         $q = "SELECT sharetracks FROM buddies WHERE userid = '$userid'";
         $rows = $dbh->query($q);
@@ -34,7 +39,6 @@ if ($dbh) {
             goto end;
         }
     }
-    
     $q = "SELECT timestamp, lat, lng FROM locations " .
             "WHERE userid = '$userid' " .
             "  AND timestamp > $t0 " .
@@ -47,7 +51,7 @@ if ($dbh) {
             $res['query'] = $q;
             $res['data'] = array();
             foreach($rows as $row)  {
-                $res['data'][] = array(
+                $res['path'][] = array(
                  'timestamp' => intval($row[0]),
                  'lat' => floatval($row[1]),
                  'lng' => floatval($row[2])

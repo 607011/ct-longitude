@@ -121,13 +121,14 @@ var CTLON = (function () {
     MaxDistance = 200 * 1000 /* meters */,
     PollingInterval = 60 * 1000 /* milliseconds */,
     MinWatchInterval = 30 * 1000 /* milliseconds */,
+    smartUploadAllowed = window.File && window.FileReader && window.XMLHttpRequest,
     lastWatch = null,
     getFriendsPending = false,
     geocoder = new google.maps.Geocoder(),
     map = null,
     circle = null, polyline = null, infoWindow = null,
     markers = {},
-    me = { id: undefined, latLng: null },
+    me = { id: undefined, latLng: null, avatar: null },
     watchId = undefined,
     selectedUser = undefined,
     pollingId = undefined,
@@ -222,14 +223,16 @@ var CTLON = (function () {
       }
     });
     if ($('#show-tracks').is(':checked')) {
-      var t1 = Date.now() / 1000, t0 = t1 - 24 * 60 * 60;
+      var t1 = Math.floor(Date.now() / 1000), t0 = t1 - 24 * 60 * 60;
       $.ajax({
-        url: 'gettrack.php' +
-          '?userid=' + encodeURIComponent(userid) +
-          '&t0=' + t0 +
-          '&t1=' + t1 +
-          '&foo=' + (Math.random() * 1e7).toFixed(0) + '-' + Date.now(),
-        accepts: 'json'
+        url: 'gettrack.php',
+        type: 'POST',
+        accepts: 'json',
+        data: {
+          userid: userid,
+          t0: t0,
+          t1: t1
+        }
       }).done(function (data) {
         var path = [];
         try {
@@ -240,9 +243,9 @@ var CTLON = (function () {
           return;
         }
         if (data.status === OK) {
-          $.each(data.data, function (i, loc) {
+          $.each(data.path, function (i, loc) {
             path.push(new google.maps.LatLng(loc.lat, loc.lng));
-          });
+          }); // XXX: path = $.map(data.path, ...) doesn't work. Why?
           if (polyline === null)
             polyline = new google.maps.Polyline({
               map: map,
@@ -315,7 +318,10 @@ var CTLON = (function () {
               }.bind(friend)));
         placeMarker(friend.id, friend.lat, friend.lng, timestamp);
       });
+    }).error(function (e) {
+      alert(e);
     });
+    ;
   }
 
 
@@ -370,8 +376,79 @@ var CTLON = (function () {
   }
 
 
+  function makeChunk(file, startByte, endByte) {
+    var blob = null;
+    if (file.slice)
+      blob = file.slice(startByte, endByte);
+    else if (file.webkitSlice)
+      blob = file.webkitSlice(startByte, endByte);
+    else if (file.mozSlice)
+      blob = file.mozSlice(startByte, endByte);
+    return blob;
+  }
+
+
+  function uploadAvatar(blob) {
+    var reader = new FileReader, avatar = $('#avatar');
+    avatar.css('background', 'none').append($('<span style="background-image: url(img/loader-5-0.gif); background-repeat: no-repeat; background-position: 6px 6px"></span>'));
+    reader.onload = function (e) {
+      if (e.target.readyState == FileReader.DONE) {
+        var dataUrl = 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, new Uint8Array(e.target.result))),
+          img = (function () {
+            var img = new Image;
+            img.onload = function () {
+              console.log(img.width, img.height);
+              $.ajax({
+                url: 'setoption.php',
+                type: 'POST',
+                data: {
+                  option: 'avatar',
+                  value: dataUrl
+                }
+              }).done(function (data) {
+                avatar.empty().css('background-image', 'url(' + dataUrl + ')');
+              });
+            };
+            img.src = dataUrl;
+          })();
+      }
+    };
+    reader.onerror = function (e) {
+      switch (e.target.error.code) {
+        case e.target.error.NOT_FOUND_ERR:
+          alert('Datei nicht gefunden.');
+          break;
+        case e.target.error.NOT_READABLE_ERR:
+          alert('Datei ist nicht lesbar.');
+          break;
+        case e.target.error.ABORT_ERR:
+          console.warn('Lesen der Datei abgebrochen.');
+          break;
+        default:
+          alert('Beim Zugriff auf die Datei ist ein Fehler aufgetreten.');
+          break;
+      }
+    };
+    reader.onabort = function () {
+      alert('Lesen der Datei abgebrochen.');
+    };
+    reader.readAsArrayBuffer(blob);
+  }
+
+
+  function pasteHandler(e) {
+    var items = e.originalEvent.clipboardData.items, i,
+      isPNG = function (item) { return item.kind === 'file' && item.type === 'image/png'; };
+    i = items.length;
+    while (i--) {
+      if (isPNG(items[i]))
+        uploadAvatar(items[i].getAsFile());
+    }
+  }
+
+
   function showHideExtras() {
-    var extras = $('#extras');
+    var extras = $('#extras'), extrasIcon = $('#extras-icon'), avatar = $('#avatar'), avatarFile = $('#avatar-file');
     if (extras.css('display') === 'none') {
       extras.animate({
         opacity: 1,
@@ -380,10 +457,46 @@ var CTLON = (function () {
       {
         start: function () {
           extras.css('display', 'block');
-          $('#extras-icon').css('background-color', '#ccc');
+          extrasIcon.css('background-color', '#ccc');
         },
         easing: 'easeInOutCubic',
-        duration: 350
+        duration: 350,
+        complete: function () {
+          $(document).bind({
+            paste: pasteHandler
+          });
+          avatarFile.bind({
+            change: function (e) {
+              var files = e.target.files;
+              if (files.length === 1)
+                uploadAvatar(files[0]);
+            }
+          });
+          avatar.bind({
+            dragover: function (event) {
+              var e = event.originalEvent;
+              e.stopPropagation();
+              e.preventDefault();
+              e.dataTransfer.dropEffect = 'copy';
+              avatar.addClass('over');
+            },
+            dragleave: function (event) {
+              var e = event.originalEvent;
+              e.stopPropagation();
+              e.preventDefault();
+              avatar.removeClass('over');
+            },
+            drop: function (event) {
+              var e = event.originalEvent,
+                files = e.dataTransfer.files;
+              e.stopPropagation();
+              e.preventDefault();
+              avatar.removeClass('over');
+              if (files.length === 1)
+                uploadAvatar(files[0]);
+            }
+          });
+        }
       });
     }
     else {
@@ -394,7 +507,10 @@ var CTLON = (function () {
       {
         complete: function () {
           extras.css('display', 'none');
-          $('#extras-icon').css('background-color', '');
+          extrasIcon.css('background-color', '');
+          $(document).unbind('paste');
+          avatarFile.unbind('change');
+          avatar.unbind('dragover').unbind('dragleave').unbind('drop');
         },
         easing: 'easeInOutCubic',
         duration: 350
@@ -402,6 +518,15 @@ var CTLON = (function () {
     }
   }
 
+
+  function preloadImages() {
+    var imgFiles = ['extras.png', 'loader-5-0.gif'];
+    $.each(imgFiles, function (i, f) {
+      var img = new Image;
+      img.src = 'img/' + f;
+    });
+    
+  }
 
   return {
     init: function () {
@@ -411,7 +536,7 @@ var CTLON = (function () {
         },
         zoom: 13
       };
-
+      preloadImages();
       // get http basic auth user
       $.ajax({
         url: 'me.php',
@@ -425,6 +550,10 @@ var CTLON = (function () {
           return;
         }
         me.id = data.userid;
+        if (typeof data.avatar === 'string' && data.avatar.indexOf('data:image/png;base64,') === 0) {
+          me.avatar = data.avatar;
+          $('#avatar').css('background-image', 'url(' + me.avatar + ')');
+        }
         $('#userid').text(me.id).click(function () {
           highlightFriend(me.id);
           stopAnimations();
@@ -484,5 +613,3 @@ var CTLON = (function () {
     }
   };
 })();
-
-$(document).ready(CTLON.init);
