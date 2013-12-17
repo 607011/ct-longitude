@@ -20,7 +20,8 @@ if ($dbh) {
          'altitude' => floatval($row[5]),
          'altitudeaccuracy' => floatval($row[6]),
          'heading' => floatval($row[7]),
-         'speed' => floatval($row[8])
+         'speed' => floatval($row[8]), 
+         'avatar' => $row[9]
         );
     }
     $res['status'] = 'ok';

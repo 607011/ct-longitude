@@ -397,7 +397,11 @@ var CTLON = (function () {
           img = (function () {
             var img = new Image;
             img.onload = function () {
-              console.log(img.width, img.height);
+              var canvas = document.createElement('canvas'), ctx = canvas.getContext('2d');
+              canvas.width = 50;
+              canvas.height = 50;
+              ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, 50, 50);
+              dataUrl = canvas.toDataURL();
               $.ajax({
                 url: 'setoption.php',
                 type: 'POST',
