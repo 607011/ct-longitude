@@ -117,7 +117,7 @@ jQuery.fn.enableHorizontalSlider = function () {
 var CTLON = (function () {
   "use strict";
 
-  var YES = 'yes', NO = 'no', OK = 'ok',
+  var OK = 'ok',
     MaxDistance = 200 * 1000 /* meters */,
     PollingInterval = 60 * 1000 /* milliseconds */,
     MinWatchInterval = 30 * 1000 /* milliseconds */,
@@ -201,7 +201,7 @@ var CTLON = (function () {
     }
     circle.setRadius(accuracy);
     circle.setCenter(m.getPosition());
-    circle.setVisible($('#show-accuracy').val() === YES);
+    circle.setVisible($('#show-accuracy').is(':checked'));
     if (infoWindow === null)
       infoWindow = new google.maps.InfoWindow();
     infoWindow.setOptions({
@@ -221,7 +221,7 @@ var CTLON = (function () {
         console.warn('Umgekehrtes Geocoding fehlgeschlagen: ' + status);
       }
     });
-    if (localStorage.getItem('show-tracks') === YES) {
+    if ($('#show-tracks').is(':checked')) {
       var t1 = Date.now() / 1000, t0 = t1 - 24 * 60 * 60;
       $.ajax({
         url: 'gettrack.php' +
@@ -325,7 +325,7 @@ var CTLON = (function () {
     $('#userid').attr('data-lat', pos.coords.latitude).attr('data-lng', pos.coords.longitude);
     if (!selectedUser)
       map.setCenter(me.latLng);
-    if ($('#incognito').val() === NO) {
+    if (!$('#incognito').is(':checked')) {
       // send own location to server
       $.ajax({
         url: 'setloc.php?userid=' + me.id +
@@ -438,7 +438,7 @@ var CTLON = (function () {
         $('#show-tracks').change(function (e) {
           var checked = $('#show-tracks').is(':checked');
           localStorage.setItem('show-tracks', checked);
-          if (typeof polyline === 'object')
+          if (polyline !== null)
             polyline.setVisible(checked);
         }).prop('checked', localStorage.getItem('show-tracks') === 'true');
 
@@ -459,7 +459,7 @@ var CTLON = (function () {
         $('#show-accuracy').change(function (e) {
           var checked = $('#show-accuracy').is(':checked')
           localStorage.setItem('show-accuracy', checked);
-          if (typeof circle === 'object')
+          if (circle !== null)
             circle.setVisible(checked);
         }).prop('checked', localStorage.getItem('show-accuracy') === 'true');
 
