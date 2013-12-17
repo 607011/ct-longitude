@@ -30,6 +30,7 @@
 })();
 
 
+/* Taken from jQuery Easing v1.3 - Copyright © 2008 George McGinley Smith - http://gsgd.co.uk/sandbox/jquery/easing/ */
 jQuery.extend(jQuery.easing, {
   easeInOutCubic: function (x, t, b, c, d) {
     if ((t /= d / 2) < 1) return c / 2 * t * t * t + b;
@@ -391,24 +392,18 @@ var CTLON = (function () {
   }
 
 
-  function makeChunk(file, startByte, endByte) {
-    var blob = null;
-    if (file.slice)
-      blob = file.slice(startByte, endByte);
-    else if (file.webkitSlice)
-      blob = file.webkitSlice(startByte, endByte);
-    else if (file.mozSlice)
-      blob = file.mozSlice(startByte, endByte);
-    return blob;
-  }
-
-
   function uploadAvatar(blob) {
     var reader = new FileReader, avatar = $('#avatar');
     avatar.css('background', 'none').append($('<span style="background-image: url(img/loader-5-0.gif); background-repeat: no-repeat; background-position: 6px 6px"></span>'));
     reader.onload = function (e) {
       if (e.target.readyState == FileReader.DONE) {
-        var dataUrl = 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, new Uint8Array(e.target.result))),
+        var dataUrl = 'data:image/png;base64,' + btoa(
+          (function (bytes) {
+            var binary = '', len = bytes.byteLength, i;
+            for (i = 0; i < len; ++i)
+              binary += String.fromCharCode(bytes[i]);
+            return binary;
+          })(new Uint8Array(e.target.result))),
           img = (function () {
             var img = new Image;
             img.onload = function () {
