@@ -119,7 +119,7 @@ table {
 }
 
 td, tr {
-  vertical-align: middle;
+  vertical-align: top;
   padding: 4px;
 }
 

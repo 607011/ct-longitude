@@ -27,46 +27,48 @@
       <tbody> 
         <tr>
           <td>
-            <label for="show-tracks">Tracks anzeigen</label>
+            <input type="checkbox" name="show-tracks" id="show-tracks" value="yes" />
           </td>
           <td>
-            <select name="show-tracks" id="show-tracks">
-              <option value="yes">Ja</option>
-              <option value="no">Nein</option>
-            </select>
+            <label for="show-tracks">Tracks anzeigen</label>
           </td>
         </tr>
         <tr>
+          <td>
+            <input type="checkbox" name="share-my-tracks" id="share-my-tracks" value="yes" />
+          </td>
           <td>
             <label for="share-my-tracks">Meine Tracks mit anderen teilen</label>
           </td>
+        </tr>
+        <tr>
           <td>
-            <select name="share-my-tracks" id="share-my-tracks">
-              <option value="yes">Ja</option>
-              <option value="no">Nein</option>
-            </select>
+            <input type="checkbox" name="incognito" id="incognito" value="yes" />
+          </td>
+          <td>
+            <label for="incognito">Inkognito bleiben</label>
           </td>
         </tr>
         <tr>
           <td>
-            <label for="incognito">Inknognito bleiben</label>
+            <input type="checkbox" name="show-accuracy" id="show-accuracy" value="yes" />
           </td>
-          <td>
-            <select name="incognito" id="incognito">
-              <option value="yes">Ja</option>
-              <option value="no">Nein</option>
-            </select>
-          </td>
-        </tr>
-        <tr>
           <td>
             <label for="incognito">Standortgenauigkeit visualisieren</label>
           </td>
+        </tr>
+      </tbody>
+    </table>
+    <table>
+      <tbody>
+        <tr>
           <td>
-            <select name="show-accuracy" id="show-accuracy">
-              <option value="yes">Ja</option>
-              <option value="no">Nein</option>
-            </select>
+            <label for="avatar">Avatar</label>
+          </td>
+          <td>
+            <input type="file" name="avatar-file" id="avatar-file" />
+            <br />
+            <span style="font-size: smaller">Bildmaße: 50 &times; 50 Pixel</span>
           </td>
         </tr>
       </tbody>

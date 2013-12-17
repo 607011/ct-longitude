@@ -12,7 +12,7 @@ if ($dbh) {
     $q = "SELECT sharetracks FROM buddies WHERE userid = '" . $_SERVER['PHP_AUTH_USER'] . "'";
     $rows = $dbh->query($q);
     $row = $rows->fetch();
-    $res['sharetracks'] = intval($row[0]) != 0 ? 'yes' : 'no';
+    $res['sharetracks'] = intval($row[0]) != 0 ? 'true' : 'false';
     $res['userid'] = $_SERVER['PHP_AUTH_USER'];
     $res['status'] = 'ok';
 }

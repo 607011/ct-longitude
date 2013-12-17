@@ -74,7 +74,7 @@ jQuery.fn.enableHorizontalSlider = function () {
     mouseup: function (e) {
       var dt = Date.now() - t0, pixelsPerSec = dx / dt * 1000,
         duration, elapsed, animStart = null,
-        /* t is the current time (or position) of the tween. This can be seconds or frames, steps, seconds, ms, whatever – as long as the unit is the same as is used for the total time [3].
+        /* t is the current time (or position) of the tween. This can be seconds or frames, steps, seconds, ms, whatever â€“ as long as the unit is the same as is used for the total time [3].
            b is the beginning value of the property.
            c is the change between the beginning and destination value of the property.
            d is the total time of the tween. */
@@ -436,34 +436,32 @@ var CTLON = (function () {
         $('#extras-icon').click(showHideExtras);
 
         $('#show-tracks').change(function (e) {
-          localStorage.setItem('show-tracks', $(e.target).val());
-          polyline.setVisible($('#show-tracks').val() === YES);
-        })
-          .children('option').removeAttr('selected')
-          .filter('[value=' + (localStorage.getItem('show-tracks') || NO) + ']').attr('selected', true);
+          var checked = $('#show-tracks').is(':checked');
+          localStorage.setItem('show-tracks', checked);
+          if (typeof polyline === 'object')
+            polyline.setVisible(checked);
+        }).prop('checked', localStorage.getItem('show-tracks') === 'true');
 
         $('#share-my-tracks').change(function (e) {
-          localStorage.setItem('share-my-tracks', $(e.target).val());
+          var checked = $('#share-my-tracks').is(':checked')
+          localStorage.setItem('share-my-tracks', checked);
           $.ajax({
-            url: 'setoption.php?option=sharetracks&value=' + encodeURIComponent($(e.target).val()),
+            url: 'setoption.php?option=sharetracks&value=' + encodeURIComponent(checked),
             accepts: 'json'
           })
-        })
-          .children('option').removeAttr('selected')
-          .filter('[value=' + (data.sharetracks || 'no') + ']').attr('selected', true);
+        }).prop('checked', data.sharetracks === 'true');
 
         $('#incognito').change(function (e) {
-          localStorage.setItem('incognito', $(e.target).val());
-        })
-          .children('option').removeAttr('selected')
-          .filter('[value=' + (localStorage.getItem('incognito') || NO) + ']').attr('selected', true);
+          var checked = $('#incognito').is(':checked')
+          localStorage.setItem('incognito', checked);
+        }).prop('checked', localStorage.getItem('incognito') === 'true');
 
         $('#show-accuracy').change(function (e) {
-          localStorage.setItem('show-accuracy', $(e.target).val());
-          circle.setVisible($('#show-accuracy').val() === YES);
-        })
-          .children('option').removeAttr('selected')
-          .filter('[value=' + (localStorage.getItem('show-accuracy') || NO) + ']').attr('selected', true);
+          var checked = $('#show-accuracy').is(':checked')
+          localStorage.setItem('show-accuracy', checked);
+          if (typeof circle === 'object')
+            circle.setVisible(checked);
+        }).prop('checked', localStorage.getItem('show-accuracy') === 'true');
 
         // init Google Maps
         google.maps.visualRefresh = true;
@@ -473,7 +471,7 @@ var CTLON = (function () {
         // start polling
         if (navigator.geolocation) {
           watchId = navigator.geolocation.watchPosition(setPosition, function () {
-            noGeolocation('Dein Browser stellt keine Standortabfragen zur Verfügung.');
+            noGeolocation('Dein Browser stellt keine Standortabfragen zur VerfÃ¼gung.');
             google.maps.event.addListenerOnce(map, 'idle', getFriends);
           });
           pollingId = setInterval(getFriends, PollingInterval);
