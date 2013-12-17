@@ -5,6 +5,8 @@ Features
 
  * Seitenverhältnis des Avatar beim Skalieren beibehalten
 
+ * Zeitraumbegrenzung getrennt für Tracks und Standorte
+
 Fehler
 ======
 

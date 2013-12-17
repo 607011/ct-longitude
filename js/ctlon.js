@@ -460,15 +460,15 @@ var CTLON = (function () {
 
 
   function showHideExtras() {
-    var extras = $('#extras'), extrasIcon = $('#extras-icon'), avatar = $('#avatar'), avatarFile = $('#avatar-file');
-    if (extras.css('display') === 'none') {
-      extras.animate({
+    var settings = $('#settings'), extrasIcon = $('#settings-icon'), avatar = $('#avatar'), avatarFile = $('#avatar-file');
+    if (settings.css('display') === 'none') {
+      settings.animate({
         opacity: 1,
         top: '0px'
       },
       {
         start: function () {
-          extras.css('display', 'block');
+          settings.css('display', 'block');
           extrasIcon.css('background-color', '#ccc');
         },
         easing: 'easeInOutCubic',
@@ -512,13 +512,13 @@ var CTLON = (function () {
       });
     }
     else {
-      extras.animate({
+      settings.animate({
         opacity: 0,
         top: '44px'
       },
       {
         complete: function () {
-          extras.css('display', 'none');
+          settings.css('display', 'none');
           extrasIcon.css('background-color', '');
           $(document).unbind('paste');
           avatarFile.unbind('change');
@@ -532,7 +532,7 @@ var CTLON = (function () {
 
 
   function preloadImages() {
-    var imgFiles = ['extras.png', 'loader-5-0.gif'];
+    var imgFiles = ['settings-icon.png', 'loader-5-0.gif'];
     $.each(imgFiles, function (i, f) {
       var img = new Image;
       img.src = 'img/' + f;
@@ -578,7 +578,7 @@ var CTLON = (function () {
         $('#avatar-max-width').text(Avatar.Width);
         $('#avatar-max-height').text(Avatar.Height);
         $('#buddies').enableHorizontalSlider();
-        $('#extras-icon').click(showHideExtras);
+        $('#settings-icon').click(showHideExtras);
 
         $('#show-tracks').change(function (e) {
           var checked = $('#show-tracks').is(':checked');

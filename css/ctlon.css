@@ -59,14 +59,14 @@ html, body {
   border-left: 1px solid #999;
 }
 
-#extras-icon {
+#settings-icon {
   position: absolute;
   display: inline-block;
   width: 44px;
   height: 44px;
   top: 0;
   right: 0;
-  background-image: url(../img/extras.png);
+  background-image: url(../img/settings-icon.png);
   background-repeat: no-repeat;
   background-position: center center;
   cursor: pointer;
@@ -94,7 +94,7 @@ html, body {
   border-right: 1px solid #666;
 }
 
-#extras {
+#settings {
   display: none;
   position: absolute;
   left: 0;
@@ -110,38 +110,38 @@ html, body {
   overflow: auto;
 }
 
-#extras label {
+#settings label {
   font-weight: bold;
 }
 
-#extras .hint {
+#settings .hint {
   font-size: smaller;
 }
 
-#extras .hint:before {
+#settings .hint:before {
   content: '(';
 }
 
-#extras .hint:after {
+#settings .hint:after {
   content: ')';
 }
 
-#extras table {
+#settings table {
   border-collapse: collapse;
   border-spacing: 0;
   width: 100%;
 }
 
-#extras table td:first-child {
+#settings table td:first-child {
   text-align: right;
 }
 
-#extras td, tr {
+#settings td, tr {
   vertical-align: top;
   padding: 4px;
 }
 
-#extras tr {
+#settings tr {
   border-top: 1px solid #999;
 }
 
