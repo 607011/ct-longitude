@@ -29,25 +29,19 @@ if ($dbh) {
             $v = in_array($value, array('1', 'ok', 'yes', 'true')) ? 1 : 0;
             $q = "UPDATE buddies SET sharetracks = $v WHERE userid = '" . $_SERVER['PHP_AUTH_USER'] . "'";
             $dbh->exec($q);
-            $res['status'] = ($dbh->errorInfo()[0] == '00000') ? 'ok' : 'error';
+            $res['status'] = 'ok';
             $res['userid'] = $_SERVER['PHP_AUTH_USER'];
             $res['option'] = $option;
             $res['value'] = $v;
-            $res['query'] = $q;
-            if ($res['status'] != 'ok')
-                $res['error'] = $dbh->errorInfo();
             break;
         case 'avatar':
             if (strpos($value, 'data:image/png;base64,') === 0) {
                 $q = "UPDATE buddies SET avatar = '$value' WHERE userid = '" . $_SERVER['PHP_AUTH_USER'] . "'";
                 $dbh->exec($q);
-                $res['status'] = ($dbh->errorInfo()[0] == '00000') ? 'ok' : 'error';
+                $res['status'] = 'ok';
                 $res['userid'] = $_SERVER['PHP_AUTH_USER'];
                 $res['option'] = $option;
                 $res['value'] = '<...present...>';
-                $res['query'] = $q;
-                if ($res['status'] != 'ok')
-                    $res['error'] = $dbh->errorInfo();
             }
             else {
                 $res['status'] = 'error';

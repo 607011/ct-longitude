@@ -65,33 +65,29 @@
           </td>
         </tr>
         <tr>
-          <td>
+          <td></td>
+          <td> 
+            <label for="max-location-age">Maximales Alter von Standortinformationen</label>
+            <div class="hint">Ältere Standorte (Markierungen, Tracks) werden nicht angezeigt.</div>
             <select name="max-location-age" id="max-location-age">
-              <option value="-1">keine</option>
+              <!-- <option value="-1">unbegrenzt</option> -->
               <option value="300">5 Minuten</option>
               <option value="1800">30 Minuten</option>
               <option value="3600">1 Stunde</option>
               <option value="7200">2 Stunden</option>
               <option value="86400">24 Stunden</option>
+              <option value="604800">1 Woche</option>
+              <option value="2419200">1 Monat</option>
             </select>
-          </td>
-          <td>
-            <label for="max-location-age">Maximales Alter von Standortinformationen</label>
-            <div class="hint">Ältere Standorte (Markierungen, Tracks) werden nicht angezeigt.</div>
+
           </td>
         </tr>
-      </tbody>
-    </table>
-    <table>
-      <tbody>
         <tr>
+          <td></td>
           <td>
             <label for="avatar">Avatar</label>
-          </td>
-          <td>
-            <div id="avatar" style="float: left; margin-right: 6px;"></div>
-            <input type="file" name="avatar-file" id="avatar-file" />
-            <br />
+            <div id="avatar"></div>
+            <input type="file" accept="image/*" name="avatar-file" id="avatar-file" />
             <span style="font-size: smaller">optimales Bildmaß: <span id="avatar-max-width"></span> &times; <span id="avatar-max-height"></span> Pixel</span>
           </td>
         </tr>

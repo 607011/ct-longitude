@@ -6,6 +6,7 @@
 html, body {
   height: 100%;
   font-family: Helvetica, Arial, Verdana, sans-serif;
+  overflow: hidden;
 }
 
 #map-canvas {
@@ -106,6 +107,7 @@ html, body {
   -webkit-text-shadow: #000 1px 1px 0;
   text-shadow: #000 1px 1px 0;
   padding: 6px;
+  overflow: auto;
 }
 
 #extras label {
@@ -124,25 +126,31 @@ html, body {
   content: ')';
 }
 
+#extras table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  width: 100%;
+}
+
 #extras table td:first-child {
   text-align: right;
 }
 
-canvas {
-	image-rendering: optimizeSpeed;
-	image-rendering: -moz-crisp-edges;
-	image-rendering: -webkit-optimize-contrast;
-	image-rendering: optimize-contrast;
-	-ms-interpolation-mode: nearest-neighbor;
+#extras td, tr {
+  vertical-align: top;
+  padding: 4px;
 }
 
+#extras tr {
+  border-top: 1px solid #999;
+}
 
 #avatar {
-  display: inline-block;
   width: 50px;
   height: 50px;
   border: 1px solid #222;
   background-image: url(../img/default-avatar.png);
+  margin: 2px 0 4px 0;
 }
 
 #avatar.over {
@@ -150,14 +158,8 @@ canvas {
   background-color: #aaf815;
 }
 
-table {
-  border-collapse: collapse;
-  border-spacing: 0;
-}
-
-td, tr {
-  vertical-align: top;
-  padding: 4px;
+canvas {
+	image-rendering: optimizeSpeed;
 }
 
 .barberpole {
