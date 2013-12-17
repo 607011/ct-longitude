@@ -464,7 +464,7 @@ var CTLON = (function () {
     if (extras.css('display') === 'none') {
       extras.animate({
         opacity: 1,
-        height: ($('#map-canvas').height() - 12) + 'px'
+        top: '0px'
       },
       {
         start: function () {
@@ -514,7 +514,7 @@ var CTLON = (function () {
     else {
       extras.animate({
         opacity: 0,
-        height: 0
+        top: '44px'
       },
       {
         complete: function () {

@@ -100,7 +100,7 @@ html, body {
   left: 0;
   right: 0;
   bottom: 44px;
-  height: 0;
+  top: 44px;
   opacity: 0;
   background-color: rgba(55, 55, 55, 0.9);
   color: #eee;
