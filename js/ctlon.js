@@ -458,12 +458,27 @@ var CTLON = (function () {
           return binary;
         })(new Uint8Array(e.target.result)));
         img.onload = function () {
+          var aspectRatio, canvas, ctx, w, h, xoff = 0, yoff = 0;
           if (img.width !== Avatar.Width || img.height !== Avatar.Height) {
             // scale image
-            var canvas = document.createElement('canvas'), ctx = canvas.getContext('2d');
+            aspectRatio = img.width / img.height;
+            if (aspectRatio > 1) { // w > h
+              w = Avatar.Width;
+              h = Avatar.Height / aspectRatio;
+              yoff = (Avatar.Height - h) / 2;
+            }
+            else { // w < h
+              w = Avatar.Width * aspectRatio;
+              h = Avatar.Height;
+              xoff = (Avatar.Width - w) / 2;
+            }
+            canvas = document.createElement('canvas');
+            ctx = canvas.getContext('2d');
             canvas.width = Avatar.Width;
             canvas.height = Avatar.Height;
-            ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, img.width, img.height, xoff, yoff, w, h);
             dataUrl = canvas.toDataURL();
           }
           send();

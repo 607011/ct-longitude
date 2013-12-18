@@ -2,7 +2,6 @@ Features
 ========
 
  * Markierungen der Freunde zeigen den jeweiligen Avatar
- * Seitenverhältnis des Avatar beim Skalieren beibehalten
  * CSS für iOS und Android
  * abgefangene Fehler als Pop-up o.ä. anzeigen
 
