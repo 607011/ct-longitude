@@ -266,7 +266,6 @@ var CTLON = (function () {
 
 
   function highlightFriend(userid, centerMap) {
-    console.log('highlightFriend(' + userid + ', ' + centerMap + ')');
     var m = markers[userid], accuracy;
     if (typeof m !== 'object')
       return;
@@ -641,7 +640,6 @@ var CTLON = (function () {
           highlightFriend(me.id, true);
           stopAnimations();
           hideCircle();
-          selectedUser = null;
         });
 
         $('#avatar-max-width').text(Avatar.Width);
