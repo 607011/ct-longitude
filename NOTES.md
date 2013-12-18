@@ -5,6 +5,7 @@ Features
  * CSS für iOS und Android
  * abgefangene Fehler als Pop-up o.ä. anzeigen
  * Track muss beim Eintreffen neuer Standortdaten verlängert werden
+ * Wenn offline: Zwischenspeicherung eigener Standortdaten. Wenn wieder online: Zwischenspeicher an Server senden.
 
 Fehler
 ======
