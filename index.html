@@ -12,15 +12,14 @@
   <script src="js/jquery-2.0.3.min.js"></script>
   <script src="js/ctlon.js" type="text/javascript"></script>
   <link rel="icon" href="img/favicon.png" type="image/png" />
-  <!-- <link rel="apple-touch-icon" href="homescreen.png"/> -->
-  <!-- <link rel="apple-touch-startup-image" href="startup.png" /> -->
+  <!-- <link rel="apple-touch-icon" href="img/apple-touch-icon.png"/> -->
+  <!-- <link rel="apple-touch-startup-image" href="img/apple-touch-startup-image.png" /> -->
   <script type="text/javascript">
     $(document).ready(CTLON.init);
   </script>
 </head>
 <body>
   <div id="map-canvas"></div>
-  <div id="log" style="position: fixed; top: 0; left: 0; right: 0; height: 150px; background-color: rgba(0,0,0,0.5); font-size: 9px; color: white; padding: 2px 4px;"></div>
   <div id="info-bar-container">
     <div id="info-bar">
       <span id="userid" class="buddy"></span>
@@ -74,7 +73,6 @@
             <label for="max-location-age">Maximales Alter von Standortinformationen</label>
             <div class="hint">Ältere Standorte werden nicht angezeigt.</div>
             <select name="max-location-age" id="max-location-age">
-              <!-- <option value="-1">unbegrenzt</option> -->
               <option value="300">5 Minuten</option>
               <option value="1800">30 Minuten</option>
               <option value="3600">1 Stunde</option>
@@ -106,7 +104,7 @@
           <td></td>
           <td>
             <label for="avatar">Avatar</label>
-            <div class="hint">optimales Bildmaß: <span id="avatar-max-width"></span> &times; <span id="avatar-max-height"></span> Pixel</div>
+            <div class="hint">optimales Bildmaß: <span id="avatar-max-width"></span>&nbsp;&times;&nbsp;<span id="avatar-max-height"></span>&nbsp;Pixel</div>
             <div id="avatar"></div>
             <input type="file" accept="image/*" name="avatar-file" id="avatar-file" />
           </td>

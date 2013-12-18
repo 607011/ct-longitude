@@ -1,5 +1,22 @@
-// Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
-// All rights reserved.
+/*
+    c't Longitude - A reimplementation of Googles discontinued Latitude app
+    Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+var DEBUG = true;
 
 (function () {
   "use strict";
@@ -11,9 +28,7 @@
         window.mozRequestAnimationFrame ||
         window.oRequestAnimationFrame ||
         window.msRequestAnimationFrame ||
-        function (callback) {
-          timerId = window.setTimeout(callback, 1000 / 60);
-        };
+        function (callback) { timerId = window.setTimeout(callback, 1000 / 60); };
     })();
 
   if (typeof window.cancelAnimationFrame !== 'function')
@@ -23,9 +38,7 @@
         window.mozRequestAnimationFrame ||
         window.oRequestAnimationFrame ||
         window.msRequestAnimationFrame ||
-        function () {
-          window.clearTimeout(timerId);
-        };
+        function () { window.clearTimeout(timerId); };
     })();
 })();
 
@@ -39,11 +52,14 @@ jQuery.extend(jQuery.easing, {
 });
 
 
+window.D = DEBUG ? function (msg) { $('#log').html(msg); } : function () { };
+
+
 jQuery.fn.enableHorizontalSlider = function () {
   "use strict";
   var el = this, t0, x0, mouseX0, dx, mouseDown = false, animId = null,
-    touchstart = function (e) {
-      mouseX0 = e.clientX || e.originalEvent.touches[0].clientX;
+    mousedown = function (e) {
+      mouseX0 = e.clientX || e.originalEvent.touches[0].clientX || e.originalEvent.changedTouches[0];
       mouseDown = true;
       t0 = Date.now();
       x0 = el.position().left;
@@ -53,10 +69,12 @@ jQuery.fn.enableHorizontalSlider = function () {
         // TODO
       }
     },
-    touchmove = function (e) {
+    mousemove = function (e) {
       var oversize, xoff,
-        clientX = e.clientX || e.originalEvent.touches[0].clientX;
+        clientX = e.clientX || e.originalEvent.touches[0].clientX || e.originalEvent.changedTouches[0];
       if (mouseDown) {
+        D('mousemove: ' + e.target.id + ', clientX: ' + clientX + ', t: ' + e.timeStamp);
+        console.log(e);
         oversize = el.width() - el.parent().width();
         dx = clientX - mouseX0;
         xoff = Math.min(dx + x0, 0);
@@ -66,7 +84,7 @@ jQuery.fn.enableHorizontalSlider = function () {
         }
       }
     },
-    touchend = function (e) {
+    mouseup = function (e) {
       var dt = Date.now() - t0, pixelsPerSec = dx / dt * 1000,
         duration, elapsed, animStart = null,
         /* t is the current time (or position) of the tween. This can be seconds or frames, steps, seconds, ms, whatever – as long as the unit is the same as is used for the total time [3].
@@ -92,6 +110,7 @@ jQuery.fn.enableHorizontalSlider = function () {
           else
             animStart = null;
         };
+      console.log('mouseup');
       mouseDown = false;
       if (Math.abs(pixelsPerSec) > 0) {
         elapsed = 0;
@@ -99,6 +118,9 @@ jQuery.fn.enableHorizontalSlider = function () {
         requestAnimationFrame(update);
       }
       $(document).unbind('selectstart');
+    },
+    mouseout = function () {
+      mouseDown = false;
     };
   el.css('position', 'relative').parent().css('overflow', 'hidden');
   $(window).resize(function () {
@@ -106,17 +128,22 @@ jQuery.fn.enableHorizontalSlider = function () {
     if (oversize > el.position().left && el.position().left < 0)
         el.css('left', Math.min(0, oversize) + 'px');
   });
-  this.bind({
-    mousedown: touchstart,
-    touchstart: touchstart,
-    mousemove: touchmove,
-    touchmove: touchmove,
-    touchend: touchend,
-    mouseup: touchend,
-    mouseout: function () {
-      mouseDown = false;
-    }
-  });
+  if (navigator.userAgent.indexOf('Mobile') >= 0) {
+    this.bind({
+      touchstart: mousedown,
+      touchmove: mousemove,
+      touchend: mouseout,
+      touchcancel: mouseup
+    });
+  }
+  else {
+    this.bind({
+      mousedown: mousedown,
+      mousemove: mousemove,
+      mouseup: mouseup,
+      mouseout: mouseout
+    });
+  }
   return this;
 };
 
@@ -125,6 +152,7 @@ var CTLON = (function () {
   "use strict";
 
   var OK = 'ok',
+    MOBILE = navigator.userAgent.indexOf('Mobile') >= 0,
     MaxDistance = 200 * 1000 /* meters */,
     PollingInterval = 60 * 1000 /* milliseconds */,
     MinWatchInterval = 30 * 1000 /* milliseconds */,
@@ -140,7 +168,6 @@ var CTLON = (function () {
     selectedUser = undefined,
     pollingId = undefined,
     computeDistanceBetween = function () { return 0; };
-
 
   function showProgressInfo() {
     $('#info-bar-container').addClass('barberpole');
@@ -193,7 +220,7 @@ var CTLON = (function () {
 
 
   function getTrack(userid) {
-    var maxAge = parseInt($('#max-waypoint-age').val()),
+    var maxAge = parseInt($('#max-waypoint-age').val(), 10),
       t1 = Math.floor(Date.now() / 1000), t0 = (maxAge < 0) ? 0 : t1 - maxAge;
     if (!$('#show-tracks').is(':checked'))
       return;
@@ -249,7 +276,7 @@ var CTLON = (function () {
     selectedUser = userid;
     map.setCenter(m.getPosition());
     m.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
-    accuracy = parseInt($('#buddy-' + userid).attr('data-accuracy'));
+    accuracy = parseInt($('#buddy-' + userid).attr('data-accuracy'), 10);
     if (circle === null) {
       circle = new google.maps.Circle({
         map: map,
@@ -298,7 +325,7 @@ var CTLON = (function () {
       return;
     showProgressInfo();
     getFriendsPending = true;
-    maxAge = parseInt($('#max-location-age').val());
+    maxAge = parseInt($('#max-location-age').val(), 10);
     if (maxAge >= 0)
       data.maxage = maxAge;
     $.ajax({
@@ -560,8 +587,7 @@ var CTLON = (function () {
     $.each(imgFiles, function (i, f) {
       var img = new Image;
       img.src = 'img/' + f;
-    });
-    
+    }); 
   }
 
   return {
@@ -572,9 +598,13 @@ var CTLON = (function () {
         },
         zoom: 13
       };
+
       preloadImages();
 
-      $('#log').html('Platform: ' + navigator.platform + '<br/ >' + 'User Agent: ' + navigator.userAgent);
+      if (DEBUG)
+        $('#info-bar-container').before($('<div id="log" style="position: fixed; top: 0; left: 0; right: 0; height: 100px; background-color: rgba(0,0,0,0.45); line-height: 11px; font-size: 9px; color: white; text-shadow: 1px 1px 0 black; padding: 2px 4px;"></div>'));
+
+      D('Platform: ' + navigator.platform + '<br/ >' + 'User Agent: ' + navigator.userAgent);
 
       // get http basic auth user
       $.ajax({
