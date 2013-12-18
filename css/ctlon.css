@@ -87,10 +87,16 @@ html, body {
   white-space: nowrap;
 }
 
+
+.opaque {
+  opacity: 0.5;
+}
+
 #buddies {
   display: inline-block;
   text-wrap: none;
 }
+
 
 .buddy {
   cursor: pointer;

@@ -169,11 +169,15 @@ var CTLON = (function () {
 
   function showProgressInfo() {
     $('#info-bar-container').addClass('barberpole');
+    $('#buddy-container').addClass('opaque');
+    $('#userid').addClass('opaque');
   }
 
 
   function hideProgressInfo() {
     $('#info-bar-container').removeClass('barberpole');
+    $('#buddy-container').removeClass('opaque');
+    $('#userid').removeClass('opaque');
   }
 
 
