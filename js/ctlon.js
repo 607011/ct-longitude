@@ -398,6 +398,7 @@ var CTLON = (function () {
   function setPosition(pos) {
     me.timestamp = Math.floor(pos.timestamp / 1000);
     me.latLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
+    localStorage.setItem('my-last-position', pos.coords.latitude + ',' + pos.coords.longitude)
     $('#userid').attr('data-lat', pos.coords.latitude).attr('data-lng', pos.coords.longitude);
     if (!$('#incognito').is(':checked')) {
       // send own location to server
@@ -632,6 +633,7 @@ var CTLON = (function () {
       }).error(function (jqXHR, textStatus, errorThrown) {
         alert(textStatus + ': ' + errorThrown);
       }).done(function (data) {
+        var myPos;
         hideProgressInfo();
         try {
           data = JSON.parse(data);
@@ -650,7 +652,7 @@ var CTLON = (function () {
           $('#userid').text(me.id);
         }
 
-        $('#userid').text(me.id).click(function () {
+        $('#userid').click(function () {
           highlightFriend(me.id, true);
           stopAnimations();
           hideCircle();
@@ -719,6 +721,15 @@ var CTLON = (function () {
         google.maps.visualRefresh = true;
         map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
         computeDistanceBetween = google.maps.geometry.spherical.computeDistanceBetween;
+        myPos = localStorage.getItem('my-last-position');
+        if (myPos) {
+          myPos = myPos.split(',')
+          me.latLng =  (myPos.length === 2) ? new google.maps.LatLng(myPos[0], myPos[1]) : new google.maps.LatLng(51, 10.3);
+        }
+        else {
+          me.latLng = new google.maps.LatLng(51, 10.3);
+        }
+        map.setCenter(me.latLng);
 
         // start polling
         if (navigator.geolocation) {
