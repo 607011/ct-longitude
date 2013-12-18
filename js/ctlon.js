@@ -43,7 +43,7 @@ jQuery.fn.enableHorizontalSlider = function () {
   "use strict";
   var el = this, t0, x0, mouseX0, dx, mouseDown = false, animId = null,
     touchstart = function (e) {
-      mouseX0 = e.clientX;
+      mouseX0 = e.clientX || e.originalEvent.touches[0].clientX;
       mouseDown = true;
       t0 = Date.now();
       x0 = el.position().left;
@@ -54,10 +54,11 @@ jQuery.fn.enableHorizontalSlider = function () {
       }
     },
     touchmove = function (e) {
-      var oversize, xoff;
+      var oversize, xoff,
+        clientX = e.clientX || e.originalEvent.touches[0].clientX;
       if (mouseDown) {
         oversize = el.width() - el.parent().width();
-        dx = e.clientX - mouseX0;
+        dx = clientX - mouseX0;
         xoff = Math.min(dx + x0, 0);
         if (oversize > 0) {
           xoff = Math.max(el.parent().width() - el.width(), xoff);
@@ -85,7 +86,7 @@ jQuery.fn.enableHorizontalSlider = function () {
             animStart = timestamp;
           ms = timestamp - animStart;
           elapsed += ms;
-          console.log(ms, easeInOutBack(elapsed, 0, 100, duration));
+          // console.log(ms, easeInOutBack(elapsed, 0, 100, duration));
           if (elapsed < duration)
             requestAnimationFrame(update);
           else
@@ -95,7 +96,6 @@ jQuery.fn.enableHorizontalSlider = function () {
       if (Math.abs(pixelsPerSec) > 0) {
         elapsed = 0;
         duration = Math.abs(Math.floor(dt / dx * 1000));
-        console.log(duration);
         requestAnimationFrame(update);
       }
       $(document).unbind('selectstart');
@@ -323,7 +323,7 @@ var CTLON = (function () {
       hideProgressInfo();
       removeAllMarkers();
       setTimeout(function () { getFriendsPending = false; }, 1000);
-      $('#buddies').empty();
+      $('#buddies').empty().css('left', '0px');
       if (typeof data.users !== 'object')
         return;
       $.each(data.users, function (userid, friend) {
@@ -406,34 +406,40 @@ var CTLON = (function () {
 
 
   function uploadAvatar(blob) {
-    var reader = new FileReader, avatar = $('#avatar');
-    avatar.css('background', 'none').append($('<span style="background-image: url(img/loader-5-0.gif); background-repeat: no-repeat; background-position: 6px 6px"></span>'));
+    var reader = new FileReader,
+      avatar = $('#avatar').css('background', 'none').css('background-color', 'white').append($('<span style="display: inline-block; width: ' + Avatar.Width + 'px; height: ' + Avatar.Height + 'px; background-image: url(img/loader-5-0.gif); background-repeat: no-repeat; background-position: 9px 9px"></span>'));
     reader.onload = function (e) {
+      var img = new Image, dataUrl,
+        send = function () {
+        $.ajax({
+          url: 'setoption.php',
+          type: 'POST',
+          data: {
+            option: 'avatar',
+            value: dataUrl
+          }
+        }).done(function (data) {
+          avatar.empty().css('background-image', 'url(' + dataUrl + ')');
+        });
+      };
       if (e.target.readyState == FileReader.DONE) {
-        var dataUrl = 'data:image/png;base64,' + btoa(
-          (function (bytes) {
-            var binary = '', len = bytes.byteLength, i;
-            for (i = 0; i < len; ++i)
-              binary += String.fromCharCode(bytes[i]);
-            return binary;
-          })(new Uint8Array(e.target.result))),
-          img = new Image;
+        dataUrl = 'data:image/png;base64,' + btoa(
+        (function (bytes) {
+          var binary = '', len = bytes.byteLength, i;
+          for (i = 0; i < len; ++i)
+            binary += String.fromCharCode(bytes[i]);
+          return binary;
+        })(new Uint8Array(e.target.result)));
         img.onload = function () {
-          var canvas = document.createElement('canvas'), ctx = canvas.getContext('2d');
-          canvas.width = Avatar.Width;
-          canvas.height = Avatar.Height;
-          ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvas.width, canvas.height);
-          dataUrl = canvas.toDataURL();
-          $.ajax({
-            url: 'setoption.php',
-            type: 'POST',
-            data: {
-              option: 'avatar',
-              value: dataUrl
-            }
-          }).done(function (data) {
-            avatar.empty().css('background-image', 'url(' + dataUrl + ')');
-          });
+          if (img.width !== Avatar.Width || img.height !== Avatar.Height) {
+            // scale image
+            var canvas = document.createElement('canvas'), ctx = canvas.getContext('2d');
+            canvas.width = Avatar.Width;
+            canvas.height = Avatar.Height;
+            ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvas.width, canvas.height);
+            dataUrl = canvas.toDataURL();
+          }
+          send();
         };
         img.src = dataUrl;
       }
@@ -473,7 +479,8 @@ var CTLON = (function () {
 
 
   function showHideSettings() {
-    var settings = $('#settings'), extrasIcon = $('#settings-icon'), avatar = $('#avatar'), avatarFile = $('#avatar-file');
+    var settings = $('#settings'), settingsIcon = $('#settings-icon'),
+      avatar = $('#avatar'), avatarFile = $('#avatar-file');
     if (settings.css('display') === 'none') {
       settings.animate({
         opacity: 1,
@@ -482,14 +489,12 @@ var CTLON = (function () {
       {
         start: function () {
           settings.css('top', $('#info-bar-container').offset().top + 'px').css('display', 'block');
-          extrasIcon.css('background-color', '#ccc');
+          settingsIcon.css('background-color', '#ccc');
         },
         easing: 'easeInOutCubic',
         duration: 350,
         complete: function () {
-          $(document).bind({
-            paste: pasteHandler
-          });
+          $(document).bind({ paste: pasteHandler });
           avatarFile.bind({
             change: function (e) {
               var files = e.target.files;
@@ -538,7 +543,7 @@ var CTLON = (function () {
       {
         complete: function () {
           settings.css('display', 'none');
-          extrasIcon.css('background-color', '');
+          settingsIcon.css('background-color', '');
           $(document).unbind('paste');
           avatarFile.unbind('change');
           avatar.unbind('dragover').unbind('dragleave').unbind('drop');
@@ -569,6 +574,8 @@ var CTLON = (function () {
       };
       preloadImages();
 
+      $('#log').html('Platform: ' + navigator.platform + '<br/ >' + 'User Agent: ' + navigator.userAgent);
+
       // get http basic auth user
       $.ajax({
         url: 'me.php',
@@ -596,8 +603,8 @@ var CTLON = (function () {
 
         $('#avatar-max-width').text(Avatar.Width);
         $('#avatar-max-height').text(Avatar.Height);
-        $('#buddies').enableHorizontalSlider();
         $('#settings-icon').click(showHideSettings);
+        $('#buddies').enableHorizontalSlider();
 
         $('#show-tracks').change(function (e) {
           var checked = $('#show-tracks').is(':checked');
