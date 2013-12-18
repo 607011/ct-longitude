@@ -359,24 +359,29 @@ var CTLON = (function () {
       if (typeof data.users !== 'object')
         return;
       $.each(data.users, function (userid, friend) {
-        var timestamp = new Date(friend.timestamp * 1000).toLocaleString();
+        var timestamp = new Date(friend.timestamp * 1000).toLocaleString(), buddy;
         friend.id = userid;
         friend.latLng = new google.maps.LatLng(friend.lat, friend.lng);
         if (me.latLng === null) // location queries disabled, use first friend's position for range calculation
           me.latLng = new google.maps.LatLng(friend.lat, friend.lng);
-        if (friend.id !== me.id && computeDistanceBetween(me.latLng, friend.latLng) < range)
-          $('#buddies')
-              .append($('<span>' + userid + '</span>')
+        if (friend.id !== me.id && computeDistanceBetween(me.latLng, friend.latLng) < range) {
+          buddy = $('<span></span>')
                 .addClass('buddy').attr('id', 'buddy-' + friend.id)
                 .attr('data-lat', friend.lat)
                 .attr('data-lng', friend.lng)
                 .attr('data-accuracy', friend.accuracy)
                 .attr('data-timestamp', friend.timestamp)
                 .attr('data-last-update', timestamp)
-                .attr('title', 'Letzte Aktualisierung: ' + timestamp)
+                .attr('title', friend.id + ' - letzte Aktualisierung: ' + timestamp)
               .click(function () {
                 highlightFriend(friend.id, true);
-              }.bind(friend)));
+              }.bind(friend));
+          if (friend.avatar)
+            buddy.css('background-image', 'url(' + friend.avatar + ')');
+          else
+            buddy.text(friend.id)
+          $('#buddies').append(buddy);
+        }
         placeMarker(friend.id, friend.lat, friend.lng, timestamp);
       });
     }).error(function (jqXHR, textStatus, errorThrown) {
@@ -441,6 +446,7 @@ var CTLON = (function () {
             }
           }).done(function (data) {
             avatar.empty().css('background-image', 'url(' + dataUrl + ')');
+            $('#userid').css('background-image', 'url(' + dataUrl + ')');
           }).error(function (jqXHR, textStatus, errorThrown) {
             alert(textStatus + ': ' + errorThrown);
           });
@@ -589,7 +595,7 @@ var CTLON = (function () {
 
 
   function preloadImages() {
-    var imgFiles = ['settings-icon.png', 'loader-5-0.gif'];
+    var imgFiles = ['loader-5-0.gif'];
     $.each(imgFiles, function (i, f) {
       var img = new Image;
       img.src = 'img/' + f;
@@ -634,6 +640,10 @@ var CTLON = (function () {
         if (typeof data.avatar === 'string' && data.avatar.indexOf('data:image/png;base64,') === 0) {
           me.avatar = data.avatar;
           $('#avatar').css('background-image', 'url(' + me.avatar + ')');
+          $('#userid').css('background-image', 'url(' + me.avatar + ')');
+        }
+        else {
+          $('#userid').text(me.id);
         }
 
         $('#userid').text(me.id).click(function () {

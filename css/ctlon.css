@@ -35,16 +35,23 @@ html, body {
   color: #ddd;
   left: 0;
   right: 0;
-  -webkit-text-shadow: #000 1px 1px 0;
-  text-shadow: #000 1px 1px 0;
+  -webkit-text-shadow: #000 1px 1px 0, #000 -1px 1px 0, #000 -1px -1px 0, #000 1px -1px 0;
+  text-shadow: #000 1px 1px 0, #000 -1px 1px 0, #000 -1px -1px 0, #000 1px -1px 0;
   overflow: hidden;
 }
 
 #userid {
   display: inline-block;
   overflow: hidden;
-  width: 43px;
-  border-right: 1px solid #999;
+  width: 44px;
+  height: 44px;
+  background-image: url(../img/default-avatar.png);
+  background-position: left top;
+  background-repeat: no-repeat;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  -webkit-background-size: cover;
+  background-size: cover;
 }
 
 #menu-container {
@@ -90,8 +97,15 @@ html, body {
   display: inline-block;
   overflow: hidden;
   text-align: center;
-  width: 43px;
-  border-right: 1px solid #666;
+  width: 44px;
+  height: 44px;
+  background-image: none;
+  background-position: left top;
+  background-repeat: no-repeat;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  -webkit-background-size: cover;
+  background-size: cover;
 }
 
 #settings {
