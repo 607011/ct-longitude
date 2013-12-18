@@ -472,7 +472,7 @@ var CTLON = (function () {
   }
 
 
-  function showHideExtras() {
+  function showHideSettings() {
     var settings = $('#settings'), extrasIcon = $('#settings-icon'), avatar = $('#avatar'), avatarFile = $('#avatar-file');
     if (settings.css('display') === 'none') {
       settings.animate({
@@ -481,7 +481,7 @@ var CTLON = (function () {
       },
       {
         start: function () {
-          settings.css('display', 'block');
+          settings.css('top', $('#info-bar-container').offset().top + 'px').css('display', 'block');
           extrasIcon.css('background-color', '#ccc');
         },
         easing: 'easeInOutCubic',
@@ -519,15 +519,21 @@ var CTLON = (function () {
               avatar.removeClass('over');
               if (files.length === 1)
                 uploadAvatar(files[0]);
+            },
+            touchstart: function (event) {
+              console.log(event); // TODO ...
+            },
+            click: function (event) {
+              console.log(event); // TODO ...
             }
-          });
+        });
         }
       });
     }
     else {
       settings.animate({
         opacity: 0,
-        top: '44px'
+        top: $('#info-bar-container').offset().top + 'px'
       },
       {
         complete: function () {
@@ -591,7 +597,7 @@ var CTLON = (function () {
         $('#avatar-max-width').text(Avatar.Width);
         $('#avatar-max-height').text(Avatar.Height);
         $('#buddies').enableHorizontalSlider();
-        $('#settings-icon').click(showHideExtras);
+        $('#settings-icon').click(showHideSettings);
 
         $('#show-tracks').change(function (e) {
           var checked = $('#show-tracks').is(':checked');
@@ -632,7 +638,7 @@ var CTLON = (function () {
         $('#max-waypoint-age').change(function (e) {
           localStorage.setItem('max-waypoint-age', $('#max-waypoint-age').val());
           getTrack(selectedUser);
-        }).children('option').filter('[value=' + (localStorage.getItem('max-waypoint-age') || '1800') + ']').prop('selected', true);
+        }).children('option').filter('[value=' + (localStorage.getItem('max-waypoint-age') || '86400') + ']').prop('selected', true);
 
         // init Google Maps
         google.maps.visualRefresh = true;

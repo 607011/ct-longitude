@@ -28,7 +28,7 @@
     </div>
   </div>
   <div id="settings">
-    <h1>Einstellungen</h1>
+    <header>Einstellungen</header>
     <table>
       <tbody> 
         <tr>
@@ -91,14 +91,13 @@
             <label for="max-waypoint-age">Maximales Alter von Track-Daten</label>
             <div class="hint">Ältere Wegpunkte werden nicht angezeigt.</div>
             <select name="max-waypoint-age" id="max-waypoint-age">
-              <!-- <option value="-1">unbegrenzt</option> -->
-              <option value="300">5 Minuten</option>
-              <option value="1800">30 Minuten</option>
               <option value="3600">1 Stunde</option>
               <option value="7200">2 Stunden</option>
               <option value="86400">24 Stunden</option>
               <option value="604800">1 Woche</option>
               <option value="2419200">1 Monat</option>
+              <option value="31557600">1 Jahr</option>
+              <option value="-1">unbegrenzt</option>
             </select>
           </td>
         </tr>
