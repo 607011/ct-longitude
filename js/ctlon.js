@@ -156,7 +156,7 @@ var CTLON = (function () {
     MaxDistance = 200 * 1000 /* meters */,
     PollingInterval = 60 * 1000 /* milliseconds */,
     MinWatchInterval = 30 * 1000 /* milliseconds */,
-    Avatar = { Width: 50, Height: 50 },
+    Avatar = { Width: 50, Height: 50, backgroundColor: '#000000' },
     lastWatch = null,
     getFriendsPending = false,
     geocoder = new google.maps.Geocoder(),
@@ -458,25 +458,27 @@ var CTLON = (function () {
           return binary;
         })(new Uint8Array(e.target.result)));
         img.onload = function () {
-          var aspectRatio, canvas, ctx, w, h, xoff = 0, yoff = 0;
+          var aspectRatio, canvas, ctx, w, h, xoff, yoff;
           if (img.width !== Avatar.Width || img.height !== Avatar.Height) {
             // scale image
             aspectRatio = img.width / img.height;
-            if (aspectRatio > 1) { // w > h
+            if (aspectRatio > 1) {
               w = Avatar.Width;
-              h = Avatar.Height / aspectRatio;
-              yoff = (Avatar.Height - h) / 2;
+              h = Math.round(Avatar.Height / aspectRatio);
+              xoff = 0;
+              yoff = Math.round((Avatar.Height - h) / 2);
             }
-            else { // w < h
-              w = Avatar.Width * aspectRatio;
+            else {
+              w = Math.round(Avatar.Width * aspectRatio);
               h = Avatar.Height;
-              xoff = (Avatar.Width - w) / 2;
+              xoff = Math.round((Avatar.Width - w) / 2);
+              yoff = 0;
             }
             canvas = document.createElement('canvas');
             ctx = canvas.getContext('2d');
             canvas.width = Avatar.Width;
             canvas.height = Avatar.Height;
-            ctx.fillStyle = '#000';
+            ctx.fillStyle = Avatar.backgroundColor;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(img, 0, 0, img.width, img.height, xoff, yoff, w, h);
             dataUrl = canvas.toDataURL();
@@ -650,6 +652,15 @@ var CTLON = (function () {
         $('#avatar-max-height').text(Avatar.Height);
         $('#settings-icon').click(showHideSettings);
         $('#buddies').enableHorizontalSlider();
+        $("#settings .colorpicker").spectrum({
+          color: Avatar.backgroundColor,
+          showInitial: true,
+          showInput: true,
+          localStorageKey: 'avatarColor',
+          change: function (color) {
+            Avatar.backgroundColor = color.toHexString();
+          }
+        });
 
         $('#show-tracks').change(function (e) {
           var checked = $('#show-tracks').is(':checked');

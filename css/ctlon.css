@@ -144,12 +144,20 @@ html, body {
   border-top: 1px solid #999;
 }
 
+#settings .sp-replacer {
+  margin: 2px 0 4px 0;
+  display: inline-block;
+  vertical-align: top;
+}
+
 #avatar {
   width: 50px;
   height: 50px;
   border: 1px solid #222;
   background-image: url(../img/default-avatar.png);
   margin: 2px 0 4px 0;
+  display: inline-block;
+  vertical-align: top;
 }
 
 #avatar.over {
