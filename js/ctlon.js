@@ -73,8 +73,6 @@ jQuery.fn.enableHorizontalSlider = function () {
       var oversize, xoff,
         clientX = e.clientX || e.originalEvent.touches[0].clientX || e.originalEvent.changedTouches[0];
       if (mouseDown) {
-        D('mousemove: ' + e.target.id + ', clientX: ' + clientX + ', t: ' + e.timeStamp);
-        console.log(e);
         oversize = el.width() - el.parent().width();
         dx = clientX - mouseX0;
         xoff = Math.min(dx + x0, 0);
@@ -110,7 +108,6 @@ jQuery.fn.enableHorizontalSlider = function () {
           else
             animStart = null;
         };
-      console.log('mouseup');
       mouseDown = false;
       if (Math.abs(pixelsPerSec) > 0) {
         elapsed = 0;
@@ -168,6 +165,7 @@ var CTLON = (function () {
     selectedUser = undefined,
     pollingId = undefined,
     computeDistanceBetween = function () { return 0; };
+
 
   function showProgressInfo() {
     $('#info-bar-container').addClass('barberpole');
@@ -268,6 +266,7 @@ var CTLON = (function () {
 
 
   function highlightFriend(userid, centerMap) {
+    console.log('highlightFriend(' + userid + ', ' + centerMap + ')');
     var m = markers[userid], accuracy;
     if (typeof m !== 'object')
       return;
@@ -329,14 +328,20 @@ var CTLON = (function () {
     maxAge = parseInt($('#max-location-age').val(), 10);
     if (maxAge >= 0)
       data.maxage = maxAge;
+    if (selectedUser == null)
+      map.setCenter(me.latLng);
     $.ajax({
       url: 'friends.php',
       type: 'POST',
       data: data,
       accepts: 'json'
     }).done(function (data) {
-      var ne = map.getBounds().getNorthEast(), sw = map.getBounds().getSouthWest(),
+      var ne, sw, range = MaxDistance, bounds = map.getBounds();
+      if (bounds) {
+        ne = bounds.getNorthEast();
+        sw = bounds.getSouthWest();
         range = Math.max(computeDistanceBetween(ne, sw) / 2, MaxDistance);
+      }
       try {
         data = JSON.parse(data);
       }
@@ -419,17 +424,6 @@ var CTLON = (function () {
         alert(textStatus + ': ' + errorThrown);
       });
     }
-  }
-
-
-  function noGeolocation(msg) {
-    var options = {
-      map: map,
-      position: new google.maps.LatLng(51.0, 10.333),
-      content: msg
-    },
-    infowindow = new google.maps.InfoWindow(options);
-    map.setCenter(options.position);
   }
 
 
@@ -571,12 +565,6 @@ var CTLON = (function () {
               avatar.removeClass('over');
               if (files.length === 1)
                 uploadAvatar(files[0]);
-            },
-            touchstart: function (event) {
-              console.log(event); // TODO ...
-            },
-            click: function (event) {
-              console.log(event); // TODO ...
             }
           });
         }
@@ -618,6 +606,8 @@ var CTLON = (function () {
         zoom: 13
       };
 
+      showProgressInfo();
+
       preloadImages();
 
       if (DEBUG)
@@ -633,6 +623,7 @@ var CTLON = (function () {
       }).error(function (jqXHR, textStatus, errorThrown) {
         alert(textStatus + ': ' + errorThrown);
       }).done(function (data) {
+        hideProgressInfo();
         try {
           data = JSON.parse(data);
         }
@@ -720,15 +711,15 @@ var CTLON = (function () {
         // start polling
         if (navigator.geolocation) {
           watchId = navigator.geolocation.watchPosition(setPosition, function () {
-            noGeolocation('Dein Browser stellt keine Standortabfragen zur Verfügung.');
-            google.maps.event.addListenerOnce(map, 'idle', getFriends);
+            alert('Dein Browser stellt keine Standortabfragen zur Verfügung.');
           });
           pollingId = setInterval(getFriends, PollingInterval);
         }
         else {
-          noGeolocation('Standortabfrage fehlgeschlagen.');
-          google.maps.event.addListenerOnce(map, 'idle', getFriends);
+          alert('Standortabfrage fehlgeschlagen.');
         }
+
+        google.maps.event.addListenerOnce(map, 'idle', getFriends);
       });
     }
   };
