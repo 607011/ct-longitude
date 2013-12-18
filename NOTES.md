@@ -4,6 +4,7 @@ Features
  * Markierungen der Freunde zeigen den jeweiligen Avatar
  * CSS für iOS und Android
  * abgefangene Fehler als Pop-up o.ä. anzeigen
+ * Track muss beim Eintreffen neuer Standortdaten verlängert werden
 
 Fehler
 ======

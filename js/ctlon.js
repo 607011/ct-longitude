@@ -16,7 +16,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-var DEBUG = true;
+var DEBUG = false;
+
+window.D = DEBUG ? function (msg) { $('#log').html(msg); } : function () { };
 
 (function () {
   "use strict";
@@ -51,8 +53,6 @@ jQuery.extend(jQuery.easing, {
   }
 });
 
-
-window.D = DEBUG ? function (msg) { $('#log').html(msg); } : function () { };
 
 
 jQuery.fn.enableHorizontalSlider = function () {
@@ -126,7 +126,7 @@ jQuery.fn.enableHorizontalSlider = function () {
   $(window).resize(function () {
     var oversize = el.parent().width() - el.width();
     if (oversize > el.position().left && el.position().left < 0)
-        el.css('left', Math.min(0, oversize) + 'px');
+      el.css('left', Math.min(0, oversize) + 'px');
   });
   if (navigator.userAgent.indexOf('Mobile') >= 0) {
     this.bind({
@@ -199,7 +199,7 @@ var CTLON = (function () {
       });
       google.maps.event
 		.addListener(markers[userid], 'click', function () {
-      // TODO ...
+		  // TODO ...
 		});
     }
     markers[userid].setPosition(new google.maps.LatLng(lat, lng));
@@ -267,14 +267,15 @@ var CTLON = (function () {
   }
 
 
-  function highlightFriend(userid) {
+  function highlightFriend(userid, centerMap) {
     var m = markers[userid], accuracy;
     if (typeof m !== 'object')
       return;
     if (typeof userid !== 'string')
       return;
     selectedUser = userid;
-    map.setCenter(m.getPosition());
+    if (centerMap)
+      map.setCenter(m.getPosition());
     m.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
     accuracy = parseInt($('#buddy-' + userid).attr('data-accuracy'), 10);
     if (circle === null) {
@@ -370,12 +371,12 @@ var CTLON = (function () {
                 .attr('data-last-update', timestamp)
                 .attr('title', 'Letzte Aktualisierung: ' + timestamp)
               .click(function () {
-                highlightFriend(friend.id);
+                highlightFriend(friend.id, true);
               }.bind(friend)));
         placeMarker(friend.id, friend.lat, friend.lng, timestamp);
       });
-    }).error(function (e) {
-      alert(e);
+    }).error(function (jqXHR, textStatus, errorThrown) {
+      alert(textStatus + ': ' + errorThrown);
     });
     ;
   }
@@ -385,8 +386,6 @@ var CTLON = (function () {
     me.timestamp = Math.floor(pos.timestamp / 1000);
     me.latLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
     $('#userid').attr('data-lat', pos.coords.latitude).attr('data-lng', pos.coords.longitude);
-    if (!selectedUser)
-      map.setCenter(me.latLng);
     if (!$('#incognito').is(':checked')) {
       // send own location to server
       $.ajax({
@@ -416,6 +415,8 @@ var CTLON = (function () {
           lastWatch = null;
           google.maps.event.addListenerOnce(map, 'idle', getFriends);
         }
+      }).error(function (jqXHR, textStatus, errorThrown) {
+        alert(textStatus + ': ' + errorThrown);
       });
     }
   }
@@ -438,17 +439,19 @@ var CTLON = (function () {
     reader.onload = function (e) {
       var img = new Image, dataUrl,
         send = function () {
-        $.ajax({
-          url: 'setoption.php',
-          type: 'POST',
-          data: {
-            option: 'avatar',
-            value: dataUrl
-          }
-        }).done(function (data) {
-          avatar.empty().css('background-image', 'url(' + dataUrl + ')');
-        });
-      };
+          $.ajax({
+            url: 'setoption.php',
+            type: 'POST',
+            data: {
+              option: 'avatar',
+              value: dataUrl
+            }
+          }).done(function (data) {
+            avatar.empty().css('background-image', 'url(' + dataUrl + ')');
+          }).error(function (jqXHR, textStatus, errorThrown) {
+            alert(textStatus + ': ' + errorThrown);
+          });
+        };
       if (e.target.readyState == FileReader.DONE) {
         dataUrl = 'data:image/png;base64,' + btoa(
         (function (bytes) {
@@ -575,7 +578,7 @@ var CTLON = (function () {
             click: function (event) {
               console.log(event); // TODO ...
             }
-        });
+          });
         }
       });
     }
@@ -583,8 +586,7 @@ var CTLON = (function () {
       settings.animate({
         opacity: 0,
         top: $('#info-bar-container').offset().top + 'px'
-      },
-      {
+      }, {
         complete: function () {
           settings.css('display', 'none');
           settingsIcon.css('background-color', '');
@@ -604,7 +606,7 @@ var CTLON = (function () {
     $.each(imgFiles, function (i, f) {
       var img = new Image;
       img.src = 'img/' + f;
-    }); 
+    });
   }
 
   return {
@@ -628,6 +630,8 @@ var CTLON = (function () {
         url: 'me.php',
         accepts: 'json',
         type: 'POST'
+      }).error(function (jqXHR, textStatus, errorThrown) {
+        alert(textStatus + ': ' + errorThrown);
       }).done(function (data) {
         try {
           data = JSON.parse(data);
@@ -641,17 +645,22 @@ var CTLON = (function () {
           me.avatar = data.avatar;
           $('#avatar').css('background-image', 'url(' + me.avatar + ')');
         }
+
         $('#userid').text(me.id).click(function () {
-          highlightFriend(me.id);
+          highlightFriend(me.id, true);
           stopAnimations();
           hideCircle();
           selectedUser = null;
         });
 
         $('#avatar-max-width').text(Avatar.Width);
+
         $('#avatar-max-height').text(Avatar.Height);
+
         $('#settings-icon').click(showHideSettings);
+
         $('#buddies').enableHorizontalSlider();
+
         $("#settings .colorpicker").spectrum({
           color: Avatar.backgroundColor,
           showInitial: true,
