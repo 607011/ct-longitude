@@ -153,7 +153,7 @@ var CTLON = (function () {
     MaxDistance = 200 * 1000 /* meters */,
     PollingInterval = 60 * 1000 /* milliseconds */,
     MinWatchInterval = 30 * 1000 /* milliseconds */,
-    Avatar = { Width: 50, Height: 50, backgroundColor: '#000000' },
+    Avatar = { Width: 44, Height: 44, backgroundColor: '#000000' },
     lastWatch = null,
     getFriendsPending = false,
     geocoder = new google.maps.Geocoder(),
@@ -657,6 +657,8 @@ var CTLON = (function () {
           stopAnimations();
           hideCircle();
         });
+
+        $('#avatar').css('width', Avatar.Width + 'px').css('height', Avatar.Height + 'px');
 
         $('#avatar-max-width').text(Avatar.Width);
 
