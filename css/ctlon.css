@@ -52,6 +52,10 @@ html, body {
   -o-background-size: cover;
   -webkit-background-size: cover;
   background-size: cover;
+  -moz-transition: opacity ease-in-out 0.25s;
+  -o-transition: opacity ease-in-out 0.25s;
+  -webkit-transition: opacity ease-in-out 0.25s;
+  transition: opacity ease-in-out 0.25s;
 }
 
 #menu-container {
@@ -85,10 +89,17 @@ html, body {
   left: 44px;
   overflow: hidden;
   white-space: nowrap;
+  -moz-transition: opacity ease-in-out 0.25s;
+  -o-transition: opacity ease-in-out 0.25s;
+  -webkit-transition: opacity ease-in-out 0.25s;
+  transition: opacity ease-in-out 0.25s;
 }
 
-
 .opaque {
+  -moz-transition: opacity ease-in-out 0.25s;
+  -o-transition: opacity ease-in-out 0.25s;
+  -webkit-transition: opacity ease-in-out 0.25s;
+  transition: opacity ease-in-out 0.25s;
   opacity: 0.5;
 }
 
@@ -96,7 +107,6 @@ html, body {
   display: inline-block;
   text-wrap: none;
 }
-
 
 .buddy {
   cursor: pointer;
