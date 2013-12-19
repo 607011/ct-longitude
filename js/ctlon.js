@@ -291,13 +291,12 @@ var CTLON = (function () {
     circle.setVisible($('#show-accuracy').is(':checked'));
     if (infoWindow === null)
       infoWindow = new google.maps.InfoWindow();
-    infoWindow.setOptions({
-      map: map,
-      position: m.getPosition(),
-      content: '<p><strong>' + userid + '</strong><br/>' +
-        $('#buddy-' + userid).attr('data-last-update') + '</p>' +
-        '<p id="address"></p>'
-    });
+    infoWindow.setOptions({ map: map });
+    infoWindow.setContent('<p><strong>' + userid + '</strong><br/>' +
+      $('#buddy-' + userid).attr('data-last-update') + '</p>' +
+      '<p id="address"></p>');
+    infoWindow.setPosition(m.getPosition());
+
     geocoder.geocode({ 'latLng': m.getPosition() }, function (results, status) {
       if (status == google.maps.GeocoderStatus.OK) {
         if (results[1]) {
