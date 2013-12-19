@@ -1,5 +1,5 @@
 /*
-    c't Longitude - A reimplementation of Googles discontinued Latitude app
+    c't Longitude - A reimplementation of Googles discontinued Latitude app.
     Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 
     This program is free software: you can redistribute it and/or modify
