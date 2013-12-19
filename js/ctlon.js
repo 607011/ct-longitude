@@ -380,7 +380,7 @@ var CTLON = (function () {
         placeMarker(friend.id, friend.lat, friend.lng, timestamp);
       });
     }).error(function (jqXHR, textStatus, errorThrown) {
-      alert(textStatus + ': ' + errorThrown);
+      alert('Fehler beim Abfragen der User-Liste [' + textStatus + ': ' + errorThrown + ']');
     });
     ;
   }
@@ -421,7 +421,7 @@ var CTLON = (function () {
           google.maps.event.addListenerOnce(map, 'idle', getFriends);
         }
       }).error(function (jqXHR, textStatus, errorThrown) {
-        alert(textStatus + ': ' + errorThrown);
+        alert('Fehler beim Senden deines Standorts [' + textStatus + ': ' + errorThrown + ']');
       });
     }
   }
@@ -444,7 +444,7 @@ var CTLON = (function () {
             avatar.empty().css('background-image', 'url(' + dataUrl + ')');
             $('#userid').css('background-image', 'url(' + dataUrl + ')');
           }).error(function (jqXHR, textStatus, errorThrown) {
-            alert(textStatus + ': ' + errorThrown);
+            alert('Fehler beim Übertragen deines Avatars [' + textStatus + ': ' + errorThrown + ']');
           });
         };
       if (e.target.readyState == FileReader.DONE) {
@@ -622,7 +622,7 @@ var CTLON = (function () {
         accepts: 'json',
         type: 'POST'
       }).error(function (jqXHR, textStatus, errorThrown) {
-        alert(textStatus + ': ' + errorThrown);
+        alert('Fehler beim Abfragen der deiner Daten [' + textStatus + ': ' + errorThrown + ']');
       }).done(function (data) {
         var myPos;
         hideProgressInfo();
@@ -730,12 +730,12 @@ var CTLON = (function () {
         // start polling
         if (navigator.geolocation) {
           watchId = navigator.geolocation.watchPosition(setPosition, function () {
-            alert('Dein Browser stellt keine Standortabfragen zur Verfügung.');
+            alert('Standortabfrage fehlgeschlagen.');
           });
           pollingId = setInterval(getFriends, PollingInterval);
         }
         else {
-          alert('Standortabfrage fehlgeschlagen.');
+          alert('Dein Browser stellt keine Standortabfragen zur Verfügung.');
         }
 
         google.maps.event.addListenerOnce(map, 'idle', getFriends);
