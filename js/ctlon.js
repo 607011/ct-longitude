@@ -45,6 +45,53 @@ window.D = DEBUG ? function (msg) { $('#log').html(msg); } : function () { };
 })();
 
 
+var Rect = function (x0, y0, x1, y1) {
+  this.x0 = x0;
+  this.x1 = x1;
+  this.y0 = y0;
+  this.y1 = y1;
+};
+Rect.prototype.width = function () {
+  return this.x1 - this.x0;
+};
+Rect.prototype.height = function () {
+  return this.y1 - this.y0;
+};
+Rect.prototype.landscape = function () {
+  return this.width() > this.height();
+};
+Rect.prototype.clone = function () {
+  return new Rect(this.x0, this.y0, this.x1, this.y1);
+};
+Rect.prototype.slices = function () {
+  var w2, h2;
+  if (this.landscape()) {
+    h2 = this.height() / 2;
+    return [new Rect(this.x0, this.y0, this.x1, this.y1 - h2), new Rect(this.x0, this.y0 + h2, this.x1, this.y1)];
+  }
+  else {
+    w2 = this.width() / 2;
+    return [new Rect(this.x0, this.y0, this.x1 - w2, this.y1), new Rect(this.x0 + w2, this.y0, this.x1, this.y1)];
+  }
+};
+Rect.prototype.partitioned = function (numTiles) {
+  var partitions = [],
+    makeTree = function (lo, hi, rect) {
+      var mid, slices;
+      if (lo > hi) {
+        partitions.push(rect);
+        return;
+      }
+      mid = ((lo + hi) / 2) >> 0;
+      slices = rect.slices();
+      makeTree(lo, mid - 1, slices[0]);
+      makeTree(mid + 1, hi, slices[1]);
+    }
+  makeTree(0, numTiles - 2, this);
+  return partitions;
+}
+
+
 /* Taken from jQuery Easing v1.3 - Copyright © 2008 George McGinley Smith - http://gsgd.co.uk/sandbox/jquery/easing/ */
 jQuery.extend(jQuery.easing, {
   easeInOutCubic: function (x, t, b, c, d) {
@@ -52,7 +99,6 @@ jQuery.extend(jQuery.easing, {
     return c / 2 * ((t -= 2) * t * t + 2) + b;
   }
 });
-
 
 
 jQuery.fn.enableHorizontalSlider = function () {
@@ -111,7 +157,7 @@ jQuery.fn.enableHorizontalSlider = function () {
       mouseDown = false;
       if (Math.abs(pixelsPerSec) > 0) {
         elapsed = 0;
-        duration = Math.abs(Math.floor(dt / dx * 1000));
+        duration = Math.abs((dt / dx * 1000) >> 0);
         requestAnimationFrame(update);
       }
       $(document).unbind('selectstart');
@@ -202,15 +248,15 @@ var CTLON = (function () {
       markers[friend.id] = new google.maps.Marker({
         title: friend.id + ' (' + friend.readableTimestamp + ')',
         icon: {
-          url: friend.avatar ? friend.avatar : 'img/default-avatar.jpg',
+          url: friend.avatar ? friend.avatar : DEFAULT_AVATAR,
           size: new google.maps.Size(Avatar.Width, Avatar.Height),
           anchor: new google.maps.Point(Avatar.Width / 2, 0),
         },
         map: map
       });
       google.maps.event.addListener(markers[friend.id], 'click', function () {
-		  console.log('clicked on ' + friend.id);
-		});
+        console.log('clicked on ' + friend.id);
+      });
     }
     markers[friend.id].setPosition(friend.latLng);
   }
@@ -432,18 +478,38 @@ var CTLON = (function () {
         }
 
         if (cluster.length > 1) { // cluster
-          var canvas, ctx;
+          var canvas, ctx, rect, slices, img,
+            clusteredFriends = {
+              id: '',
+              avatar: null
+            };
 
           canvas = document.createElement('canvas');
           ctx = canvas.getContext('2d');
           canvas.width = Avatar.Width;
           canvas.height = Avatar.Height;
 
+          rect = new Rect(0, 0, Avatar.Width, Avatar.Height);
+          slices = rect.partitioned(cluster.length);
+          console.log(cluster, slices);
+
           $.each(cluster, function (i, friend) {
+            var img = new Image, imagesLoaded = 0;
             processSingle(friend);
+            img.onload = function () {
+              var slice = slices[i];
+              clusteredFriends.id += friend.id + ' ';
+              ctx.drawImage(img, 0, 0, img.width, img.height, slice.x0, slice.y0, slice.width(), slice.height());
+              console.log(friend.id, slice, slices.length);
+              if (++imagesLoaded === slices.length - 1) {
+                friend.avatar = canvas.toDataURL();
+                placeMarker(clusteredFriends);
+                $('#cluster-image').css('background-image', friend.avatar).append($(canvas));
+              }
+            };
+            img.src = friend.avatar || DEFAULT_AVATAR;
           });
 
-          placeMarker(clusterMarker);
         }
         else { // single
           processSingle(cluster[0]);
