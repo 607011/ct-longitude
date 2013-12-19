@@ -1,8 +1,6 @@
 <?php
 include('globals.php');
 
-$res = array();
-
 if (!isset($_SERVER['PHP_AUTH_USER'])) {
     $res['status'] = 'error';
     $res['error'] = 'no authenticated user';

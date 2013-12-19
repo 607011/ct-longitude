@@ -6,4 +6,5 @@ $dbh = new PDO("sqlite:$DB_NAME", null, null, array(
      PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
      // PDO::ATTR_PERSISTENT => true
 ));
+$res = array();
 ?>

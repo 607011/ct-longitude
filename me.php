@@ -1,6 +1,5 @@
 <?php
 include('globals.php');
-$res = array();
 
 if (!isset($_SERVER['PHP_AUTH_USER'])) {
     $res['status'] = 'error';
@@ -9,24 +8,29 @@ if (!isset($_SERVER['PHP_AUTH_USER'])) {
 }
 
 
-function getBuddy($userid) {
-    global $dbh;
-    $q = "SELECT sharetracks, avatar FROM buddies WHERE userid = '$userid'";
-    return $dbh->query($q);
-}
-
-
 if ($dbh) {
-    $rows = getBuddy($_SERVER['PHP_AUTH_USER']);
-    if ($rows->rowCount() == 0) {
+    $q = "SELECT sharetracks, avatar FROM buddies WHERE userid = :userid";
+    $sth = $dbh->prepare($q);
+    $sth->bindParam(':userid', $_SERVER['PHP_AUTH_USER'], PDO::PARAM_STR);
+    $res['query1'] = $q;
+    $sth->execute();
+    if (!$sth->fetch()) {
         $dbh->exec("INSERT INTO buddies (userid, sharetracks) VALUES('" . $_SERVER['PHP_AUTH_USER'] . "', 0)");
-        $rows = getBuddy($_SERVER['PHP_AUTH_USER']);
+        $sth->execute();
+        $res['query1a'] = $q;
     }    
-    $row = $rows->fetch();
+    $row = $sth->fetch();
     $res['sharetracks'] = intval($row[0]) != 0 ? 'true' : 'false';
     $res['avatar'] = $row[1];
     $res['userid'] = $_SERVER['PHP_AUTH_USER'];
     $res['status'] = 'ok';
+    
+    $q = "SELECT lat, lng FROM locations WHERE userid = '" . $_SERVER['PHP_AUTH_USER'] . "' ORDER BY timestamp DESC LIMIT 1";
+    $rows = $dbh->query($q);
+    $row = $rows->fetch();
+    $res['lat'] = floatval($row[0]);
+    $res['lng'] = floatval($row[1]);
+    $res['query2'] = $q;
 }
 
 end:

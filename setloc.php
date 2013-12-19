@@ -1,6 +1,5 @@
 ﻿<?php
 include('globals.php');
-$res = array();
 
 $userid = $_GET['userid'];
 if (!preg_match('/^\\w+$/', $userid)) {
