@@ -150,18 +150,18 @@ var CTLON = (function () {
 
   var OK = 'ok',
     MOBILE = navigator.userAgent.indexOf('Mobile') >= 0,
+    DEFAULT_AVATAR = 'img/default-avatar.jpg',
     MaxDistance = 200 * 1000 /* meters */,
     PollingInterval = 60 * 1000 /* milliseconds */,
     MinWatchInterval = 30 * 1000 /* milliseconds */,
     Avatar = { Width: 44, Height: 44, backgroundColor: '#000' },
     TrackColor = '#039',
-    lastWatch = null,
-    getFriendsPending = false,
     geocoder = new google.maps.Geocoder(),
-    map = null, overlay = null,
-    circle = null, polyline = null, infoWindow = null,
+    map = null, overlay = null, circle = null, polyline = null, infoWindow = null,
     markers = {},
     me = { id: undefined, latLng: null, avatar: null },
+    getFriendsPending = false,
+    lastWatch = null,
     watchId = undefined,
     selectedUser = undefined,
     pollingId = undefined,
@@ -197,23 +197,22 @@ var CTLON = (function () {
   }
 
 
-  function placeMarker(userid, lat, lng, timestamp, avatar) {
-    if (typeof markers[userid] === 'undefined') {
-      markers[userid] = new google.maps.Marker({
-        title: userid + ' (' + timestamp + ')',
+  function placeMarker(friend) {
+    if (typeof markers[friend.id] === 'undefined') {
+      markers[friend.id] = new google.maps.Marker({
+        title: friend.id + ' (' + friend.readableTimestamp + ')',
         icon: {
-          url: avatar ? avatar : 'img/default-avatar.jpg',
+          url: friend.avatar ? friend.avatar : 'img/default-avatar.jpg',
           size: new google.maps.Size(Avatar.Width, Avatar.Height),
           anchor: new google.maps.Point(Avatar.Width / 2, 0),
         },
         map: map
       });
-      google.maps.event
-		.addListener(markers[userid], 'click', function () {
-		  console.log('clicked on ' + userid);
+      google.maps.event.addListener(markers[friend.id], 'click', function () {
+		  console.log('clicked on ' + friend.id);
 		});
     }
-    markers[userid].setPosition(new google.maps.LatLng(lat, lng));
+    markers[friend.id].setPosition(friend.latLng);
   }
 
 
@@ -324,9 +323,9 @@ var CTLON = (function () {
   }
 
 
-  function cluster() {
+  function clusteredFriends(userData) {
     // adapted from http://www.appelsiini.net/2008/introduction-to-marker-clustering-with-google-maps
-    var clustered = [], cluster, users = Object.keys(markers), currentUser, p0,
+    var clustered = [], cluster, users = Object.keys(userData), currentUser, p0,
       projection = overlay.getProjection(), sqr = function (a) { return a * a; },
       distance = Math.sqrt(sqr(Avatar.Width) + sqr(Avatar.Height));
     while (users.length > 0) {
@@ -334,24 +333,28 @@ var CTLON = (function () {
       if (typeof currentUser === 'undefined')
         continue;
       cluster = [];
-      p0 = projection.fromLatLngToDivPixel(markers[currentUser].getPosition());
+      userData[currentUser].latLng = new google.maps.LatLng(userData[currentUser].lat, userData[currentUser].lng);
+      userData[currentUser].id = currentUser;
+      p0 = projection.fromLatLngToDivPixel(userData[currentUser].latLng);
       $.each(users, function (i, user) {
         var p1, p0p1;
         if (typeof users[i] === 'undefined')
           return;
-        p1 = projection.fromLatLngToDivPixel(markers[user].getPosition());
+        userData[user].latLng = new google.maps.LatLng(userData[user].lat, userData[user].lng);
+        userData[user].id = user;
+        p1 = projection.fromLatLngToDivPixel(userData[user].latLng);
         p0p1 = Math.sqrt(sqr(p1.x - p0.x) + sqr(p1.y - p0.y));
         if (p0p1 < distance) {
-          cluster.push(user);
+          cluster.push(userData[user]);
           users[i] = undefined;
         }
       });
       if (cluster.length > 0) {
-        cluster.push(currentUser);
+        cluster.push(userData[currentUser]);
         clustered.push(cluster);
       }
       else {
-        clustered.push(currentUser);
+        clustered.push([ userData[currentUser] ]);
       }
     }
     return clustered;
@@ -373,12 +376,7 @@ var CTLON = (function () {
       data: data,
       accepts: 'json'
     }).done(function (data) {
-      var ne, sw, range = MaxDistance, bounds = map.getBounds(), clusters;
-      if (bounds) {
-        ne = bounds.getNorthEast();
-        sw = bounds.getSouthWest();
-        range = Math.max(computeDistanceBetween(ne, sw) / 2, MaxDistance);
-      }
+      var clusters;
       try {
         data = JSON.parse(data);
       }
@@ -396,34 +394,62 @@ var CTLON = (function () {
       $('#buddies').empty().css('left', '0px');
       if (typeof data.users !== 'object')
         return;
-      $.each(data.users, function (userid, friend) {
-        var timestamp = new Date(friend.timestamp * 1000).toLocaleString(), buddy;
-        friend.id = userid;
-        friend.latLng = new google.maps.LatLng(friend.lat, friend.lng);
-        if (me.latLng === null) // location queries disabled, use first friend's position for range calculation
-          me.latLng = new google.maps.LatLng(friend.lat, friend.lng);
-        if (computeDistanceBetween(me.latLng, friend.latLng) < range) {
+      clusters = clusteredFriends(data.users);
+      $.each(clusters, function (i, cluster) {
+        function processSingle(friend) {
+          var buddy;
+          friend.readableTimestamp = new Date(friend.timestamp * 1000).toLocaleString();
+          if (me.latLng === null) // location queries disabled, use first friend's position for range calculation
+            me.latLng = new google.maps.LatLng(friend.lat, friend.lng);
           buddy = $('<span></span>')
                 .addClass('buddy').attr('id', 'buddy-' + friend.id)
                 .attr('data-lat', friend.lat)
                 .attr('data-lng', friend.lng)
                 .attr('data-accuracy', friend.accuracy)
                 .attr('data-timestamp', friend.timestamp)
-                .attr('data-last-update', timestamp)
-                .attr('title', friend.id + ' - letzte Aktualisierung: ' + timestamp)
+                .attr('data-last-update', friend.readableTimestamp)
+                .attr('title', friend.id + ' - letzte Aktualisierung: ' + friend.readableTimestamp)
               .click(function () {
                 highlightFriend(friend.id, true);
               }.bind(friend));
           if (friend.id === me.id)
             buddy.css('display', 'none');
           else
-            buddy.css('background-image', 'url(' + (friend.avatar ? friend.avatar : 'img/default-avatar.jpg') + ')');
-          $('#buddies').append(buddy);
+            buddy.css('background-image', 'url(' + (friend.avatar ? friend.avatar : DEFAULT_AVATAR) + ')');
+          if ($('#buddies').children().length === 0) {
+            $('#buddies').append(buddy);
+          }
+          else {
+            $('#buddies').children().each(function (i, b) {
+              if (friend.timestamp > parseInt($(b).attr('data-timestamp'), 10)) {
+                buddy.insertBefore(b);
+                return false;
+              }
+              if (i == $('#buddies').children().length - 1)
+                $('#buddies').append(buddy);
+            });
+          }
         }
-        placeMarker(friend.id, friend.lat, friend.lng, timestamp, friend.avatar);
+
+        if (cluster.length > 1) { // cluster
+          var canvas, ctx;
+
+          canvas = document.createElement('canvas');
+          ctx = canvas.getContext('2d');
+          canvas.width = Avatar.Width;
+          canvas.height = Avatar.Height;
+
+          $.each(cluster, function (i, friend) {
+            processSingle(friend);
+          });
+
+          placeMarker(clusterMarker);
+        }
+        else { // single
+          processSingle(cluster[0]);
+          placeMarker(cluster[0]);
+        }
       });
-      clusters = cluster();
-      console.log(clusters);
     }).error(function (jqXHR, textStatus, errorThrown) {
       alert('Fehler beim Abfragen der User-Liste [' + textStatus + ': ' + errorThrown + ']');
     });
@@ -465,7 +491,7 @@ var CTLON = (function () {
           google.maps.event.addListenerOnce(map, 'idle', getFriends);
         }
       }).error(function (jqXHR, textStatus, errorThrown) {
-        alert('Fehler beim Senden deines Standorts [' + textStatus + ': ' + errorThrown + ']');
+        alert('Fehler beim Übertragen deines Standorts [' + textStatus + ': ' + errorThrown + ']');
       });
     }
   }
