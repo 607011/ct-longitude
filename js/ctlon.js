@@ -214,13 +214,6 @@ var CTLON = (function () {
   }
 
 
-  function stopAnimations() {
-    $.each(markers, function (i, marker) {
-      marker.setAnimation(google.maps.Animation.NONE);
-    });
-  }
-
-
   function getTrack(userid) {
     var maxAge = parseInt($('#max-waypoint-age').val(), 10),
       t1 = Math.floor(Date.now() / 1000), t0 = (maxAge < 0) ? 0 : t1 - maxAge;
@@ -331,8 +324,6 @@ var CTLON = (function () {
     maxAge = parseInt($('#max-location-age').val(), 10);
     if (maxAge >= 0)
       data.maxage = maxAge;
-    if (selectedUser == null)
-      map.setCenter(me.latLng);
     $.ajax({
       url: 'friends.php',
       type: 'POST',
@@ -639,6 +630,7 @@ var CTLON = (function () {
           console.error(e);
           return;
         }
+
         me.id = data.userid;
         if (typeof data.avatar === 'string' && data.avatar.indexOf('data:image/png;base64,') === 0) {
           me.avatar = data.avatar;
@@ -649,9 +641,19 @@ var CTLON = (function () {
           $('#userid').text(me.id);
         }
 
+        myPos = localStorage.getItem('my-last-position');
+        if (myPos) {
+          myPos = myPos.split(',')
+          me.latLng = (myPos.length === 2) ? new google.maps.LatLng(myPos[0], myPos[1]) : new google.maps.LatLng(51, 10.3);
+        }
+        else {
+          me.latLng = (typeof data.lat === 'number' && typeof data.lng === 'number')
+          ? new google.maps.LatLng(data.lat, data.lng)
+          : new google.maps.LatLng(51, 10.3);
+        }
+
         $('#userid').click(function () {
           highlightFriend(me.id, true);
-          stopAnimations();
           hideCircle();
         });
 
@@ -720,14 +722,6 @@ var CTLON = (function () {
         google.maps.visualRefresh = true;
         map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
         computeDistanceBetween = google.maps.geometry.spherical.computeDistanceBetween;
-        myPos = localStorage.getItem('my-last-position');
-        if (myPos) {
-          myPos = myPos.split(',')
-          me.latLng =  (myPos.length === 2) ? new google.maps.LatLng(myPos[0], myPos[1]) : new google.maps.LatLng(51, 10.3);
-        }
-        else {
-          me.latLng = new google.maps.LatLng(51, 10.3);
-        }
         map.setCenter(me.latLng);
 
         // start polling
