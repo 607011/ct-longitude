@@ -380,10 +380,7 @@ var CTLON = (function () {
               .click(function () {
                 highlightFriend(friend.id, true);
               }.bind(friend));
-          if (friend.avatar)
-            buddy.css('background-image', 'url(' + friend.avatar + ')');
-          else
-            buddy.text(friend.id)
+          buddy.css('background-image', 'url(' + (friend.avatar ? friend.avatar : 'img/default-avatar.jpg') + ')');
           $('#buddies').append(buddy);
         }
         placeMarker(friend.id, friend.lat, friend.lng, timestamp);

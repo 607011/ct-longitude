@@ -45,7 +45,7 @@ html, body {
   overflow: hidden;
   width: 44px;
   height: 44px;
-  background-image: url(../img/default-avatar.png);
+  background-image: url(../img/default-avatar.jpg);
   background-position: left top;
   background-repeat: no-repeat;
   -moz-background-size: cover;
@@ -182,7 +182,7 @@ html, body {
 
 #avatar {
   border: 1px solid #222;
-  background-image: url(../img/default-avatar.png);
+  background-image: url(../img/default-avatar.jpg);
   margin: 2px 0 4px 0;
   display: inline-block;
   vertical-align: top;
