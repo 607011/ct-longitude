@@ -153,7 +153,8 @@ var CTLON = (function () {
     MaxDistance = 200 * 1000 /* meters */,
     PollingInterval = 60 * 1000 /* milliseconds */,
     MinWatchInterval = 30 * 1000 /* milliseconds */,
-    Avatar = { Width: 44, Height: 44, backgroundColor: '#000000' },
+    Avatar = { Width: 44, Height: 44, backgroundColor: '#000' },
+    TrackColor = '#039',
     lastWatch = null,
     getFriendsPending = false,
     geocoder = new google.maps.Geocoder(),
@@ -230,7 +231,7 @@ var CTLON = (function () {
         t1: t1
       }
     }).done(function (data) {
-      var path = [];
+      var path;
       try {
         data = JSON.parse(data);
       }
@@ -239,14 +240,15 @@ var CTLON = (function () {
         return;
       }
       if (data.status === OK) {
-        $.each(data.path, function (i, loc) {
-          path.push(new google.maps.LatLng(loc.lat, loc.lng));
-        }); // XXX: path = $.map(data.path, ...) doesn't work. Why?
+        path = $.map(data.path, function (i, key) {
+          var loc = data.path[key];
+          return new google.maps.LatLng(loc.lat, loc.lng);
+        });
         if (polyline === null)
           polyline = new google.maps.Polyline({
             map: map,
-            strokeColor: '#039',
-            strokeOpacity: 0.7,
+            strokeColor: TrackColor,
+            strokeOpacity: 0.8,
             strokeWeight: 2,
             geodesic: true
           });
