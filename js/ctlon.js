@@ -438,7 +438,7 @@ var CTLON = (function () {
 
   function uploadAvatar(blob) {
     var reader = new FileReader,
-      avatar = $('#avatar').css('background', 'none').css('background-color', 'white').append($('<span style="display: inline-block; width: ' + Avatar.Width + 'px; height: ' + Avatar.Height + 'px; background-image: url(img/loader-5-0.gif); background-repeat: no-repeat; background-position: 9px 9px"></span>'));
+      avatar = $('#avatar').css('background', 'none').css('background-color', 'white').append($('<span style="display: inline-block; width: ' + Avatar.Width + 'px; height: ' + Avatar.Height + 'px; background-image: url(img/loader-5-0.gif); background-repeat: no-repeat; background-position: 6px 6px"></span>'));
     reader.onload = function (e) {
       var img = new Image, dataUrl,
         send = function () {
