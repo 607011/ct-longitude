@@ -9,17 +9,17 @@ if (!isset($_SERVER['PHP_AUTH_USER'])) {
 
 
 if ($dbh) {
-    $q = "SELECT sharetracks, avatar FROM buddies WHERE userid = :userid";
+    $q = "SELECT sharetracks, avatar FROM buddies WHERE userid = '" . $_SERVER['PHP_AUTH_USER'] . "'";
     $sth = $dbh->prepare($q);
-    $sth->bindParam(':userid', $_SERVER['PHP_AUTH_USER'], PDO::PARAM_STR);
     $res['query1'] = $q;
     $sth->execute();
-    if (!$sth->fetch()) {
+    $row = $sth->fetch();
+    if (!$row) {
         $dbh->exec("INSERT INTO buddies (userid, sharetracks) VALUES('" . $_SERVER['PHP_AUTH_USER'] . "', 0)");
         $sth->execute();
+        $row = $sth->fetch();
         $res['query1a'] = $q;
-    }    
-    $row = $sth->fetch();
+    }
     $res['sharetracks'] = intval($row[0]) != 0 ? 'true' : 'false';
     $res['avatar'] = $row[1];
     $res['userid'] = $_SERVER['PHP_AUTH_USER'];
