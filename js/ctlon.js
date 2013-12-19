@@ -359,7 +359,7 @@ var CTLON = (function () {
         friend.latLng = new google.maps.LatLng(friend.lat, friend.lng);
         if (me.latLng === null) // location queries disabled, use first friend's position for range calculation
           me.latLng = new google.maps.LatLng(friend.lat, friend.lng);
-        if (friend.id !== me.id && computeDistanceBetween(me.latLng, friend.latLng) < range) {
+        if (computeDistanceBetween(me.latLng, friend.latLng) < range) {
           buddy = $('<span></span>')
                 .addClass('buddy').attr('id', 'buddy-' + friend.id)
                 .attr('data-lat', friend.lat)
@@ -371,7 +371,10 @@ var CTLON = (function () {
               .click(function () {
                 highlightFriend(friend.id, true);
               }.bind(friend));
-          buddy.css('background-image', 'url(' + (friend.avatar ? friend.avatar : 'img/default-avatar.jpg') + ')');
+          if (friend.id === me.id)
+            buddy.css('display', 'none');
+          else
+            buddy.css('background-image', 'url(' + (friend.avatar ? friend.avatar : 'img/default-avatar.jpg') + ')');
           $('#buddies').append(buddy);
         }
         placeMarker(friend.id, friend.lat, friend.lng, timestamp);
