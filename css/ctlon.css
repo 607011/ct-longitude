@@ -52,10 +52,10 @@ html, body {
   -o-background-size: cover;
   -webkit-background-size: cover;
   background-size: cover;
-  -moz-transition: opacity ease-in-out 0.25s;
-  -o-transition: opacity ease-in-out 0.25s;
-  -webkit-transition: opacity ease-in-out 0.25s;
-  transition: opacity ease-in-out 0.25s;
+  -moz-transition: opacity ease-in-out 0.1s;
+  -o-transition: opacity ease-in-out 0.1s;
+  -webkit-transition: opacity ease-in-out 0.1s;
+  transition: opacity ease-in-out 0.1s;
 }
 
 #menu-container {
@@ -92,14 +92,14 @@ html, body {
   -moz-transition: opacity ease-in-out 0.25s;
   -o-transition: opacity ease-in-out 0.25s;
   -webkit-transition: opacity ease-in-out 0.25s;
-  transition: opacity ease-in-out 0.25s;
+  transition: opacity ease-in-out 0.1s;
 }
 
 .opaque {
   -moz-transition: opacity ease-in-out 0.25s;
   -o-transition: opacity ease-in-out 0.25s;
   -webkit-transition: opacity ease-in-out 0.25s;
-  transition: opacity ease-in-out 0.25s;
+  transition: opacity ease-in-out 0.1s;
   opacity: 0.5;
 }
 

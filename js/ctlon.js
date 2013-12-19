@@ -158,14 +158,21 @@ var CTLON = (function () {
     lastWatch = null,
     getFriendsPending = false,
     geocoder = new google.maps.Geocoder(),
-    map = null,
+    map = null, overlay = null,
     circle = null, polyline = null, infoWindow = null,
     markers = {},
     me = { id: undefined, latLng: null, avatar: null },
     watchId = undefined,
     selectedUser = undefined,
     pollingId = undefined,
-    computeDistanceBetween = function () { return 0; };
+    deg2rad = function (angle) { return 0.017453292519943295 * angle; },
+    computeDistanceBetween = function haversineDistance(latLng1, latLng2) {
+      var latd = 0.5 * deg2rad(latLng2.lat() - latLng1.lat()),
+        lond = 0.5 * deg2rad(latLng2.lng() - latLng1.lng()),
+        a = Math.sin(latd) * Math.sin(latd) + Math.cos(deg2rad(latLng1.lat())) * Math.cos(deg2rad(latLng2.lat())) * Math.sin(lond) * Math.sin(lond),
+        c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return 1000 * 6371.0 * c;
+    };
 
 
   function showProgressInfo() {
@@ -317,6 +324,40 @@ var CTLON = (function () {
   }
 
 
+  function cluster() {
+    // adapted from http://www.appelsiini.net/2008/introduction-to-marker-clustering-with-google-maps
+    var clustered = [], cluster, users = Object.keys(markers), currentUser, p0,
+      projection = overlay.getProjection(), sqr = function (a) { return a * a; },
+      distance = Math.sqrt(sqr(Avatar.Width) + sqr(Avatar.Height));
+    while (users.length > 0) {
+      currentUser = users.pop();
+      if (typeof currentUser === 'undefined')
+        continue;
+      cluster = [];
+      p0 = projection.fromLatLngToDivPixel(markers[currentUser].getPosition());
+      $.each(users, function (i, user) {
+        var p1, p0p1;
+        if (typeof users[i] === 'undefined')
+          return;
+        p1 = projection.fromLatLngToDivPixel(markers[user].getPosition());
+        p0p1 = Math.sqrt(sqr(p1.x - p0.x) + sqr(p1.y - p0.y));
+        if (p0p1 < distance) {
+          cluster.push(user);
+          users[i] = undefined;
+        }
+      });
+      if (cluster.length > 0) {
+        cluster.push(currentUser);
+        clustered.push(cluster);
+      }
+      else {
+        clustered.push(currentUser);
+      }
+    }
+    return clustered;
+  }
+
+
   function getFriends() {
     var data = {}, maxAge;
     if (getFriendsPending)
@@ -332,7 +373,7 @@ var CTLON = (function () {
       data: data,
       accepts: 'json'
     }).done(function (data) {
-      var ne, sw, range = MaxDistance, bounds = map.getBounds();
+      var ne, sw, range = MaxDistance, bounds = map.getBounds(), clusters;
       if (bounds) {
         ne = bounds.getNorthEast();
         sw = bounds.getSouthWest();
@@ -381,10 +422,11 @@ var CTLON = (function () {
         }
         placeMarker(friend.id, friend.lat, friend.lng, timestamp, friend.avatar);
       });
+      clusters = cluster();
+      console.log(clusters);
     }).error(function (jqXHR, textStatus, errorThrown) {
       alert('Fehler beim Abfragen der User-Liste [' + textStatus + ': ' + errorThrown + ']');
     });
-    ;
   }
 
 
@@ -726,8 +768,13 @@ var CTLON = (function () {
         // init Google Maps
         google.maps.visualRefresh = true;
         map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
-        computeDistanceBetween = google.maps.geometry.spherical.computeDistanceBetween;
+        if (google.maps.geometry.spherical.computeDistanceBetween)
+          computeDistanceBetween = google.maps.geometry.spherical.computeDistanceBetween;
         map.setCenter(me.latLng);
+
+        overlay = new google.maps.OverlayView();
+        overlay.draw = function () { };
+        overlay.setMap(map);
 
         // start polling
         if (navigator.geolocation) {
