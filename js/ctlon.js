@@ -189,19 +189,20 @@ var CTLON = (function () {
   }
 
 
-  function placeMarker(userid, lat, lng, timestamp) {
-    var url = (userid === me.id)
-        ? 'http://mt.google.com/vt/icon?psize=10&font=fonts/Roboto-Bold.ttf&ax=43&ay=50&scale=1&color=ff115511&name=icons/spotlight/spotlight-waypoint-a.png&text=' + userid
-        : 'http://mt.google.com/vt/icon?psize=10&font=fonts/Roboto-Bold.ttf&ax=43&ay=50&scale=1&color=ff551111&name=icons/spotlight/spotlight-waypoint-b.png&text=' + userid;
+  function placeMarker(userid, lat, lng, timestamp, avatar) {
     if (typeof markers[userid] === 'undefined') {
       markers[userid] = new google.maps.Marker({
         title: userid + ' (' + timestamp + ')',
-        icon: { url: url },
+        icon: {
+          url: avatar ? avatar : 'img/default-avatar.jpg',
+          size: new google.maps.Size(Avatar.Width, Avatar.Height),
+          anchor: new google.maps.Point(Avatar.Width / 2, 0),
+        },
         map: map
       });
       google.maps.event
 		.addListener(markers[userid], 'click', function () {
-		  // TODO ...
+		  console.log('clicked on ' + userid);
 		});
     }
     markers[userid].setPosition(new google.maps.LatLng(lat, lng));
@@ -377,7 +378,7 @@ var CTLON = (function () {
             buddy.css('background-image', 'url(' + (friend.avatar ? friend.avatar : 'img/default-avatar.jpg') + ')');
           $('#buddies').append(buddy);
         }
-        placeMarker(friend.id, friend.lat, friend.lng, timestamp);
+        placeMarker(friend.id, friend.lat, friend.lng, timestamp, friend.avatar);
       });
     }).error(function (jqXHR, textStatus, errorThrown) {
       alert('Fehler beim Abfragen der User-Liste [' + textStatus + ': ' + errorThrown + ']');
