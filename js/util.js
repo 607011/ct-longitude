@@ -32,24 +32,12 @@ var Rect = function (x0, y0, x1, y1) {
   this.x1 = x1;
   this.y1 = y1;
 };
-Rect.prototype.left = function () {
-  return this.x0;
-};
-Rect.prototype.top = function () {
-  return this.y0;
-};
-Rect.prototype.right = function () {
-  return this.x1;
-};
-Rect.prototype.bottom = function () {
-  return this.y1;
-};
-Rect.prototype.width = function () {
-  return this.x1 - this.x0;
-};
-Rect.prototype.height = function () {
-  return this.y1 - this.y0;
-};
+Rect.prototype.left = function () { return this.x0; };
+Rect.prototype.top = function () { return this.y0; };
+Rect.prototype.right = function () { return this.x1; };
+Rect.prototype.bottom = function () { return this.y1; };
+Rect.prototype.width = function () { return this.x1 - this.x0; };
+Rect.prototype.height = function () { return this.y1 - this.y0; };
 Rect.prototype.slices = function () {
   var w = this.width(), h = this.height(), w2, h2;
   if (w >= h) {

@@ -396,7 +396,6 @@ var CTLON = (function () {
         function placeMarker(friend, isClustered) {
           var icon;
           if (typeof markers[friend.id] === 'undefined') {
-            // TODO: hübschere Markierungen mit Pfeil, der auf die exakte Position zeigt
             if (isClustered) {
               icon = {
                 url: friend.avatar ? friend.avatar : DEFAULT_AVATAR,
