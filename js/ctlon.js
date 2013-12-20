@@ -495,6 +495,8 @@ var CTLON = (function () {
   function setPosition(pos) {
     me.timestamp = Math.floor(pos.timestamp / 1000);
     me.latLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
+    if (infoWindow !== null && me.id === selectedUser)
+      infoWindow.setPosition(me.latLng);
     localStorage.setItem('my-last-position', pos.coords.latitude + ',' + pos.coords.longitude)
     $('#userid').attr('data-lat', pos.coords.latitude).attr('data-lng', pos.coords.longitude);
     if (!$('#incognito').is(':checked')) {
@@ -524,7 +526,6 @@ var CTLON = (function () {
           else if (Date.now() - lastWatch < MinWatchInterval)
             return;
           lastWatch = null;
-          google.maps.event.addListenerOnce(map, 'idle', getFriends);
         }
       }).error(function (jqXHR, textStatus, errorThrown) {
         alert('Fehler beim Übertragen deines Standorts [' + textStatus + ': ' + errorThrown + ']');
