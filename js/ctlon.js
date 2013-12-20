@@ -143,6 +143,11 @@ var CTLON = (function () {
     computeDistanceBetween = haversineDistance;
 
 
+  function hideInfoWindow() {
+    if (infoWindow)
+      infoWindow.setMap(null);
+  }
+
   function showProgressInfo() {
     $('#info-bar-container').addClass('barberpole');
     $('#buddy-container').addClass('opaque');
@@ -365,9 +370,9 @@ var CTLON = (function () {
                 .attr('data-last-update', friend.readableTimestamp)
                 .attr('title', friend.id + ' - letzte Aktualisierung: ' + friend.readableTimestamp)
               .click(function () {
-                if (infoWindow)
-                  infoWindow.setMap(null);
+                hideInfoWindow();
                 highlightFriend(friend.id, true);
+                hideCircle();
               }.bind(friend));
           if (friend.id === me.id)
             buddy.css('display', 'none');
@@ -751,6 +756,7 @@ var CTLON = (function () {
         }
 
         $('#userid').click(function () {
+          hideInfoWindow();
           highlightFriend(me.id, true);
           hideCircle();
         });
