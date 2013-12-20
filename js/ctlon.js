@@ -127,7 +127,6 @@ var CTLON = (function () {
     DEFAULT_AVATAR = 'img/default-avatar.jpg',
     MaxDistance = 200 * 1000 /* meters */,
     PollingInterval = 60 * 1000 /* milliseconds */,
-    MinWatchInterval = 30 * 1000 /* milliseconds */,
     Avatar = { Width: 44, Height: 44, backgroundColor: '#000' },
     Symbol = { Width: 46, Height: 53 },
     TrackColor = '#039',
@@ -136,7 +135,6 @@ var CTLON = (function () {
     markers = {},
     me = { id: undefined, latLng: null, avatar: null },
     getFriendsPending = false,
-    lastWatch = null,
     watchId = undefined,
     selectedUser = undefined,
     pollingId = undefined,
@@ -564,11 +562,7 @@ var CTLON = (function () {
           return;
         }
         if (data.status === 'ok' && data.userid === me.id) {
-          if (lastWatch === null)
-            lastWatch = Date.now();
-          else if (Date.now() - lastWatch < MinWatchInterval)
-            return;
-          lastWatch = null;
+          // XXX?
         }
       }).error(function (jqXHR, textStatus, errorThrown) {
         alert('Fehler beim Übertragen deines Standorts [' + textStatus + ': ' + errorThrown + ']');
