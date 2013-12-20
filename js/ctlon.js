@@ -321,6 +321,136 @@ var CTLON = (function () {
   }
 
 
+  function processFriends(users) {
+    $.each(clusteredFriends(users), function (i, cluster) {
+
+      function process(friend) {
+        var buddy;
+        friend.readableTimestamp = new Date(friend.timestamp * 1000).toLocaleString();
+        if (me.latLng === null) // location queries disabled, use first friend's position for range calculation (XXX: is this needed any longer?)
+          me.latLng = new google.maps.LatLng(friend.lat, friend.lng);
+        buddy = $('<span></span>')
+              .addClass('buddy').attr('id', 'buddy-' + friend.id)
+              .attr('data-lat', friend.lat)
+              .attr('data-lng', friend.lng)
+              .attr('data-accuracy', friend.accuracy)
+              .attr('data-timestamp', friend.timestamp)
+              .attr('data-last-update', friend.readableTimestamp)
+              .attr('title', friend.id + ' - letzte Aktualisierung: ' + friend.readableTimestamp)
+            .click(function () {
+              hideInfoWindow();
+              highlightFriend(friend.id, true);
+              hideCircle();
+            }.bind(friend));
+        if (friend.id === me.id)
+          buddy.css('display', 'none');
+        else
+          buddy.css('background-image', 'url(' + (friend.avatar ? friend.avatar : DEFAULT_AVATAR) + ')');
+        if ($('#buddies').children().length === 0) {
+          $('#buddies').append(buddy);
+        }
+        else {
+          $('#buddies').children().each(function (i, b) {
+            if (friend.timestamp > parseInt($(b).attr('data-timestamp'), 10)) {
+              buddy.insertBefore(b);
+              return false;
+            }
+            if (i == $('#buddies').children().length - 1)
+              $('#buddies').append(buddy);
+          });
+        }
+      }
+
+      function placeMarker(friend, isClustered) {
+        var icon;
+        if (typeof markers[friend.id] === 'undefined') {
+          if (isClustered) {
+            icon = {
+              url: friend.avatar ? friend.avatar : DEFAULT_AVATAR,
+              size: new google.maps.Size(Avatar.Width + 2, Avatar.Height + 2),
+              anchor: new google.maps.Point(1 + Avatar.Width / 2, 1 + Avatar.Height / 2),
+            };
+          }
+          else {
+            icon = {
+              url: friend.avatar,
+              size: new google.maps.Size(Symbol.Width, Symbol.Height),
+              anchor: new google.maps.Point(Symbol.Width / 2, 0),
+            };
+          }
+          markers[friend.id] = new google.maps.Marker({
+            title: friend.id + (friend.readableTimestamp ? (' (' + friend.readableTimestamp + ')') : ''),
+            icon: icon,
+            map: map
+          });
+          google.maps.event.addListener(markers[friend.id], 'click', function () {
+            console.log('clicked on ' + friend.id);
+          });
+        }
+        markers[friend.id].setPosition(friend.latLng);
+      }
+
+      if (cluster.length === 1) { // single
+        (function () {
+          var img = new Image, friend = cluster[0];
+          img.onload = function () {
+            var canvas = document.createElement('canvas'), ctx = canvas.getContext('2d'),
+              avatarImg = new Image(Avatar.Width, Avatar.Height);
+            process(friend);
+            avatarImg.src = friend.avatar || DEFAULT_AVATAR;
+            canvas.width = Symbol.Width;
+            canvas.height = Symbol.Height;
+            ctx.drawImage(img, 0, 0);
+            ctx.drawImage(avatarImg, 1, 8, Avatar.Width, Avatar.Height);
+            friend.avatar = canvas.toDataURL();
+            placeMarker(friend, false);
+          };
+          img.src = 'img/single-symbol.png';
+        })();
+      }
+      else if (cluster.length > 1) { // cluster
+        (function () {
+          var canvas = document.createElement('canvas'), ctx = canvas.getContext('2d'),
+            rect = new Rect(0, 0, Avatar.Width, Avatar.Height),
+            slices = rect.partitioned(cluster.length),
+            imagesLoaded = 0,
+            clusteredFriends = {
+              id: [],
+              latLng: null,
+              avatar: null,
+              bounds: new google.maps.LatLngBounds()
+            };
+          canvas.width = Avatar.Width + 2;
+          canvas.height = Avatar.Height + 2;
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          $.each(cluster, function (i, friend) {
+            var img = new Image;
+            img.onload = function () {
+              var slice = slices[i], sliceW = slice.width(), sliceH = slice.height();
+              if (sliceH > sliceW)
+                ctx.drawImage(img, img.width / 4, 0, img.width / 2, img.height, slice.left() + 1, slice.top() + 1, sliceW, sliceH);
+              else
+                ctx.drawImage(img, 0, 0, img.width, img.height, slice.left() + 1, slice.top() + 1, sliceW, sliceH);
+              clusteredFriends.id.push(friend.id);
+              clusteredFriends.bounds.extend(friend.latLng);
+              if (++imagesLoaded === slices.length) {
+                clusteredFriends.avatar = canvas.toDataURL();
+                clusteredFriends.id = clusteredFriends.id.join('/');
+                clusteredFriends.latLng = clusteredFriends.bounds.getCenter();
+                placeMarker(clusteredFriends, true);
+              }
+            };
+            img.src = friend.avatar || DEFAULT_AVATAR;
+            process(friend);
+          });
+        })();
+      }
+    });
+
+  }
+
+
   function getFriends() {
     var data = {}, maxAge;
     if (getFriendsPending)
@@ -354,131 +484,8 @@ var CTLON = (function () {
       if (typeof data.users !== 'object')
         return;
 
-      $.each(clusteredFriends(data.users), function (i, cluster) {
+      processFriends(data.users);
 
-        function process(friend) {
-          var buddy;
-          friend.readableTimestamp = new Date(friend.timestamp * 1000).toLocaleString();
-          if (me.latLng === null) // location queries disabled, use first friend's position for range calculation (XXX: is this needed any longer?)
-            me.latLng = new google.maps.LatLng(friend.lat, friend.lng);
-          buddy = $('<span></span>')
-                .addClass('buddy').attr('id', 'buddy-' + friend.id)
-                .attr('data-lat', friend.lat)
-                .attr('data-lng', friend.lng)
-                .attr('data-accuracy', friend.accuracy)
-                .attr('data-timestamp', friend.timestamp)
-                .attr('data-last-update', friend.readableTimestamp)
-                .attr('title', friend.id + ' - letzte Aktualisierung: ' + friend.readableTimestamp)
-              .click(function () {
-                hideInfoWindow();
-                highlightFriend(friend.id, true);
-                hideCircle();
-              }.bind(friend));
-          if (friend.id === me.id)
-            buddy.css('display', 'none');
-          else
-            buddy.css('background-image', 'url(' + (friend.avatar ? friend.avatar : DEFAULT_AVATAR) + ')');
-          if ($('#buddies').children().length === 0) {
-            $('#buddies').append(buddy);
-          }
-          else {
-            $('#buddies').children().each(function (i, b) {
-              if (friend.timestamp > parseInt($(b).attr('data-timestamp'), 10)) {
-                buddy.insertBefore(b);
-                return false;
-              }
-              if (i == $('#buddies').children().length - 1)
-                $('#buddies').append(buddy);
-            });
-          }
-        }
-
-        function placeMarker(friend, isClustered) {
-          var icon;
-          if (typeof markers[friend.id] === 'undefined') {
-            if (isClustered) {
-              icon = {
-                url: friend.avatar ? friend.avatar : DEFAULT_AVATAR,
-                size: new google.maps.Size(Avatar.Width + 2, Avatar.Height + 2),
-                anchor: new google.maps.Point(1 + Avatar.Width / 2, 1 + Avatar.Height / 2),
-              };
-            }
-            else {
-              icon = {
-                url: friend.avatar,
-                size: new google.maps.Size(Symbol.Width, Symbol.Height),
-                anchor: new google.maps.Point(Symbol.Width / 2, 0),
-              };
-            }
-            markers[friend.id] = new google.maps.Marker({
-              title: friend.id + (friend.readableTimestamp ? (' (' + friend.readableTimestamp + ')') : ''),
-              icon: icon,
-              map: map
-            });
-            google.maps.event.addListener(markers[friend.id], 'click', function () {
-              console.log('clicked on ' + friend.id);
-            });
-          }
-          markers[friend.id].setPosition(friend.latLng);
-        }
-
-        if (cluster.length === 1) { // single
-          (function () {
-            var img = new Image, friend = cluster[0];
-            img.onload = function () {
-              var canvas = document.createElement('canvas'), ctx = canvas.getContext('2d'),
-                avatarImg = new Image(Avatar.Width, Avatar.Height);
-              process(friend);
-              avatarImg.src = friend.avatar || DEFAULT_AVATAR;
-              canvas.width = Symbol.Width;
-              canvas.height = Symbol.Height;
-              ctx.drawImage(img, 0, 0);
-              ctx.drawImage(avatarImg, 1, 8, Avatar.Width, Avatar.Height);
-              friend.avatar = canvas.toDataURL();
-              placeMarker(friend, false);
-            };
-            img.src = 'img/single-symbol.png';
-          })();
-        }
-        else if (cluster.length > 1) { // cluster
-          (function () {
-            var canvas = document.createElement('canvas'), ctx = canvas.getContext('2d'),
-              rect = new Rect(0, 0, Avatar.Width, Avatar.Height),
-              slices = rect.partitioned(cluster.length),
-              imagesLoaded = 0,
-              clusteredFriends = {
-                id: [],
-                latLng: null,
-                avatar: null,
-                bounds: new google.maps.LatLngBounds()
-              };
-            canvas.width = Avatar.Width + 2;
-            canvas.height = Avatar.Height + 2;
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            $.each(cluster, function (i, friend) {
-              var img = new Image;
-              img.onload = function () {
-                var slice = slices[i], sliceW = slice.width(), sliceH = slice.height();
-                if (sliceH > sliceW)
-                  ctx.drawImage(img, img.width / 4, 0, img.width / 2, img.height, slice.left() + 1, slice.top() + 1, sliceW, sliceH);
-                else
-                  ctx.drawImage(img, 0, 0, img.width, img.height, slice.left() + 1, slice.top() + 1, sliceW, sliceH);
-                clusteredFriends.id.push(friend.id);
-                clusteredFriends.bounds.extend(friend.latLng);
-                if (++imagesLoaded === slices.length) {
-                  clusteredFriends.avatar = canvas.toDataURL();
-                  clusteredFriends.id = clusteredFriends.id.join('/');
-                  clusteredFriends.latLng = clusteredFriends.bounds.getCenter();
-                  placeMarker(clusteredFriends, true);
-                }
-              };
-              img.src = friend.avatar || DEFAULT_AVATAR;
-              process(friend);
-            });
-          })();
-        }
-      });
     }).error(function (jqXHR, textStatus, errorThrown) {
       alert('Fehler beim Abfragen der User-Liste [' + textStatus + ': ' + errorThrown + ']');
     });
