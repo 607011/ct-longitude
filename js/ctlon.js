@@ -318,7 +318,7 @@ var CTLON = (function () {
         icon: {
           url: friend.avatar ? friend.avatar : DEFAULT_AVATAR,
           size: new google.maps.Size(Avatar.Width, Avatar.Height),
-          anchor: new google.maps.Point(Avatar.Width / 2, 0),
+          anchor: new google.maps.Point(Avatar.Width / 2, Avatar.Height / 2),
         },
         map: map
       });
@@ -367,7 +367,7 @@ var CTLON = (function () {
         function processSingle(friend) {
           var buddy;
           friend.readableTimestamp = new Date(friend.timestamp * 1000).toLocaleString();
-          if (me.latLng === null) // location queries disabled, use first friend's position for range calculation
+          if (me.latLng === null) // location queries disabled, use first friend's position for range calculation (XXX: is this needed any longer?)
             me.latLng = new google.maps.LatLng(friend.lat, friend.lng);
           buddy = $('<span></span>')
                 .addClass('buddy').attr('id', 'buddy-' + friend.id)
@@ -660,6 +660,7 @@ var CTLON = (function () {
     init: function () {
       var mapOptions = {
         bounds_changed: function () {
+          infoWindow.setMap(null);
           google.maps.event.addListenerOnce(map, 'idle', getFriends);
         },
         zoom: 13
