@@ -273,38 +273,32 @@ var CTLON = (function () {
 
 
   function clusteredFriends(userData) {
-    // adapted from http://www.appelsiini.net/2008/introduction-to-marker-clustering-with-google-maps
-    var clustered = [], cluster, users = Object.keys(userData), currentUser, p0,
+    var clustered = [], cluster, userIDs = Object.keys(userData), currentUser, currentUserId, p0,
       projection = overlay.getProjection(), sqr = function (a) { return a * a; },
-      distance = Math.sqrt(sqr(Avatar.Width) + sqr(Avatar.Height));
-    while (users.length > 0) {
-      currentUser = users.pop();
-      if (typeof currentUser === 'undefined')
+      distance = (Avatar.Width + Avatar.Height) / 3;
+    while (userIDs.length > 0) {
+      currentUserId = userIDs.pop();
+      if (currentUserId === null)
         continue;
-      cluster = [];
-      userData[currentUser].latLng = new google.maps.LatLng(userData[currentUser].lat, userData[currentUser].lng);
-      userData[currentUser].id = currentUser;
-      p0 = projection.fromLatLngToDivPixel(userData[currentUser].latLng);
-      $.each(users, function (i, user) {
+      currentUser = userData[currentUserId];
+      cluster = [currentUser];
+      currentUser.id = currentUserId;
+      currentUser.latLng = new google.maps.LatLng(currentUser.lat, currentUser.lng);
+      p0 = projection.fromLatLngToDivPixel(currentUser.latLng);
+      $.each(userIDs, function (i, userid) {
         var p1, p0p1;
-        if (typeof users[i] === 'undefined')
+        if (userIDs[i] === null)
           return;
-        userData[user].latLng = new google.maps.LatLng(userData[user].lat, userData[user].lng);
-        userData[user].id = user;
-        p1 = projection.fromLatLngToDivPixel(userData[user].latLng);
+        userData[userid].latLng = new google.maps.LatLng(userData[userid].lat, userData[userid].lng);
+        userData[userid].id = userid;
+        p1 = projection.fromLatLngToDivPixel(userData[userid].latLng);
         p0p1 = Math.sqrt(sqr(p1.x - p0.x) + sqr(p1.y - p0.y));
         if (p0p1 < distance) {
-          cluster.push(userData[user]);
-          users[i] = undefined;
+          cluster.push(userData[userid]);
+          userIDs[i] = null;
         }
       });
-      if (cluster.length > 0) {
-        cluster.push(userData[currentUser]);
-        clustered.push(cluster);
-      }
-      else {
-        clustered.push([ userData[currentUser] ]);
-      }
+      clustered.push(cluster);
     }
     return clustered;
   }
