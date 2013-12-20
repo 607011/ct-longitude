@@ -32,7 +32,7 @@ if ($dbh) {
         $rows = $dbh->query($q);
         $row = $rows->fetch();
         if (!$row[0]) {
-            $res['error'] = 'user does not share tracks';
+            $res['error'] = "user '$userid' does not share tracks";
             $res['status'] = 'error';
             goto end;
         }

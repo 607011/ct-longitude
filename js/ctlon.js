@@ -196,7 +196,7 @@ var CTLON = (function () {
         data = JSON.parse(data);
       }
       catch (e) {
-        console.error(e);
+        console.error(e, data);
         return;
       }
       if (data.status === OK) {
@@ -213,6 +213,7 @@ var CTLON = (function () {
             geodesic: true
           });
         polyline.setPath(path);
+        polyline.setMap(map);
       }
       else {
         if (polyline) {
@@ -229,7 +230,11 @@ var CTLON = (function () {
     var m = markers[userid], accuracy, userIDs, found = false, isCluster = false;
     if (typeof userid !== 'string')
       return;
-    if (typeof m !== 'object') { // user is possible clustered, find user
+    if (polyline)
+      polyline.setMap(null);
+    if ($('#show-tracks').is(':checked'))
+      getTrack(userid);
+    if (typeof m !== 'object') { // user is possibly clustered, find user
       $.each(Object.keys(markers), function (i, uid) {
         if (uid.split('/').indexOf(userid) >= 0) {
           userid = uid;
@@ -263,11 +268,11 @@ var CTLON = (function () {
       circle.setVisible($('#show-accuracy').is(':checked'));
       if (infoWindow === null)
         infoWindow = new google.maps.InfoWindow();
-      infoWindow.setOptions({ map: map });
+      infoWindow.setMap(map);
+      infoWindow.setPosition(m.getPosition());
       infoWindow.setContent('<p><strong>' + userid + '</strong><br/>' +
         $('#buddy-' + userid).attr('data-last-update') + '</p>' +
         '<p id="address"></p>');
-      infoWindow.setPosition(m.getPosition());
       geocoder.geocode({ 'latLng': m.getPosition() }, function (results, status) {
         if (status == google.maps.GeocoderStatus.OK) {
           if (results[1]) {
@@ -278,13 +283,6 @@ var CTLON = (function () {
           console.warn('Umgekehrtes Geocoding fehlgeschlagen: ' + status);
         }
       });
-    }
-    if ($('#show-tracks').is(':checked')) {
-      getTrack(userid);
-    }
-    else {
-      if (polyline)
-        polyline.setMap(null);
     }
   }
 
@@ -470,7 +468,7 @@ var CTLON = (function () {
         data = JSON.parse(data);
       }
       catch (e) {
-        console.error(e);
+        console.error(e, data);
         return;
       }
       if (data.status !== 'ok') {
@@ -543,7 +541,7 @@ var CTLON = (function () {
         pendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
       }
       catch (e) {
-        console.error(e);
+        console.error(e, data);
         return;
       }
       delete location.userid;
@@ -562,7 +560,7 @@ var CTLON = (function () {
           data = JSON.parse(data);
         }
         catch (e) {
-          console.error(e);
+          console.error(e, data);
           return;
         }
         if (data.status === 'ok' && data.userid === me.id) {
@@ -782,7 +780,7 @@ var CTLON = (function () {
           data = JSON.parse(data);
         }
         catch (e) {
-          console.error(e);
+          console.error(e, data);
           return;
         }
 
