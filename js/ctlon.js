@@ -304,16 +304,27 @@ var CTLON = (function () {
   }
 
 
-  function placeMarker(friend) {
+  function placeMarker(friend, isClustered) {
+    var icon;
     if (typeof markers[friend.id] === 'undefined') {
       // TODO: hübschere Markierungen mit Pfeil, der auf die exakte Position zeigt
-      markers[friend.id] = new google.maps.Marker({
-        title: friend.id + (friend.readableTimestamp ? (' (' + friend.readableTimestamp + ')') : ''),
-        icon: {
+      if (isClustered) {
+        icon = {
+          url: friend.avatar,
+          size: new google.maps.Size(Avatar.Width, Avatar.Height),
+          anchor: new google.maps.Point(Avatar.Width / 2, Avatar.Height / 2),
+        };
+      }
+      else {
+        icon = {
           url: friend.avatar ? friend.avatar : DEFAULT_AVATAR,
           size: new google.maps.Size(Avatar.Width, Avatar.Height),
           anchor: new google.maps.Point(Avatar.Width / 2, Avatar.Height / 2),
-        },
+        };
+      }
+      markers[friend.id] = new google.maps.Marker({
+        title: friend.id + (friend.readableTimestamp ? (' (' + friend.readableTimestamp + ')') : ''),
+        icon: icon,
         map: map
       });
       google.maps.event.addListener(markers[friend.id], 'click', function () {
@@ -414,11 +425,13 @@ var CTLON = (function () {
             $.each(cluster, function (i, friend) {
               var img = new Image;
               img.onload = function () {
-                var slice = slices[i];
+                var slice = slices[i], sliceW = slice.width(), sliceH = slice.height();
+                if (sliceH > sliceW)
+                  ctx.drawImage(img, img.width / 4, 0, img.width / 2, img.height, slice.left(), slice.top(), sliceW, sliceH);
+                else
+                  ctx.drawImage(img, 0, 0, img.width, img.height, slice.left(), slice.top(), sliceW, sliceH);
                 clusteredFriends.id.push(friend.id);
                 clusteredFriends.bounds.extend(friend.latLng);
-                // TODO: Seitenverhältnis der eingepassten Avatare beibehalten
-                ctx.drawImage(img, 0, 0, img.width, img.height, slice.x0, slice.y0, slice.width(), slice.height());
                 if (++imagesLoaded === slices.length) {
                   clusteredFriends.avatar = canvas.toDataURL();
                   clusteredFriends.id = clusteredFriends.id.join(', ');

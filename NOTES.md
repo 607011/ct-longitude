@@ -7,7 +7,8 @@ Features
 
 Fehler
 ======
-
+ 
+ * Klick auf geclusterten User in der Leiste ist wirkungslos
  * Karte wird nicht richtig initialisiert, wenn die User-Leiste leer ist
  * Kreis um Symbol wandert nicht bei Standortänderungen mit
  * Ausgewählter User sollte vorne bleiben: Wenn ich den Ausschnitt verschiebe, bin ich nicht mehr vorn :-(
