@@ -129,6 +129,7 @@ var CTLON = (function () {
     PollingInterval = 60 * 1000 /* milliseconds */,
     MinWatchInterval = 30 * 1000 /* milliseconds */,
     Avatar = { Width: 44, Height: 44, backgroundColor: '#000' },
+    Symbol = { Width: 46, Height: 53 },
     TrackColor = '#039',
     geocoder = new google.maps.Geocoder(),
     map = null, overlay = null, circle = null, polyline = null, infoWindow = null,
@@ -139,7 +140,6 @@ var CTLON = (function () {
     watchId = undefined,
     selectedUser = undefined,
     pollingId = undefined,
-    deg2rad = function (angle) { return 0.017453292519943295 * angle; },
     computeDistanceBetween = haversineDistance;
 
 
@@ -304,37 +304,6 @@ var CTLON = (function () {
   }
 
 
-  function placeMarker(friend, isClustered) {
-    var icon;
-    if (typeof markers[friend.id] === 'undefined') {
-      // TODO: hübschere Markierungen mit Pfeil, der auf die exakte Position zeigt
-      if (isClustered) {
-        icon = {
-          url: friend.avatar,
-          size: new google.maps.Size(Avatar.Width, Avatar.Height),
-          anchor: new google.maps.Point(Avatar.Width / 2, Avatar.Height / 2),
-        };
-      }
-      else {
-        icon = {
-          url: friend.avatar ? friend.avatar : DEFAULT_AVATAR,
-          size: new google.maps.Size(Avatar.Width, Avatar.Height),
-          anchor: new google.maps.Point(Avatar.Width / 2, Avatar.Height / 2),
-        };
-      }
-      markers[friend.id] = new google.maps.Marker({
-        title: friend.id + (friend.readableTimestamp ? (' (' + friend.readableTimestamp + ')') : ''),
-        icon: icon,
-        map: map
-      });
-      google.maps.event.addListener(markers[friend.id], 'click', function () {
-        console.log('clicked on ' + friend.id);
-      });
-    }
-    markers[friend.id].setPosition(friend.latLng);
-  }
-
-
   function getFriends() {
     var data = {}, maxAge;
     if (getFriendsPending)
@@ -369,6 +338,7 @@ var CTLON = (function () {
         return;
 
       $.each(clusteredFriends(data.users), function (i, cluster) {
+
         function processSingle(friend) {
           var buddy;
           friend.readableTimestamp = new Date(friend.timestamp * 1000).toLocaleString();
@@ -404,9 +374,53 @@ var CTLON = (function () {
           }
         }
 
+        function placeMarker(friend, isClustered) {
+          var icon;
+          if (typeof markers[friend.id] === 'undefined') {
+            // TODO: hübschere Markierungen mit Pfeil, der auf die exakte Position zeigt
+            if (isClustered) {
+              icon = {
+                url: friend.avatar ? friend.avatar : DEFAULT_AVATAR,
+                size: new google.maps.Size(Avatar.Width + 2, Avatar.Height + 2),
+                anchor: new google.maps.Point(1 + Avatar.Width / 2, 1 + Avatar.Height / 2),
+              };
+            }
+            else {
+              icon = {
+                url: friend.avatar,
+                size: new google.maps.Size(Symbol.Width, Symbol.Height),
+                anchor: new google.maps.Point(Symbol.Width / 2, Symbol.Height),
+              };
+            }
+            markers[friend.id] = new google.maps.Marker({
+              title: friend.id + (friend.readableTimestamp ? (' (' + friend.readableTimestamp + ')') : ''),
+              icon: icon,
+              map: map
+            });
+            google.maps.event.addListener(markers[friend.id], 'click', function () {
+              console.log('clicked on ' + friend.id);
+            });
+          }
+          markers[friend.id].setPosition(friend.latLng);
+        }
+
         if (cluster.length === 1) { // single
-          processSingle(cluster[0]);
-          placeMarker(cluster[0]);
+          (function () {
+            var img = new Image, friend = cluster[0];
+            img.onload = function () {
+              var canvas = document.createElement('canvas'), ctx = canvas.getContext('2d'),
+                avatarImg = new Image(Avatar.Width, Avatar.Height);
+              processSingle(friend);
+              avatarImg.src = friend.avatar || DEFAULT_AVATAR;
+              canvas.width = Symbol.Width;
+              canvas.height = Symbol.Height;
+              ctx.drawImage(img, 0, 0);
+              ctx.drawImage(avatarImg, 1, 1, Avatar.Width, Avatar.Height);
+              friend.avatar = canvas.toDataURL();
+              placeMarker(friend, false);
+            };
+            img.src = 'img/single-symbol.png';
+          })();
         }
         else if (cluster.length > 1) { // cluster
           (function () {
@@ -420,23 +434,25 @@ var CTLON = (function () {
                 avatar: null,
                 bounds: new google.maps.LatLngBounds()
               };
-            canvas.width = Avatar.Width;
-            canvas.height = Avatar.Height;
+            canvas.width = Avatar.Width + 2;
+            canvas.height = Avatar.Height + 2;
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             $.each(cluster, function (i, friend) {
               var img = new Image;
               img.onload = function () {
                 var slice = slices[i], sliceW = slice.width(), sliceH = slice.height();
                 if (sliceH > sliceW)
-                  ctx.drawImage(img, img.width / 4, 0, img.width / 2, img.height, slice.left(), slice.top(), sliceW, sliceH);
+                  ctx.drawImage(img, img.width / 4, 0, img.width / 2, img.height, slice.left() + 1, slice.top() + 1, sliceW, sliceH);
                 else
-                  ctx.drawImage(img, 0, 0, img.width, img.height, slice.left(), slice.top(), sliceW, sliceH);
+                  ctx.drawImage(img, 0, 0, img.width, img.height, slice.left() + 1, slice.top() + 1, sliceW, sliceH);
                 clusteredFriends.id.push(friend.id);
                 clusteredFriends.bounds.extend(friend.latLng);
                 if (++imagesLoaded === slices.length) {
                   clusteredFriends.avatar = canvas.toDataURL();
                   clusteredFriends.id = clusteredFriends.id.join(', ');
                   clusteredFriends.latLng = clusteredFriends.bounds.getCenter();
-                  placeMarker(clusteredFriends);
+                  placeMarker(clusteredFriends, true);
                 }
               };
               img.src = friend.avatar || DEFAULT_AVATAR;
@@ -656,7 +672,7 @@ var CTLON = (function () {
 
 
   function preloadImages() {
-    var imgFiles = ['loader-5-0.gif'];
+    var imgFiles = ['loader-5-0.gif', 'single-symbol.png'];
     $.each(imgFiles, function (i, f) {
       var img = new Image;
       img.src = 'img/' + f;
@@ -667,8 +683,6 @@ var CTLON = (function () {
     init: function () {
       var mapOptions = {
         bounds_changed: function () {
-          if (infoWindow)
-            infoWindow.setMap(null);
           google.maps.event.addListenerOnce(map, 'idle', getFriends);
         },
         zoom: 13
