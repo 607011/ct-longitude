@@ -20,78 +20,6 @@ var DEBUG = false;
 
 window.D = DEBUG ? function (msg) { $('#log').html(msg); } : function () { };
 
-(function () {
-  "use strict";
-  var timerId;
-  if (typeof window.requestAnimationFrame !== 'function')
-    window.requestAnimationFrame = (function () {
-      return window.requestAnimationFrame ||
-        window.webkitRequestAnimationFrame ||
-        window.mozRequestAnimationFrame ||
-        window.oRequestAnimationFrame ||
-        window.msRequestAnimationFrame ||
-        function (callback) { timerId = window.setTimeout(callback, 1000 / 60); };
-    })();
-
-  if (typeof window.cancelAnimationFrame !== 'function')
-    window.cancelAnimationFrame = (function () {
-      return window.requestAnimationFrame ||
-        window.webkitRequestAnimationFrame ||
-        window.mozRequestAnimationFrame ||
-        window.oRequestAnimationFrame ||
-        window.msRequestAnimationFrame ||
-        function () { window.clearTimeout(timerId); };
-    })();
-})();
-
-
-var Rect = function (x0, y0, x1, y1) {
-  this.x0 = x0;
-  this.x1 = x1;
-  this.y0 = y0;
-  this.y1 = y1;
-};
-Rect.prototype.width = function () {
-  return this.x1 - this.x0;
-};
-Rect.prototype.height = function () {
-  return this.y1 - this.y0;
-};
-Rect.prototype.landscape = function () {
-  return this.width() > this.height();
-};
-Rect.prototype.clone = function () {
-  return new Rect(this.x0, this.y0, this.x1, this.y1);
-};
-Rect.prototype.slices = function () {
-  var w2, h2;
-  if (this.landscape()) {
-    h2 = this.height() / 2;
-    return [new Rect(this.x0, this.y0, this.x1, this.y1 - h2), new Rect(this.x0, this.y0 + h2, this.x1, this.y1)];
-  }
-  else {
-    w2 = this.width() / 2;
-    return [new Rect(this.x0, this.y0, this.x1 - w2, this.y1), new Rect(this.x0 + w2, this.y0, this.x1, this.y1)];
-  }
-};
-Rect.prototype.partitioned = function (numTiles) {
-  var partitions = [],
-    makeTree = function (lo, hi, rect) {
-      var mid, slices;
-      if (lo > hi) {
-        partitions.push(rect);
-        return;
-      }
-      mid = ((lo + hi) / 2) >> 0;
-      slices = rect.slices();
-      makeTree(lo, mid - 1, slices[0]);
-      makeTree(mid + 1, hi, slices[1]);
-    }
-  makeTree(0, numTiles - 2, this);
-  return partitions;
-}
-
-
 /* Taken from jQuery Easing v1.3 - Copyright © 2008 George McGinley Smith - http://gsgd.co.uk/sandbox/jquery/easing/ */
 jQuery.extend(jQuery.easing, {
   easeInOutCubic: function (x, t, b, c, d) {
@@ -212,13 +140,7 @@ var CTLON = (function () {
     selectedUser = undefined,
     pollingId = undefined,
     deg2rad = function (angle) { return 0.017453292519943295 * angle; },
-    computeDistanceBetween = function haversineDistance(latLng1, latLng2) {
-      var latd = 0.5 * deg2rad(latLng2.lat() - latLng1.lat()),
-        lond = 0.5 * deg2rad(latLng2.lng() - latLng1.lng()),
-        a = Math.sin(latd) * Math.sin(latd) + Math.cos(deg2rad(latLng1.lat())) * Math.cos(deg2rad(latLng2.lat())) * Math.sin(lond) * Math.sin(lond),
-        c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return 1000 * 6371.0 * c;
-    };
+    computeDistanceBetween = haversineDistance;
 
 
   function showProgressInfo() {
@@ -240,25 +162,6 @@ var CTLON = (function () {
       marker.setMap(null);
     });
     markers = {};
-  }
-
-
-  function placeMarker(friend) {
-    if (typeof markers[friend.id] === 'undefined') {
-      markers[friend.id] = new google.maps.Marker({
-        title: friend.id + ' (' + friend.readableTimestamp + ')',
-        icon: {
-          url: friend.avatar ? friend.avatar : DEFAULT_AVATAR,
-          size: new google.maps.Size(Avatar.Width, Avatar.Height),
-          anchor: new google.maps.Point(Avatar.Width / 2, 0),
-        },
-        map: map
-      });
-      google.maps.event.addListener(markers[friend.id], 'click', function () {
-        console.log('clicked on ' + friend.id);
-      });
-    }
-    markers[friend.id].setPosition(friend.latLng);
   }
 
 
@@ -407,6 +310,26 @@ var CTLON = (function () {
   }
 
 
+  function placeMarker(friend) {
+    if (typeof markers[friend.id] === 'undefined') {
+      // TODO: hübschere Markierungen mit Pfeil, der auf die exakte Position zeigt
+      markers[friend.id] = new google.maps.Marker({
+        title: friend.id + (friend.readableTimestamp ? (' (' + friend.readableTimestamp + ')') : ''),
+        icon: {
+          url: friend.avatar ? friend.avatar : DEFAULT_AVATAR,
+          size: new google.maps.Size(Avatar.Width, Avatar.Height),
+          anchor: new google.maps.Point(Avatar.Width / 2, 0),
+        },
+        map: map
+      });
+      google.maps.event.addListener(markers[friend.id], 'click', function () {
+        console.log('clicked on ' + friend.id);
+      });
+    }
+    markers[friend.id].setPosition(friend.latLng);
+  }
+
+
   function getFriends() {
     var data = {}, maxAge;
     if (getFriendsPending)
@@ -422,7 +345,6 @@ var CTLON = (function () {
       data: data,
       accepts: 'json'
     }).done(function (data) {
-      var clusters;
       try {
         data = JSON.parse(data);
       }
@@ -440,8 +362,8 @@ var CTLON = (function () {
       $('#buddies').empty().css('left', '0px');
       if (typeof data.users !== 'object')
         return;
-      clusters = clusteredFriends(data.users);
-      $.each(clusters, function (i, cluster) {
+
+      $.each(clusteredFriends(data.users), function (i, cluster) {
         function processSingle(friend) {
           var buddy;
           friend.readableTimestamp = new Date(friend.timestamp * 1000).toLocaleString();
@@ -477,43 +399,43 @@ var CTLON = (function () {
           }
         }
 
-        if (cluster.length > 1) { // cluster
-          var canvas, ctx, rect, slices, img,
-            clusteredFriends = {
-              id: '',
-              avatar: null
-            };
-
-          canvas = document.createElement('canvas');
-          ctx = canvas.getContext('2d');
-          canvas.width = Avatar.Width;
-          canvas.height = Avatar.Height;
-
-          rect = new Rect(0, 0, Avatar.Width, Avatar.Height);
-          slices = rect.partitioned(cluster.length);
-          console.log(cluster, slices);
-
-          $.each(cluster, function (i, friend) {
-            var img = new Image, imagesLoaded = 0;
-            processSingle(friend);
-            img.onload = function () {
-              var slice = slices[i];
-              clusteredFriends.id += friend.id + ' ';
-              ctx.drawImage(img, 0, 0, img.width, img.height, slice.x0, slice.y0, slice.width(), slice.height());
-              console.log(friend.id, slice, slices.length);
-              if (++imagesLoaded === slices.length - 1) {
-                friend.avatar = canvas.toDataURL();
-                placeMarker(clusteredFriends);
-                $('#cluster-image').css('background-image', friend.avatar).append($(canvas));
-              }
-            };
-            img.src = friend.avatar || DEFAULT_AVATAR;
-          });
-
-        }
-        else { // single
+        if (cluster.length === 1) { // single
           processSingle(cluster[0]);
           placeMarker(cluster[0]);
+        }
+        else if (cluster.length > 1) { // cluster
+          (function () {
+            var canvas = document.createElement('canvas'), ctx = canvas.getContext('2d'),
+              rect = new Rect(0, 0, Avatar.Width, Avatar.Height),
+              slices = rect.partitioned(cluster.length),
+              imagesLoaded = 0,
+              clusteredFriends = {
+                id: [],
+                latLng: null,
+                avatar: null,
+                bounds: new google.maps.LatLngBounds()
+              };
+            canvas.width = Avatar.Width;
+            canvas.height = Avatar.Height;
+            $.each(cluster, function (i, friend) {
+              var img = new Image;
+              img.onload = function () {
+                var slice = slices[i];
+                clusteredFriends.id.push(friend.id);
+                clusteredFriends.bounds.extend(friend.latLng);
+                // TODO: Seitenverhältnis der eingepassten Avatare beibehalten
+                ctx.drawImage(img, 0, 0, img.width, img.height, slice.x0, slice.y0, slice.width(), slice.height());
+                if (++imagesLoaded === slices.length) {
+                  clusteredFriends.avatar = canvas.toDataURL();
+                  clusteredFriends.id = clusteredFriends.id.join(', ');
+                  clusteredFriends.latLng = clusteredFriends.bounds.getCenter();
+                  placeMarker(clusteredFriends);
+                }
+              };
+              img.src = friend.avatar || DEFAULT_AVATAR;
+              processSingle(friend);
+            });
+          })();
         }
       });
     }).error(function (jqXHR, textStatus, errorThrown) {
@@ -595,6 +517,10 @@ var CTLON = (function () {
           var aspectRatio, canvas, ctx, w, h, xoff, yoff;
           if (img.width !== Avatar.Width || img.height !== Avatar.Height) {
             // scale image
+            canvas = document.createElement('canvas');
+            ctx = canvas.getContext('2d');
+            canvas.width = Avatar.Width;
+            canvas.height = Avatar.Height;
             aspectRatio = img.width / img.height;
             if (aspectRatio > 1) {
               w = Avatar.Width;
@@ -608,10 +534,6 @@ var CTLON = (function () {
               xoff = Math.round((Avatar.Width - w) / 2);
               yoff = 0;
             }
-            canvas = document.createElement('canvas');
-            ctx = canvas.getContext('2d');
-            canvas.width = Avatar.Width;
-            canvas.height = Avatar.Height;
             ctx.fillStyle = Avatar.backgroundColor;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(img, 0, 0, img.width, img.height, xoff, yoff, w, h);
