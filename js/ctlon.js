@@ -221,47 +221,59 @@ var CTLON = (function () {
 
 
   function highlightFriend(userid, centerMap) {
-    var m = markers[userid], accuracy;
-    if (typeof m !== 'object')
-      return;
+    var m = markers[userid], accuracy, userIDs, found = false, isCluster = false;
     if (typeof userid !== 'string')
       return;
+    if (typeof m !== 'object') { // user is possible clustered, find user
+      $.each(Object.keys(markers), function (i, uid) {
+        if (uid.split('/').indexOf(userid) >= 0) {
+          userid = uid;
+          m = markers[userid];
+          found = true;
+          isCluster = true;
+          return false;
+        }
+      });
+      if (!found)
+        return;
+    }
     selectedUser = userid;
     if (centerMap)
       map.setCenter(m.getPosition());
     m.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
-    accuracy = parseInt($('#buddy-' + userid).attr('data-accuracy'), 10);
-    if (circle === null) {
-      circle = new google.maps.Circle({
-        map: map,
-        strokeColor: '#f00',
-        strokeOpacity: 0.7,
-        strokeWeight: 2,
-        fillColor: '#f00',
-        fillOpacity: 0.1
+    if (!isCluster) {
+      accuracy = parseInt($('#buddy-' + userid).attr('data-accuracy'), 10);
+      if (circle === null) {
+        circle = new google.maps.Circle({
+          map: map,
+          strokeColor: '#f00',
+          strokeOpacity: 0.7,
+          strokeWeight: 2,
+          fillColor: '#f00',
+          fillOpacity: 0.1
+        });
+      }
+      circle.setRadius(accuracy);
+      circle.setCenter(m.getPosition());
+      circle.setVisible($('#show-accuracy').is(':checked'));
+      if (infoWindow === null)
+        infoWindow = new google.maps.InfoWindow();
+      infoWindow.setOptions({ map: map });
+      infoWindow.setContent('<p><strong>' + userid + '</strong><br/>' +
+        $('#buddy-' + userid).attr('data-last-update') + '</p>' +
+        '<p id="address"></p>');
+      infoWindow.setPosition(m.getPosition());
+      geocoder.geocode({ 'latLng': m.getPosition() }, function (results, status) {
+        if (status == google.maps.GeocoderStatus.OK) {
+          if (results[1]) {
+            $('#address').text(results[1].formatted_address);
+          }
+        }
+        else {
+          console.warn('Umgekehrtes Geocoding fehlgeschlagen: ' + status);
+        }
       });
     }
-    circle.setRadius(accuracy);
-    circle.setCenter(m.getPosition());
-    circle.setVisible($('#show-accuracy').is(':checked'));
-    if (infoWindow === null)
-      infoWindow = new google.maps.InfoWindow();
-    infoWindow.setOptions({ map: map });
-    infoWindow.setContent('<p><strong>' + userid + '</strong><br/>' +
-      $('#buddy-' + userid).attr('data-last-update') + '</p>' +
-      '<p id="address"></p>');
-    infoWindow.setPosition(m.getPosition());
-
-    geocoder.geocode({ 'latLng': m.getPosition() }, function (results, status) {
-      if (status == google.maps.GeocoderStatus.OK) {
-        if (results[1]) {
-          $('#address').text(results[1].formatted_address);
-        }
-      }
-      else {
-        console.warn('Umgekehrtes Geocoding fehlgeschlagen: ' + status);
-      }
-    });
     if ($('#show-tracks').is(':checked')) {
       getTrack(userid);
     }
@@ -339,7 +351,7 @@ var CTLON = (function () {
 
       $.each(clusteredFriends(data.users), function (i, cluster) {
 
-        function processSingle(friend) {
+        function process(friend) {
           var buddy;
           friend.readableTimestamp = new Date(friend.timestamp * 1000).toLocaleString();
           if (me.latLng === null) // location queries disabled, use first friend's position for range calculation (XXX: is this needed any longer?)
@@ -353,6 +365,8 @@ var CTLON = (function () {
                 .attr('data-last-update', friend.readableTimestamp)
                 .attr('title', friend.id + ' - letzte Aktualisierung: ' + friend.readableTimestamp)
               .click(function () {
+                if (infoWindow)
+                  infoWindow.setMap(null);
                 highlightFriend(friend.id, true);
               }.bind(friend));
           if (friend.id === me.id)
@@ -410,7 +424,7 @@ var CTLON = (function () {
             img.onload = function () {
               var canvas = document.createElement('canvas'), ctx = canvas.getContext('2d'),
                 avatarImg = new Image(Avatar.Width, Avatar.Height);
-              processSingle(friend);
+              process(friend);
               avatarImg.src = friend.avatar || DEFAULT_AVATAR;
               canvas.width = Symbol.Width;
               canvas.height = Symbol.Height;
@@ -450,13 +464,13 @@ var CTLON = (function () {
                 clusteredFriends.bounds.extend(friend.latLng);
                 if (++imagesLoaded === slices.length) {
                   clusteredFriends.avatar = canvas.toDataURL();
-                  clusteredFriends.id = clusteredFriends.id.join(', ');
+                  clusteredFriends.id = clusteredFriends.id.join('/');
                   clusteredFriends.latLng = clusteredFriends.bounds.getCenter();
                   placeMarker(clusteredFriends, true);
                 }
               };
               img.src = friend.avatar || DEFAULT_AVATAR;
-              processSingle(friend);
+              process(friend);
             });
           })();
         }
