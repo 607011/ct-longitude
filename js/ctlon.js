@@ -751,15 +751,15 @@ var CTLON = (function () {
           $('#userid').text(me.id);
         }
 
-        myPos = localStorage.getItem('my-last-position');
-        if (myPos) {
+        if (typeof data.lat === 'number' && typeof data.lng === 'number') {
+          me.latLng = new google.maps.LatLng(data.lat, data.lng);
+        }
+        else if (myPos = localStorage.getItem('my-last-position')) {
           myPos = myPos.split(',')
           me.latLng = (myPos.length === 2) ? new google.maps.LatLng(myPos[0], myPos[1]) : new google.maps.LatLng(51, 10.3);
         }
         else {
-          me.latLng = (typeof data.lat === 'number' && typeof data.lng === 'number')
-          ? new google.maps.LatLng(data.lat, data.lng)
-          : new google.maps.LatLng(51, 10.3);
+          me.latLng = new google.maps.LatLng(51, 10.3); // last resort (center of Germany)
         }
 
         $('#userid').click(function () {
