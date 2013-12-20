@@ -389,7 +389,7 @@ var CTLON = (function () {
               icon = {
                 url: friend.avatar,
                 size: new google.maps.Size(Symbol.Width, Symbol.Height),
-                anchor: new google.maps.Point(Symbol.Width / 2, Symbol.Height),
+                anchor: new google.maps.Point(Symbol.Width / 2, 0),
               };
             }
             markers[friend.id] = new google.maps.Marker({
@@ -415,7 +415,7 @@ var CTLON = (function () {
               canvas.width = Symbol.Width;
               canvas.height = Symbol.Height;
               ctx.drawImage(img, 0, 0);
-              ctx.drawImage(avatarImg, 1, 1, Avatar.Width, Avatar.Height);
+              ctx.drawImage(avatarImg, 1, 8, Avatar.Width, Avatar.Height);
               friend.avatar = canvas.toDataURL();
               placeMarker(friend, false);
             };
