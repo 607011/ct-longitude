@@ -660,7 +660,8 @@ var CTLON = (function () {
     init: function () {
       var mapOptions = {
         bounds_changed: function () {
-          infoWindow.setMap(null);
+          if (infoWindow)
+            infoWindow.setMap(null);
           google.maps.event.addListenerOnce(map, 'idle', getFriends);
         },
         zoom: 13
