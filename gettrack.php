@@ -15,7 +15,7 @@ if (!isset($_REQUEST['userid'])) {
 
 $userid = $_REQUEST['userid'];
 if (!preg_match('/^\\w+$/', $userid)) {
-    $res['error'] = 'bad userid';
+    $res['error'] = 'bad userid: ' . $userid;
     $res['status'] = 'error';
     goto end;
 }

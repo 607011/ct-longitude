@@ -5,6 +5,7 @@ Features
  * Track muss beim Eintreffen neuer Standortdaten verlängert werden
  * Wenn offline: Zwischenspeicherung eigener Standortdaten. Wenn wieder online: Zwischenspeicher an Server senden.
  * Klick auf Symbol sollte irgendeine sinnvolle Aktion auslösen
+ * Fake-Standort durch Tippen/Klicken auf Karte setzen
 
 Fehler
 ======

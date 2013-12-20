@@ -492,26 +492,71 @@ var CTLON = (function () {
   }
 
 
+  function goOnline() {
+
+  }
+
+
+  function goOffline() {
+
+  }
+
+
+  function transferPendingLocations() {
+    var pendpendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
+    if (pendpendingLocations.length === 0)
+      return;
+    $.ajax({
+      url: 'pending.php',
+      type: 'POST',
+      accepts: 'json',
+      data: {
+        userid: pendingLocations[0].userid,
+        locations: pendingLocations
+      }
+    })
+    localStorage.setItem('pending-locations', '[]');
+  }
+
+
   function setPosition(pos) {
+    var location, pendingLocations;
     me.timestamp = Math.floor(pos.timestamp / 1000);
     me.latLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
     if (infoWindow !== null && me.id === selectedUser)
       infoWindow.setPosition(me.latLng);
     localStorage.setItem('my-last-position', pos.coords.latitude + ',' + pos.coords.longitude)
     $('#userid').attr('data-lat', pos.coords.latitude).attr('data-lng', pos.coords.longitude);
-    if (!$('#incognito').is(':checked')) {
+    location = {
+      userid: me.id,
+      lat: pos.coords.latitude,
+      lng: pos.coords.longitude,
+      timestamp: me.timestamp
+    };
+    location.accuracy = pos.coords.accuracy ? pos.coords.accuracy : undefined;
+    location.heading = pos.coords.heading ? pos.coords.heading : undefined;
+    location.speed = pos.coords.speed ? pos.coords.speed : undefined;
+    location.altitude = pos.coords.altitude ? pos.coords.altitude : undefined;
+    location.altitudeaccuracy = pos.coords.altitudeAccuracy ? pos.coords.altitudeAccuracy : undefined;
+    if ($('#offline-mode').is(':checked')) {
+      try {
+        pendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
+      }
+      catch (e) {
+        console.error(e);
+        return;
+      }
+      delete location.userid;
+      pendingLocations.push(location);
+      localStorage.setItem('pending-locations', JSON.stringify(pendingLocations));
+    }
+    else if (!$('#incognito').is(':checked')) {
       // send own location to server
       $.ajax({
-        url: 'setloc.php?userid=' + me.id +
-         '&lat=' + me.latLng.lat() +
-         '&lng=' + me.latLng.lng() +
-         '&accuracy=' + pos.coords.accuracy +
-         '&heading=' + pos.coords.heading +
-         '&speed=' + pos.coords.speed +
-         '&altitude=' + pos.coords.altitude +
-         '&altitudeaccuracy=' + pos.coords.altitudeAccuracy +
-         '&timestamp=' + me.timestamp,
-        accepts: 'json'
+        url: 'setloc.php',
+        type: 'POST',
+        accepts: 'json',
+        data: location
       }).done(function (data) {
         try {
           data = JSON.parse(data);
@@ -811,6 +856,13 @@ var CTLON = (function () {
           localStorage.setItem('incognito', checked);
         }).prop('checked', localStorage.getItem('incognito') === 'true');
 
+        $('#offline-mode').change(function (e) {
+          var checked = $('#offline-mode').is(':checked')
+          localStorage.setItem('offline-mode', checked);
+          if (!checked)
+            transferPendingLocations();
+        }).prop('checked', localStorage.getItem('offline-mode') === 'true');
+
         $('#show-accuracy').change(function (e) {
           var checked = $('#show-accuracy').is(':checked')
           localStorage.setItem('show-accuracy', checked);
@@ -850,6 +902,11 @@ var CTLON = (function () {
         else {
           alert('Dein Browser stellt keine Standortabfragen zur Verfügung.');
         }
+
+        $(window).bind({
+          online: goOnline,
+          offline: goOffline
+        });
 
         google.maps.event.addListenerOnce(map, 'idle', getFriends);
       });
