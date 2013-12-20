@@ -489,12 +489,13 @@ var CTLON = (function () {
 
 
   function goOnline() {
-
+    console.log('went online.');
+    transferPendingLocations();
   }
 
 
   function goOffline() {
-
+    console.warn('went offline.');
   }
 
 
@@ -510,8 +511,13 @@ var CTLON = (function () {
         userid: pendingLocations[0].userid,
         locations: pendingLocations
       }
-    })
-    localStorage.setItem('pending-locations', '[]');
+    }).done(function (data) {
+      if (data.status === 'ok') {
+        localStorage.setItem('pending-locations', '[]');
+      }
+    }).error(function (jqXHR, textStatus, errorThrown) {
+      alert('Fehler beim Übertragen der zwischengespeicherten Standorte [' + textStatus + ': ' + errorThrown + ']');
+    });
   }
 
 
@@ -534,7 +540,7 @@ var CTLON = (function () {
     location.speed = pos.coords.speed ? pos.coords.speed : undefined;
     location.altitude = pos.coords.altitude ? pos.coords.altitude : undefined;
     location.altitudeaccuracy = pos.coords.altitudeAccuracy ? pos.coords.altitudeAccuracy : undefined;
-    if ($('#offline-mode').is(':checked')) {
+    if (!navigator.onLine || $('#offline-mode').is(':checked')) {
       try {
         pendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
       }

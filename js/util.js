@@ -42,7 +42,7 @@ Rect.prototype.slices = function () {
   var w = this.width(), h = this.height(), w2, h2;
   if (w >= h) {
     w2 = w / 2;
-    return [new Rect(this.x0, this.y0, this.x1 - w2, this.y1), new Rect(this.x0 + w2, this.y0, this.x1, this.y1)];
+    return [new Rect(this.x0 + w2, this.y0, this.x1, this.y1), new Rect(this.x0, this.y0, this.x1 - w2, this.y1)];
   }
   else {
     h2 = h / 2;
