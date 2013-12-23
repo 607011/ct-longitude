@@ -179,6 +179,7 @@ var CTLON = (function () {
       t1 = Math.floor(Date.now() / 1000), t0 = (maxAge < 0) ? 0 : t1 - maxAge;
     if (!$('#show-tracks').is(':checked'))
       return;
+    showProgressInfo();
     $.ajax({
       url: 'gettrack.php',
       type: 'POST',
@@ -220,6 +221,7 @@ var CTLON = (function () {
         }
         console.warn(data.error);
       }
+      hideProgressInfo();
     });
   }
 
@@ -500,8 +502,15 @@ var CTLON = (function () {
 
 
   function transferPendingLocations() {
-    var pendpendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
-    if (pendpendingLocations.length === 0)
+    console.log('transferPendingLocations()');
+    showProgressInfo();
+    try {
+      var pendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
+    }
+    catch (e) {
+      console.error('invalid data in localStorage["pending-locations"]');
+    }
+    if (!pendingLocations || pendingLocations.length === 0)
       return;
     $.ajax({
       url: 'pending.php',
@@ -512,6 +521,7 @@ var CTLON = (function () {
         locations: pendingLocations
       }
     }).done(function (data) {
+      hideProgressInfo();
       if (data.status === 'ok') {
         localStorage.setItem('pending-locations', '[]');
       }
@@ -751,6 +761,7 @@ var CTLON = (function () {
   return {
     init: function () {
       var mapOptions = {
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
         bounds_changed: function () {
           google.maps.event.addListenerOnce(map, 'idle', getFriends);
         },
