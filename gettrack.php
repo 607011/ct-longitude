@@ -15,7 +15,7 @@ if (!isset($_REQUEST['userid'])) {
 
 $userid = $_REQUEST['userid'];
 if (!preg_match('/^\\w+$/', $userid)) {
-    $res['error'] = 'bad userid';
+    $res['error'] = 'bad userid: ' . $userid;
     $res['status'] = 'error';
     goto end;
 }
@@ -32,7 +32,7 @@ if ($dbh) {
         $rows = $dbh->query($q);
         $row = $rows->fetch();
         if (!$row[0]) {
-            $res['error'] = 'user does not share tracks';
+            $res['error'] = "user '$userid' does not share tracks";
             $res['status'] = 'error';
             goto end;
         }
