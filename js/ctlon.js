@@ -333,9 +333,7 @@ var CTLON = (function () {
       function process(friend) {
         var buddy;
         friend.readableTimestamp = new Date(friend.timestamp * 1000).toLocaleString();
-        if (me.latLng === null) // location queries disabled, use first friend's position for range calculation (XXX: is this needed any longer?)
-          me.latLng = new google.maps.LatLng(friend.lat, friend.lng);
-        buddy = $('<span></span>')
+        if (me.latLng === null) // location queries disabled, use first friend's position for range calculation          me.latLng = new google.maps.LatLng(friend.lat, friend.lng);        buddy = $('<span></span>')
               .addClass('buddy').attr('id', 'buddy-' + friend.id)
               .attr('data-lat', friend.lat)
               .attr('data-lng', friend.lng)
@@ -361,7 +359,7 @@ var CTLON = (function () {
               buddy.insertBefore(b);
               return false;
             }
-            if (i == $('#buddies').children().length - 1)
+            if (($('#buddies').children().length - 1) === i)
               $('#buddies').append(buddy);
           });
         }
@@ -459,7 +457,12 @@ var CTLON = (function () {
 
 
   function getFriends() {
-    var data = {}, maxAge;
+    var maxAge,
+    rangeConstraint = parseInt($('#range-constraint').val(), 10),
+    data = {
+      lat: map.getCenter().lat(),
+      lng: map.getCenter().lng()
+    };
     if (getFriendsPending)
       return;
     showProgressInfo();
@@ -467,6 +470,12 @@ var CTLON = (function () {
     maxAge = parseInt($('#max-location-age').val(), 10);
     if (maxAge >= 0)
       data.maxage = maxAge;
+    if (rangeConstraint === 0) {
+      data.maxdist = Math.ceil(google.maps.geometry.spherical.computeDistanceBetween(map.getBounds().getNorthEast(), map.getBounds().getSouthWest()) / 2);
+    }
+    else if (rangeConstraint > 0) {
+      data.maxdist = rangeConstraint;
+    }
     $.ajax({
       url: 'friends.php',
       type: 'POST',
@@ -515,10 +524,11 @@ var CTLON = (function () {
 
 
   function transferPendingLocations() {
+    var pendingLocations;
     console.log('transferPendingLocations()');
     showProgressInfo();
     try {
-      var pendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
+      pendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
     }
     catch (e) {
       console.error('invalid data in localStorage["pending-locations"]');
@@ -551,9 +561,11 @@ var CTLON = (function () {
     var location, pendingLocations;
     me.timestamp = Math.floor(pos.timestamp / 1000);
     me.latLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
+    console.log(infoWindow, me.id, selectedUser, me.latLng);
     if (infoWindow !== null && me.id === selectedUser)
       infoWindow.setPosition(me.latLng);
-    markers[me.id].setPosition(me.latLng);
+    if (markers.hasOwnProperty(me.id))
+      markers[me.id].setPosition(me.latLng);
     localStorage.setItem('my-last-position', pos.coords.latitude + ',' + pos.coords.longitude)
     $('#userid').attr('data-lat', pos.coords.latitude).attr('data-lng', pos.coords.longitude);
     location = {
@@ -920,6 +932,11 @@ var CTLON = (function () {
           localStorage.setItem('max-waypoint-age', $('#max-waypoint-age').val());
           getTrack(selectedUser);
         }).children('option').filter('[value=' + (localStorage.getItem('max-waypoint-age') || '86400') + ']').prop('selected', true);
+
+        $('#range-constraint').change(function (e) {
+          localStorage.setItem('range-constraint', $('#range-constraint').val());
+          getFriends();
+        }).children('option').filter('[value=' + (localStorage.getItem('range-constraint') || '-1') + ']').prop('selected', true);
 
         // init Google Maps
         google.maps.visualRefresh = true;

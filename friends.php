@@ -24,7 +24,7 @@ if (isset($_REQUEST['lng']))
     $reflng = floatval($_REQUEST['lng']);
 if (isset($_REQUEST['maxdist']))
     $maxdist = floatval($_REQUEST['maxdist']);
-$checkdist = isset($reflat) && isset($reflng) && $isset($maxdist);
+$checkdist = isset($reflat) && isset($reflng) && isset($maxdist);
 
 if ($dbh) {
     $q = "SELECT locations.userid, locations.timestamp, locations.lat, locations.lng, locations.accuracy, locations.altitude, locations.altitudeaccuracy, locations.heading, locations.speed, buddies.avatar" .
