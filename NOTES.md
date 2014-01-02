@@ -7,6 +7,7 @@ Features
  * Klick auf Symbol sollte irgendeine sinnvolle Aktion auslösen
  * Fake-Standort durch Tippen/Klicken auf Karte setzen
  * friends.php: Ausfiltern aller User, die sich außerhalb eines bestimmten Radius befinden (haversineDistance()...)
+ * Upload von KML- und GPX-Trackdaten
 
 Fehler
 ======

@@ -130,6 +130,7 @@ var CTLON = (function () {
     Avatar = { Width: 44, Height: 44, backgroundColor: '#000' },
     Symbol = { Width: 46, Height: 53 },
     TrackColor = '#039',
+    firstLoad = true,
     geocoder = new google.maps.Geocoder(),
     map = null, overlay = null, circle = null, polyline = null, infoWindow = null,
     markers = {},
@@ -385,6 +386,7 @@ var CTLON = (function () {
             console.log('clicked on ' + friend.id);
           });
         }
+        // if (($('#incognito').is(':checked') || $('#offline-mode').is(':checked')) && friend.id === me.id && !firstLoad)
         markers[friend.id].setPosition(friend.latLng);
       }
 
@@ -537,6 +539,7 @@ var CTLON = (function () {
     me.latLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
     if (infoWindow !== null && me.id === selectedUser)
       infoWindow.setPosition(me.latLng);
+    markers[me.id].setPosition(me.latLng);
     localStorage.setItem('my-last-position', pos.coords.latitude + ',' + pos.coords.longitude)
     $('#userid').attr('data-lat', pos.coords.latitude).attr('data-lng', pos.coords.longitude);
     location = {
@@ -919,6 +922,16 @@ var CTLON = (function () {
 
         google.maps.event.addListenerOnce(map, 'idle', getFriends);
       });
+    },
+    setLocation: function (lat, lng) {
+      var pos = {
+        timestamp: Date.now(),
+        coords: {
+          latitude: lat,
+          longitude: lng
+        }
+      }
+      setPosition(pos);
     }
   };
 })();
