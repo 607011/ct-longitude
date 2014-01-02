@@ -39,7 +39,7 @@ if ($dbh) {
     foreach($rows as $row)  {
         $lat = floatval($row[2]);
         $lng = floatval($row[3]);
-        if ($checkdist && haversineDistance($reflat, $reflng, $lat, $lng) > $maxdist)
+        if ($_SERVER['PHP_AUTH_USER'] !== $row[0] && $checkdist && haversineDistance($reflat, $reflng, $lat, $lng) > $maxdist)
             continue;
         $res['users'][$row[0]] = array(
             'timestamp' => intval($row[1]),
