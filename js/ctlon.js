@@ -126,7 +126,6 @@ var CTLON = (function () {
     MOBILE = navigator.userAgent.indexOf('Mobile') >= 0,
     DEFAULT_AVATAR = 'img/default-avatar.jpg',
     MaxDistance = 200 * 1000 /* meters */,
-    PollingInterval = 60 * 1000 /* milliseconds */,
     MinWatchInterval = 30 * 1000 /* milliseconds */,
     Avatar = { Width: 44, Height: 44, backgroundColor: '#000' },
     Symbol = { Width: 46, Height: 53 },
@@ -705,6 +704,22 @@ var CTLON = (function () {
     });
   }
 
+
+  function startPolling() {
+    if (navigator.geolocation) {
+      watchId = navigator.geolocation.watchPosition(setPosition, function () {
+        alert('Standortabfrage fehlgeschlagen.');
+      });
+      if (pollingId)
+        clearInterval(pollingId);
+      pollingId = setInterval(getFriends, 1000 * parseInt($('#polling-interval').val(), 10));
+    }
+    else {
+      alert('Dein Browser stellt keine Standortabfragen zur Verfügung.');
+    }
+
+  }
+
   return {
     init: function () {
       var mapOptions = {
@@ -829,6 +844,11 @@ var CTLON = (function () {
           getTrack(selectedUser);
         }).children('option').filter('[value=' + (localStorage.getItem('max-waypoint-age') || '86400') + ']').prop('selected', true);
 
+        $('#polling-interval').change(function (e) {
+          localStorage.setItem('polling-interval', $('#polling-interval').val());
+          startPolling();
+        }).children('option').filter('[value=' + (localStorage.getItem('polling-interval') || '60') + ']').prop('selected', true);
+
         // init Google Maps
         google.maps.visualRefresh = true;
         map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
@@ -840,18 +860,9 @@ var CTLON = (function () {
         overlay.draw = function () { };
         overlay.setMap(map);
 
-        // start polling
-        if (navigator.geolocation) {
-          watchId = navigator.geolocation.watchPosition(setPosition, function () {
-            alert('Standortabfrage fehlgeschlagen.');
-          });
-          pollingId = setInterval(getFriends, PollingInterval);
-        }
-        else {
-          alert('Dein Browser stellt keine Standortabfragen zur Verfügung.');
-        }
-
         google.maps.event.addListenerOnce(map, 'idle', getFriends);
+
+        startPolling();
       });
     }
   };

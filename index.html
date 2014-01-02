@@ -130,6 +130,20 @@
         <tr>
           <td></td>
           <td>
+            <label for="max-waypoint-age">Aktualisierungsintervall</label>
+            <div class="hint">In welchen Abständen sollen Daten der Freunde abgerufen werden?</div>
+            <select name="polling-interval" id="polling-interval">
+              <option value="15">15 Sekunden</option>
+              <option value="30">30 Sekunden</option>
+              <option value="60">1 Minute</option>
+              <option value="300">5 Minuten</option>
+              <option value="900">15 Minuten</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>
             <label for="avatar">Avatar</label>
             <div class="hint">optimales Bildmaß: <span id="avatar-max-width"></span>&nbsp;&times;&nbsp;<span id="avatar-max-height"></span>&nbsp;Pixel</div>
             <div>
