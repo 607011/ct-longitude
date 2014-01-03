@@ -1,5 +1,5 @@
-﻿<?php
-include('globals.php');
+<?php
+require_once 'globals.php';
 
 if (!isset($_SERVER['PHP_AUTH_USER'])) {
     $res['status'] = 'error';

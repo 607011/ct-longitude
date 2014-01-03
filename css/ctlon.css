@@ -7,7 +7,80 @@ html, body {
   height: 100%;
   font: 17px/21px -apple-system-font, Helvetica, Arial, Verdana, sans-serif;
   overflow: hidden;
+  background-color: #111;
 }
+
+.hide {
+  display: none;
+  opacity: 0;
+  -moz-transition: opacity ease 0.5s;
+  -o-transition: opacity ease 0.5s;
+  -webkit-transition: opacity ease 0.5s;
+  transition: opacity ease 0.5s;
+}
+
+.show {
+  display: block;
+  opacity: 1;
+  -moz-transition: opacity ease 0.5s;
+  -o-transition: opacity ease 0.5s;
+  -webkit-transition: opacity ease 0.5s;
+  transition: opacity ease 0.5s;
+}
+
+#app {
+  overflow: hidden;
+}
+
+#logon {
+  text-align: center;
+  padding: 25% 0;
+  background-color: #333;
+  color: #eee;
+  height: 100%;
+  overflow: hidden;
+}
+
+  #logon h1 {
+    line-height: 150%;
+  }
+
+  #logon footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    padding: 0.5ex 1em;
+    font-size: smaller;
+  }
+
+#user-info {
+  display: inline-block;
+}
+
+#user-photo {
+  display: block;
+  width: 50px;
+  height: 50px;
+  border: 1px solid #444;
+  margin: 0 auto;
+  padding: 0;
+}
+
+#user-name {
+  display: block;
+  margin: 0 auto;
+}
+
+#logout-button {
+  cursor: pointer;
+  font-size: smaller;
+}
+
+  #logout-button:hover {
+    text-decoration: underline;
+  }
 
 #map-canvas {
   position: absolute;

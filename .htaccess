@@ -1,4 +1,0 @@
-AuthType Basic
-AuthName "c't Longitude"
-AuthUserFile D:/Developer/xampp/htpasswd-ctlat
-require valid-user

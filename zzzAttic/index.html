@@ -1,0 +1,72 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+  <title>c't Longitude</title>
+  <script src="js/jquery-2.0.3.min.js"></script>
+  <link rel="stylesheet" href="css/ctlon.css" />
+  <!-- Login with Google -->
+  <script type="text/javascript">
+    var profile, idToken = null,
+      clientId = '794079768346.apps.googleusercontent.com';
+
+    (function () {
+      var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+      po.src = 'https://apis.google.com/js/client:plusone.js?onload=onLoadCallback';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+    })();
+
+    function onLoadCallback() {
+      $('#googleSigninButton').addClass('show');
+    }
+
+    function signinCallback(authResult) {
+      if (authResult['status']['signed_in']) {
+        $('#googleSigninButton').removeClass('show').addClass('hide');
+        sessionState = authResult.session_state;
+        console.log(authResult);
+        idToken = authResult.id_token;
+        gapi.client.load('plus', 'v1', function loadProfile() {
+          gapi.client.plus.people.get({
+            'userId': 'me'
+          }).execute(function loadProfileCallback(response) {
+            profile = response;
+            $('#user-info').attr('style', '');
+            $('#user-photo').css('background-image', 'url(' + profile.image.url + ')').attr('title', profile.displayName);
+            $('#user-name').text(profile.displayName);
+          });
+        });
+      }
+      else {
+        // Possible error values:
+        //   "user_signed_out" - User is signed-out
+        //   "access_denied" - User denied access to your app
+        //   "immediate_failed" - Could not automatically log in the user
+        console.log('Google sign-in state: ' + authResult['error']);
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="logon">
+    <h1>c't Longitude</h1>
+
+    <span id="user-info" style="display: none;">
+      <span id="user-photo"></span>
+      <span id="user-name"></span>
+      <span id="logout-button">Abmelden</span>
+    </span>
+
+    <!-- Login with Google -->
+    <span id="googleSigninButton" class="hide">
+      <span class="g-signin"
+        data-callback="signinCallback"
+        data-clientid="794079768346.apps.googleusercontent.com"
+        data-cookiepolicy="single_host_origin"
+        data-height="short"
+        data-scope="https://www.googleapis.com/auth/plus.login"></span>
+    </span>
+  </div>
+</body>
+</html>
