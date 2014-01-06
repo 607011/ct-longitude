@@ -1,5 +1,7 @@
 <?php
 require_once 'globals.php';
 
-print json_encode(validateGoogleOauthToken($_GET['token']));
+$token = $_GET['token'];
+validateGoogleOauthToken($token);
+print json_encode($_SESSION[$token]);
 ?>

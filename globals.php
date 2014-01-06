@@ -12,8 +12,6 @@ $DB_NAME = "$DB_PATH/ctlat.sqlite";
 $DB_PERSISTENT = false;
 
 
-session_start();
-
 ///////////////////////////////////
 /// DO NOT CHANGE ANYTHING BELOW
 ///////////////////////////////////
@@ -26,6 +24,9 @@ $res = array();
 
 function validateGoogleOauthToken($token) {
     global $GOOGLE_OAUTH_CLIENT_ID;
+    session_start();
+    
+    // check token validity via Google REST API
     $service_url = 'https://www.googleapis.com/oauth2/v1/tokeninfo?id_token=' . filter_var($token, FILTER_SANITIZE_STRING);
     $curl = curl_init();
     curl_setopt($curl, CURLOPT_URL, $service_url);
@@ -36,13 +37,15 @@ function validateGoogleOauthToken($token) {
     if ($curl_response === false) {
         $info = curl_getinfo($curl);
         curl_close($curl);
-        die('<pre>error occured during curl exec. Additional info: ' . var_export($info) . '</pre>');
+        die('<pre>error occured during curl_exec(): ' . var_export($info) . '</pre>');
     }
     curl_close($curl);
     $result = json_decode($curl_response, true);
     
-    return (isset($result['user_id']) && isset($result['audience']) && $result['audience'] === $GOOGLE_OAUTH_CLIENT_ID)
-        ? $result
-        : null;
+    if (isset($result['user_id']) && isset($result['audience']) && $result['audience'] === $GOOGLE_OAUTH_CLIENT_ID) {
+        $_SESSION[$token] = $result;
+        return true;
+    }
+    return false;
 }
 ?>
