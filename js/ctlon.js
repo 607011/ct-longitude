@@ -135,7 +135,7 @@ var CTLON = (function () {
     geocoder = new google.maps.Geocoder(),
     map = null, overlay = null, circle = null, polyline = null, infoWindow = null,
     markers = {},
-    me = { id: undefined, latLng: null, avatar: null, name: null, oauth: { clientId: null, token: null }, profile: null },
+    me = { id: undefined, latLng: null, avatar: null, name: null, oauth: { clientId: null, token: null, expiresAt: null, expiresIn: null }, profile: null },
     getFriendsPending = false,
     watchId = undefined,
     selectedUser = undefined,
@@ -1014,9 +1014,12 @@ var CTLON = (function () {
         $('#logon').removeClass('show').addClass('hide');
         $('#app').removeClass('hide').addClass('show').css('visibility', 'visible');
         $('#googleSigninButton').removeClass('show').addClass('hide');
-        console.log(authResult);
+        console.log('authResult', authResult);
         me.oauth.token = authResult.id_token;
         me.oauth.clientId = authResult.client_id;
+        me.oauth.expiresAt = parseInt(authResult.expires_at);
+        me.oauth.expiresIn = parseInt(authResult.expires_in);
+        console.log('me.oauth', me.oauth);
         //gapi.client.load('plus', 'v1', function loadProfile() {
         //  gapi.client.plus.people.get({
         //    'userId': 'me'

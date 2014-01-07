@@ -9,11 +9,13 @@ function haversineDistance($lat1, $lng1, $lat2, $lng2) {
   return 1000 * 6371.0 * $c;
 }
 
-if (!isset($_SERVER['PHP_AUTH_USER'])) {
+if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['oauth']['token'])) {
     $res['status'] = 'error';
     $res['error'] = 'no authenticated user';
     goto end;
 }
+
+$token = $_REQUEST['oauth']['token'];
 
 $maxage = isset($_REQUEST['maxage']) ? intval($_REQUEST['maxage']) : time();
 $t0 = time() - $maxage;
@@ -39,7 +41,7 @@ if ($dbh) {
     foreach($rows as $row)  {
         $lat = floatval($row[2]);
         $lng = floatval($row[3]);
-        if ($_SERVER['PHP_AUTH_USER'] !== $row[0] && $checkdist && haversineDistance($reflat, $reflng, $lat, $lng) > $maxdist)
+        if ($_SESSION[$token]['user_id'] !== $row[0] && $checkdist && haversineDistance($reflat, $reflng, $lat, $lng) > $maxdist)
             continue;
         $res['users'][$row[0]] = array(
             'timestamp' => intval($row[1]),
@@ -54,6 +56,7 @@ if ($dbh) {
         );
     }
     $res['status'] = 'ok';
+    $res['user_id'] = $_SESSION[$token]['user_id'];
 }
 
 end:
