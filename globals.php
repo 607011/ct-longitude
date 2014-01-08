@@ -39,8 +39,8 @@ function validateGoogleOauthToken($token, $force = false) {
     
     $must_validate = $force
         || !isset($result)
-        || !isset($result['expires'])
-        || time() > $result['expires'];
+        || !isset($result['expires_at'])
+        || time() > $result['expires_at'];
     
     if ($must_validate) {
         // check token validity via Google REST API
@@ -64,11 +64,12 @@ function validateGoogleOauthToken($token, $force = false) {
     
     if (isset($result['user_id']) && isset($result['expires_in'])
         && isset($result['audience']) && $result['audience'] === $GOOGLE_OAUTH_CLIENT_ID
+        && isset($result['issued_to']) && $result['issued_to'] === $GOOGLE_OAUTH_CLIENT_ID
         && isset($result['issuer']) && $result['issuer'] === 'accounts.google.com')
     {
-        $result['expires'] = time() + $result['expires_in'];
-        $result['server-timestamp'] = time();
-        $result['time-left'] = $result['expires_in'] + $result['issued_at'] - time();
+        $result['expires_at'] = time() + $result['expires_in'];
+        $result['server_timestamp'] = time();
+        $result['time_left'] = $result['expires_in'] + $result['issued_at'] - time();
         // cache result
         $_SESSION[$token] = $result;
         return true;

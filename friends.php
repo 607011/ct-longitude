@@ -16,6 +16,7 @@ if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['
 }
 
 $token = $_REQUEST['oauth']['token'];
+$userid = $_SESSION[$token]['user_id'];
 
 $maxage = isset($_REQUEST['maxage']) ? intval($_REQUEST['maxage']) : time();
 $t0 = time() - $maxage;
@@ -26,6 +27,7 @@ if (isset($_REQUEST['lng']))
     $reflng = floatval($_REQUEST['lng']);
 if (isset($_REQUEST['maxdist']))
     $maxdist = floatval($_REQUEST['maxdist']);
+
 $checkdist = isset($reflat) && isset($reflng) && isset($maxdist);
 
 if ($dbh) {
@@ -41,9 +43,9 @@ if ($dbh) {
     foreach($rows as $row)  {
         $lat = floatval($row[2]);
         $lng = floatval($row[3]);
-        if ($_SESSION[$token]['user_id'] !== $row[0] && $checkdist && haversineDistance($reflat, $reflng, $lat, $lng) > $maxdist)
+        if ($checkdist && haversineDistance($reflat, $reflng, $lat, $lng) > $maxdist)
             continue;
-        $res['users'][$row[0]] = array(
+        $res['users'][utf8_encode($row[0])] = array(
             'timestamp' => intval($row[1]),
             'lat' => $lat,
             'lng' => $lng,

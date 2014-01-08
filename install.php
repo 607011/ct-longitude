@@ -22,11 +22,12 @@ if ($dbh) {
 
     $dbh->exec('CREATE TABLE IF NOT EXISTS `buddies` (`id` INTEGER PRIMARY KEY AUTOINCREMENT,' .
         ' `userid` TEXT,' . /* User id at 'authenticationservice' */
-        ' `name` TEXT,' . /* Display name at 'authenticationservice' */
-        ' `authenticationservice` TEXT,' . /* Google ... */
         ' `sharetracks` INTEGER,' .
-        ' `avatar` TEXT' .
+        ' `avatar` TEXT,' .
+        ' `name` TEXT,' . /* Display name at 'authenticationservice' */
+        ' `authenticationservice` TEXT' . /* Google ... */
         ')');
+
     $dbh->exec('CREATE UNIQUE INDEX IF NOT EXISTS `userid_uniq` ON `buddies` (`userid`);');
     echo "Table 'buddies' created.<br/>\n";
 
@@ -34,7 +35,8 @@ if ($dbh) {
     // following code needed for migration from HTTP-Basic authenticated users to Google OAuth authenticated users
     
     $dbh->exec('ALTER TABLE buddies ADD COLUMN `name` TEXT');
-    
+    $dbh->exec('ALTER TABLE buddies ADD authenticationservice `name` TEXT');
+
     $dbh->exec('CREATE INDEX IF NOT EXISTS `name` ON `buddies` (`name`);');
     $dbh->exec('CREATE INDEX IF NOT EXISTS `authenticationservice` ON `buddies` (`authenticationservice`);');
     $dbh->exec('CREATE INDEX IF NOT EXISTS `name_authenticationservice` ON `buddies` (`name`, `authenticationservice`);');
@@ -51,8 +53,8 @@ if ($dbh) {
     $dbh->exec('UPDATE buddies SET userid = "108548842764132944902" WHERE userid = "jkj"');
     $dbh->exec('UPDATE locations SET userid = "108548842764132944902" WHERE userid = "jkj"');
     
-    $dbh->exec('UPDATE buddies SET userid = "+JörgWirtgen" WHERE userid = "jow"');
-    $dbh->exec('UPDATE locations SET userid = "+JörgWirtgen" WHERE userid = "jow"');
+    $dbh->exec('UPDATE buddies SET userid = "+JÃ¶rgWirtgen" WHERE userid = "jow"');
+    $dbh->exec('UPDATE locations SET userid = "+JÃ¶rgWirtgen" WHERE userid = "jow"');
 
     $dbh->exec('UPDATE buddies SET userid = "+JoBager" WHERE userid = "jo"');
     $dbh->exec('UPDATE locations SET userid = "+JoBager" WHERE userid = "jo"');
@@ -62,6 +64,10 @@ if ($dbh) {
 
     $dbh->exec('UPDATE buddies SET userid = "+IngoStorm" WHERE userid = "it"');
     $dbh->exec('UPDATE locations SET userid = "+IngoStorm" WHERE userid = "it"');
+
+    $dbh->exec('UPDATE buddies SET authenticationservice = "Google"');
+
+    echo Changes applied.<br/>\n";
 }
 
 ?>

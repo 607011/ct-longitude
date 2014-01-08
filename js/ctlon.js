@@ -148,7 +148,7 @@ var CTLON = (function () {
 
   function criticalError(msg) {
     softError(msg);
-    window.location.reload();
+    // window.location.reload();
   }
 
   function hideInfoWindow() {

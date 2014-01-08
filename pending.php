@@ -1,6 +1,12 @@
 <?php
 require_once 'globals.php';
 
+if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['oauth']['token'])) {
+    $res['status'] = 'error';
+    $res['error'] = 'no authenticated user';
+    goto end;
+}
+
 if (!$dbh) {
     $res['status'] = 'error';
     $res['error'] = 'cannot connect to database';

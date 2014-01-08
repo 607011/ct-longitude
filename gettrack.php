@@ -1,7 +1,7 @@
 <?php
 include('globals.php');
 
-if (!isset($_SERVER['PHP_AUTH_USER'])) {
+if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['oauth']['token'])) {
     $res['status'] = 'error';
     $res['error'] = 'no authenticated user';
     goto end;
