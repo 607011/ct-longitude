@@ -131,30 +131,34 @@ var CTLON = (function () {
     Avatar = { Width: DevicePixelRatio * 44, Height: DevicePixelRatio * 44, backgroundColor: '#000' },
     Symbol = { Width: 46, Height: 53 },
     TrackColor = '#039',
-    firstLoad = true,
+    appInitialized = false,
     geocoder = new google.maps.Geocoder(),
     map = null, overlay = null, circle = null, polyline = null, infoWindow = null,
     markers = {},
-    me = { id: undefined, latLng: null, avatar: null, name: null, oauth: { clientId: null, token: null, expiresAt: null, expiresIn: null }, profile: null },
+    me = { id: undefined, latLng: null, avatar: null, oauth: { clientId: null, token: null, expiresAt: null, expiresIn: null }, profile: null },
     getFriendsPending = false,
     watchId = undefined,
     selectedUser = undefined,
     pollingId = undefined,
     computeDistanceBetween = haversineDistance;
 
+
   function softError(msg) {
     alert(msg);
   }
+
 
   function criticalError(msg) {
     softError(msg);
     // window.location.reload();
   }
 
+
   function hideInfoWindow() {
     if (infoWindow)
       infoWindow.setMap(null);
   }
+
 
   function showProgressInfo() {
     $('#info-bar-container').addClass('barberpole');
@@ -395,7 +399,6 @@ var CTLON = (function () {
             console.log('clicked on ' + friend.id);
           });
         }
-        // if (($('#incognito').is(':checked') || $('#offline-mode').is(':checked')) && friend.id === me.id && !firstLoad)
         markers[friend.id].setPosition(friend.latLng);
       }
 
@@ -411,7 +414,7 @@ var CTLON = (function () {
             canvas.height = Symbol.Height;
             ctx.drawImage(img, 0, 0);
             ctx.drawImage(avatarImg, 1, 8, Avatar.Width, Avatar.Height);
-            friend.avatar = canvas.toDataURL();
+            friend.avatar = canvas.toDataURL('image/png');
             placeMarker(friend, false);
           };
           img.src = 'img/single-symbol.png';
@@ -444,7 +447,7 @@ var CTLON = (function () {
               clusteredFriends.id.push(friend.id);
               clusteredFriends.bounds.extend(friend.latLng);
               if (++imagesLoaded === slices.length) {
-                clusteredFriends.avatar = canvas.toDataURL();
+                clusteredFriends.avatar = canvas.toDataURL('image/png');
                 clusteredFriends.id = clusteredFriends.id.join('/');
                 clusteredFriends.latLng = clusteredFriends.bounds.getCenter();
                 placeMarker(clusteredFriends, true);
@@ -629,90 +632,110 @@ var CTLON = (function () {
 
 
   function uploadAvatar(blob) {
-    var reader = new FileReader,
-      avatar = $('#avatar').css('background', 'none').css('background-color', 'white').append($('<span style="display: inline-block; width: ' + Avatar.Width + 'px; height: ' + Avatar.Height + 'px; background-image: url(img/loader-5-0.gif); background-repeat: no-repeat; background-position: 6px 6px"></span>'));
-    reader.onload = function (e) {
-      var img = new Image, dataUrl,
-        send = function () {
-          $.ajax({
-            url: 'setoption.php',
-            type: 'POST',
-            data: {
-              option: 'avatar',
-              oauth: me.oauth,
-              value: dataUrl
-            }
-          }).done(function (data) {
-            if (!data) {
-              criticalError('Fehler beim Übertragen deines Avatars!');
-            }
-            else {
-              avatar.empty().css('background-image', 'url(' + dataUrl + ')');
-              $('#userid').css('background-image', 'url(' + dataUrl + ')');
-            }
-          }).error(function (jqXHR, textStatus, errorThrown) {
-            criticalError('Fehler beim Übertragen deines Avatars [' + textStatus + ': ' + errorThrown + ']');
-          });
-        };
-      if (e.target.readyState == FileReader.DONE) {
-        dataUrl = 'data:image/png;base64,' + btoa(
-        (function (bytes) {
-          var binary = '', len = bytes.byteLength, i;
-          for (i = 0; i < len; ++i)
-            binary += String.fromCharCode(bytes[i]);
-          return binary;
-        })(new Uint8Array(e.target.result)));
-        img.onload = function () {
-          var aspectRatio, canvas, ctx, w, h, xoff, yoff;
-          if (img.width !== Avatar.Width || img.height !== Avatar.Height) {
-            // scale image
-            canvas = document.createElement('canvas');
-            ctx = canvas.getContext('2d');
-            canvas.width = Avatar.Width;
-            canvas.height = Avatar.Height;
-            aspectRatio = img.width / img.height;
-            if (aspectRatio > 1) {
-              w = Avatar.Width;
-              h = Math.round(Avatar.Height / aspectRatio);
-              xoff = 0;
-              yoff = Math.round((Avatar.Height - h) / 2);
-            }
-            else {
-              w = Math.round(Avatar.Width * aspectRatio);
-              h = Avatar.Height;
-              xoff = Math.round((Avatar.Width - w) / 2);
-              yoff = 0;
-            }
-            ctx.fillStyle = Avatar.backgroundColor;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0, img.width, img.height, xoff, yoff, w, h);
-            dataUrl = canvas.toDataURL();
+    var reader = new FileReader, img, avatar = $('#avatar'), dataUrl,
+      send = function () {
+        $.ajax({
+          url: 'setoption.php',
+          type: 'POST',
+          data: {
+            option: 'avatar',
+            oauth: me.oauth,
+            value: dataUrl
           }
-          send();
-        };
-        img.src = dataUrl;
-      }
-    };
-    reader.onerror = function (e) {
-      switch (e.target.error.code) {
-        case e.target.error.NOT_FOUND_ERR:
-          criticalError('Avatar-Datei nicht gefunden.');
-          break;
-        case e.target.error.NOT_READABLE_ERR:
-          criticalError('Avatar-Datei ist nicht lesbar.');
-          break;
-        case e.target.error.ABORT_ERR:
-          console.warn('Lesen der Avatar-Datei abgebrochen.');
-          break;
-        default:
-          criticalError('Beim Zugriff auf die Avatar-Datei ist ein Fehler aufgetreten.');
-          break;
-      }
-    };
-    reader.onabort = function () {
-      criticalError('Lesen der Datei abgebrochen.');
-    };
-    reader.readAsArrayBuffer(blob);
+        }).done(function (data) {
+          if (!data) {
+            criticalError('Fehler beim Übertragen deines Avatars!');
+            return;
+          }
+          try {
+            data = JSON.parse(data);
+          }
+          catch (e) {
+            criticalError('Fehler beim Übertragen deines Avatars: ' + e);
+            return;
+          }
+          if (data.status === 'ok') {
+            avatar.empty().css('background-image', 'url(' + dataUrl + ')');
+            $('#userid').css('background-image', 'url(' + dataUrl + ')');
+          }
+          else {
+            criticalError('Fehler beim Speichern deines Avatars: ' + data.error);
+          }
+        }).error(function (jqXHR, textStatus, errorThrown) {
+          criticalError('Fehler beim Übertragen deines Avatars [' + textStatus + ': ' + errorThrown + ']');
+        });
+      },
+      fitImage = function () {
+        var aspectRatio, canvas, ctx, w, h, xoff, yoff;
+        if (img.width !== Avatar.Width || img.height !== Avatar.Height) {
+          // scale image
+          canvas = document.createElement('canvas');
+          ctx = canvas.getContext('2d');
+          canvas.width = Avatar.Width;
+          canvas.height = Avatar.Height;
+          aspectRatio = img.width / img.height;
+          if (aspectRatio > 1) {
+            w = Avatar.Width;
+            h = Math.round(Avatar.Height / aspectRatio);
+            xoff = 0;
+            yoff = Math.round((Avatar.Height - h) / 2);
+          }
+          else {
+            w = Math.round(Avatar.Width * aspectRatio);
+            h = Avatar.Height;
+            xoff = Math.round((Avatar.Width - w) / 2);
+            yoff = 0;
+          }
+          ctx.fillStyle = Avatar.backgroundColor;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, img.width, img.height, xoff, yoff, w, h);
+          dataUrl = canvas.toDataURL('image/png');
+        }
+        send();
+      };
+
+    avatar.css('background', 'none').css('background-color', 'white').append($('<span style="display: inline-block; width: ' + Avatar.Width + 'px; height: ' + Avatar.Height + 'px; background-image: url(img/loader-5-0.gif); background-repeat: no-repeat; background-position: 6px 6px"></span>'));
+
+    if (blob instanceof Image) { // blob contains image
+      img = blob;
+      fitImage();
+    }
+    else {
+      img = new Image;
+      reader.onload = function (e) {
+        if (e.target.readyState == FileReader.DONE) {
+          dataUrl = 'data:image/png;base64,' + btoa(
+          (function (bytes) {
+            var binary = '', len = bytes.byteLength, i;
+            for (i = 0; i < len; ++i)
+              binary += String.fromCharCode(bytes[i]);
+            return binary;
+          })(new Uint8Array(e.target.result)));
+          img.onload = fitImage;
+          img.src = dataUrl;
+        }
+      };
+      reader.onerror = function (e) {
+        switch (e.target.error.code) {
+          case e.target.error.NOT_FOUND_ERR:
+            criticalError('Avatar-Datei nicht gefunden.');
+            break;
+          case e.target.error.NOT_READABLE_ERR:
+            criticalError('Avatar-Datei ist nicht lesbar.');
+            break;
+          case e.target.error.ABORT_ERR:
+            console.warn('Lesen der Avatar-Datei abgebrochen.');
+            break;
+          default:
+            criticalError('Beim Zugriff auf die Avatar-Datei ist ein Fehler aufgetreten.');
+            break;
+        }
+      };
+      reader.onabort = function () {
+        criticalError('Lesen der Datei abgebrochen.');
+      };
+      reader.readAsArrayBuffer(blob);
+    }
   }
 
 
@@ -822,13 +845,9 @@ var CTLON = (function () {
   }
 
   function initApp() {
-    var mapOptions = {
-      mapTypeId: google.maps.MapTypeId.ROADMAP,
-      bounds_changed: function () {
-        google.maps.event.addListenerOnce(map, 'idle', getFriends);
-      },
-      zoom: 13
-    };
+    if (appInitialized)
+      return;
+    appInitialized = true;
 
     showProgressInfo();
 
@@ -865,15 +884,13 @@ var CTLON = (function () {
       }
 
       me.id = data.userid;
+
       if (typeof data.avatar === 'string' && data.avatar.indexOf('data:image/png;base64,') === 0) {
         me.avatar = data.avatar;
         $('#avatar').css('background-image', 'url(' + me.avatar + ')');
         $('#userid').css('background-image', 'url(' + me.avatar + ')');
       }
-      else {
-        $('#userid').text(me.id);
-      }
-
+ 
       if (typeof data.lat === 'number' && typeof data.lng === 'number') {
         me.latLng = new google.maps.LatLng(data.lat, data.lng);
       }
@@ -884,6 +901,12 @@ var CTLON = (function () {
       else {
         me.latLng = new google.maps.LatLng(51, 10.3); // last resort (center of Germany)
       }
+
+      if (data.name === null) {
+        me.name = me.profile.displayName;
+        // XXX: Name an Server senden?
+      }
+
 
       $('#userid').click(function () {
         hideInfoWindow();
@@ -975,7 +998,13 @@ var CTLON = (function () {
 
       // init Google Maps
       google.maps.visualRefresh = true;
-      map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+      map = new google.maps.Map(document.getElementById('map-canvas'), {
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        bounds_changed: function () {
+          google.maps.event.addListenerOnce(map, 'idle', getFriends);
+        },
+        zoom: 13
+      });
       if (google.maps.geometry.spherical.computeDistanceBetween)
         computeDistanceBetween = google.maps.geometry.spherical.computeDistanceBetween;
       map.setCenter(me.latLng);
@@ -995,52 +1024,65 @@ var CTLON = (function () {
     });
   }
 
+
+  function googleSigninCallback(authResult) {
+    console.log('googleSigninCallback()');
+    hideProgressInfo();
+    if (authResult['status']['signed_in']) {
+      $('#logon').removeClass('show').addClass('hide');
+      $('#app').removeClass('hide').addClass('show').css('visibility', 'visible');
+      $('#googleSigninButton').removeClass('show').addClass('hide');
+      me.oauth.token = authResult.id_token;
+      me.oauth.clientId = authResult.client_id;
+      me.oauth.expiresAt = parseInt(authResult.expires_at);
+      me.oauth.expiresIn = parseInt(authResult.expires_in);
+      console.log('authResult -->', authResult, 'me.oauth -->', me.oauth);
+      setTimeout(googleAuthorize, 1000 * me.oauth.expiresIn);
+      if (me.profile === null) {
+        gapi.client.load('plus', 'v1', function loadProfile() {
+          gapi.client.plus.people.get({
+            'userId': 'me'
+          }).execute(function loadProfileCallback(response) {
+            var img = new Image;
+            img.crossOrigin = 'anonymous';
+            me.profile = response;
+            img.onload = function () {
+              uploadAvatar(img);
+            };
+            img.src = me.profile.image.url;
+          });
+        });
+      }
+      initApp();
+    }
+    else {
+      // Possible authResult['error'] values: "user_signed_out" (User is signed-out), "access_denied" (User denied access to your app), "immediate_failed" (Could not automatically log in the user)
+      $('#logon').removeClass('hide').addClass('show');
+      $('#app').removeClass('show').addClass('hide');
+      $('#googleSigninButton').removeClass('hide');
+    }
+  }
+
+
+  function googleAuthorize() {
+    console.log('googleAuthorize()');
+    showProgressInfo();
+    gapi.auth.authorize({
+      immediate: true,
+      client_id: GoogleOAuthClientId,
+      scope: 'https://www.googleapis.com/auth/plus.login'
+    }, googleSigninCallback)
+  }
+
+
   return {
     init: function () {
       $('<script>').attr('type', 'text/javascript').attr('async', true).attr('src', 'https://apis.google.com/js/client:plusone.js').insertBefore($('script'));
     },
-    setLocation: function (lat, lng) {
-      var pos = {
-        timestamp: Date.now(),
-        coords: {
-          latitude: lat,
-          longitude: lng
-        }
-      }
-      setPosition(pos);
-    },
-    googleSigninCallback: function (authResult) {
-      if (authResult['status']['signed_in']) {
-        $('#logon').removeClass('show').addClass('hide');
-        $('#app').removeClass('hide').addClass('show').css('visibility', 'visible');
-        $('#googleSigninButton').removeClass('show').addClass('hide');
-        console.log('authResult', authResult);
-        me.oauth.token = authResult.id_token;
-        me.oauth.clientId = authResult.client_id;
-        me.oauth.expiresAt = parseInt(authResult.expires_at);
-        me.oauth.expiresIn = parseInt(authResult.expires_in);
-        console.log('me.oauth', me.oauth);
-        //gapi.client.load('plus', 'v1', function loadProfile() {
-        //  gapi.client.plus.people.get({
-        //    'userId': 'me'
-        //  }).execute(function loadProfileCallback(response) {
-        //    me.profile = response;
-        //    $('#user-info').attr('style', '');
-        //    $('#user-photo').css('background-image', 'url(' + me.profile.image.url + ')').attr('title', me.profile.displayName);
-        //    $('#user-name').text(me.profile.displayName);
-        //  });
-        //});
-        initApp();
-      }
-      else {
-        // Possible authResult['error'] values: "user_signed_out" (User is signed-out), "access_denied" (User denied access to your app), "immediate_failed" (Could not automatically log in the user)
-        $('#logon').removeClass('hide').addClass('show');
-        $('#app').removeClass('show').addClass('hide');
-        $('#googleSigninButton').removeClass('hide');
-      }
-    }
+    googleSigninCallback: googleSigninCallback
   };
 })();
+
 
 function googleSigninCallback(authResult) {
   CTLON.googleSigninCallback(authResult);

@@ -14,7 +14,6 @@ if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['
     $res['error'] = 'no authenticated user';
     goto end;
 }
-
 $token = $_REQUEST['oauth']['token'];
 $userid = $_SESSION[$token]['user_id'];
 
@@ -31,21 +30,22 @@ if (isset($_REQUEST['maxdist']))
 $checkdist = isset($reflat) && isset($reflng) && isset($maxdist);
 
 if ($dbh) {
-    $q = "SELECT locations.userid, locations.timestamp, locations.lat, locations.lng, locations.accuracy, locations.altitude, locations.altitudeaccuracy, locations.heading, locations.speed, buddies.avatar" .
+    $q = "SELECT locations.userid, locations.timestamp, locations.lat, locations.lng, " .
+        "locations.accuracy, locations.altitude, locations.altitudeaccuracy, ".
+        "locations.heading, locations.speed, buddies.avatar, buddies.name" .
         " FROM locations, buddies" .
         " WHERE " .
         "   locations.userid = buddies.userid AND" .
         "   locations.timestamp > $t0" .
         " GROUP BY locations.userid" .
         " ORDER BY locations.timestamp DESC";
-    $res['query'] = $q;
     $rows = $dbh->query($q);
     foreach($rows as $row)  {
         $lat = floatval($row[2]);
         $lng = floatval($row[3]);
         if ($checkdist && haversineDistance($reflat, $reflng, $lat, $lng) > $maxdist)
             continue;
-        $res['users'][utf8_encode($row[0])] = array(
+        $res['users'][$row[0]] = array(
             'timestamp' => intval($row[1]),
             'lat' => $lat,
             'lng' => $lng,
@@ -54,7 +54,8 @@ if ($dbh) {
             'altitudeaccuracy' => floatval($row[6]),
             'heading' => floatval($row[7]),
             'speed' => floatval($row[8]), 
-            'avatar' => $row[9]
+            'avatar' => $row[9],
+            'name' => $row[9]
         );
     }
     $res['status'] = 'ok';

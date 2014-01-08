@@ -1,12 +1,13 @@
 <?php
 require_once 'globals.php';
 
-$userid = $_REQUEST['userid'];
-if (!preg_match('/^\\w+$/', $userid)) {
+if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['oauth']['token'])) {
     $res['status'] = 'error';
-    $res['error'] = 'bad userid:' + $userid;
+    $res['error'] = 'no authenticated user';
     goto end;
 }
+$token = $_REQUEST['oauth']['token'];
+$userid = $_SESSION[$token]['user_id'];
 
 $lat = $_REQUEST['lat'];
 if (!preg_match('/^\\d+\\.\\d+$/', $lat)) {

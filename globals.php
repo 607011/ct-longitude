@@ -23,24 +23,13 @@ $dbh = new PDO("sqlite:$DB_NAME", null, null, array(
 $res = array();
 
 
-function validateGoogleOauthToken($token, $force = false) {
+function validateGoogleOauthToken($token) {
     global $GOOGLE_OAUTH_CLIENT_ID;
     session_start();
     
-    /* {
-      "issuer": "accounts.google.com",
-      "issued_to": "794079768346.apps.googleusercontent.com",
-      "audience": "794079768346.apps.googleusercontent.com",
-      "user_id": "100829969894177493033",
-      "expires_in": 3578,
-      "issued_at": 1389101071
-    } */
     $result = isset($_SESSION[$token]) ? $_SESSION[$token] : array();
     
-    $must_validate = $force
-        || !isset($result)
-        || !isset($result['expires_at'])
-        || time() > $result['expires_at'];
+    $must_validate = !isset($result) || !isset($result['expires_at']) || time() > $result['expires_at'];
     
     if ($must_validate) {
         // check token validity via Google REST API

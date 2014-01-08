@@ -37,37 +37,37 @@ if ($dbh) {
     $dbh->exec('ALTER TABLE buddies ADD COLUMN `name` TEXT');
     $dbh->exec('ALTER TABLE buddies ADD authenticationservice `name` TEXT');
 
-    $dbh->exec('CREATE INDEX IF NOT EXISTS `name` ON `buddies` (`name`);');
-    $dbh->exec('CREATE INDEX IF NOT EXISTS `authenticationservice` ON `buddies` (`authenticationservice`);');
-    $dbh->exec('CREATE INDEX IF NOT EXISTS `name_authenticationservice` ON `buddies` (`name`, `authenticationservice`);');
+    $dbh->exec('CREATE INDEX IF NOT EXISTS `name` ON `buddies` (`name`)');
+    $dbh->exec('CREATE INDEX IF NOT EXISTS `authenticationservice` ON `buddies` (`authenticationservice`)');
+    $dbh->exec('CREATE INDEX IF NOT EXISTS `name_authenticationservice` ON `buddies` (`name`, `authenticationservice`)');
 
-    $dbh->exec('UPDATE buddies SET userid = "100829969894177493033" WHERE userid = "ola"');
+    $dbh->exec('UPDATE buddies SET userid = "100829969894177493033", name = "Oliver Lau" WHERE userid = "ola"');
     $dbh->exec('UPDATE locations SET userid = "100829969894177493033" WHERE userid = "ola"');
     
-    $dbh->exec('UPDATE buddies SET userid = "106537406819187054768" WHERE userid = "bo"');
+    $dbh->exec('UPDATE buddies SET userid = "106537406819187054768", name = "Harald Bögeholz" WHERE userid = "bo"');
     $dbh->exec('UPDATE locations SET userid = "106537406819187054768" WHERE userid = "bo"');
     
-    $dbh->exec('UPDATE buddies SET userid = "115086849295182397968" WHERE userid = "hos"');
+    $dbh->exec('UPDATE buddies SET userid = "115086849295182397968", name = "Hajo Schulz" WHERE userid = "hos"');
     $dbh->exec('UPDATE locations SET userid = "115086849295182397968" WHERE userid = "hos"');
     
-    $dbh->exec('UPDATE buddies SET userid = "108548842764132944902" WHERE userid = "jkj"');
+    $dbh->exec('UPDATE buddies SET userid = "108548842764132944902", name = "Jan-Keno Janssen" WHERE userid = "jkj"');
     $dbh->exec('UPDATE locations SET userid = "108548842764132944902" WHERE userid = "jkj"');
     
-    $dbh->exec('UPDATE buddies SET userid = "+JörgWirtgen" WHERE userid = "jow"');
+    $dbh->exec('UPDATE buddies SET userid = "+JörgWirtgen", name = "Jörg Wirtgen" WHERE userid = "jow"');
     $dbh->exec('UPDATE locations SET userid = "+JörgWirtgen" WHERE userid = "jow"');
 
-    $dbh->exec('UPDATE buddies SET userid = "+JoBager" WHERE userid = "jo"');
+    $dbh->exec('UPDATE buddies SET userid = "+JoBager", name = "Jo Bager" WHERE userid = "jo"');
     $dbh->exec('UPDATE locations SET userid = "+JoBager" WHERE userid = "jo"');
 
-    $dbh->exec('UPDATE buddies SET userid = "+StefanPorteck" WHERE userid = "spo"');
+    $dbh->exec('UPDATE buddies SET userid = "+StefanPorteck", name = "Stefan Porteck" WHERE userid = "spo"');
     $dbh->exec('UPDATE locations SET userid = "+StefanPorteck" WHERE userid = "spo"');
 
-    $dbh->exec('UPDATE buddies SET userid = "+IngoStorm" WHERE userid = "it"');
+    $dbh->exec('UPDATE buddies SET userid = "+IngoStorm", name = "Ingo T. Storm" WHERE userid = "it"');
     $dbh->exec('UPDATE locations SET userid = "+IngoStorm" WHERE userid = "it"');
 
     $dbh->exec('UPDATE buddies SET authenticationservice = "Google"');
 
-    echo Changes applied.<br/>\n";
+    echo "Changes applied.<br/>\n";
 }
 
 ?>

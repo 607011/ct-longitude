@@ -6,6 +6,9 @@ if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['
     $res['error'] = 'no authenticated user';
     goto end;
 }
+$token = $_REQUEST['oauth']['token'];
+$userid = $_SESSION[$token]['user_id'];
+
 
 if (!$dbh) {
     $res['status'] = 'error';
@@ -60,7 +63,7 @@ foreach ($locations as $location) {
         $res['error'] = 'bad timestamp';
         goto end;
     }
-    $timestamp = floatval($location['timestamp']);
+    $timestamp = intval($location['timestamp']);
 
     $accuracy = isset($location['accuracy']) ? intval($location['accuracy']) : null;
     $altitude = isset($location['altitude']) ? floatval($location['altitude']) : null;
