@@ -32,7 +32,9 @@ if ($dbh) {
     
     // following code needed for migration from HTTP-Basic authenticated users to Google OAuth authenticated users
     
-    $dbh->exec('ALTER TABLE buddies ADD COLUMN `name` TEXT');    $dbh->exec('CREATE INDEX IF NOT EXISTS `name` ON `buddies` (`name`)');
+    $dbh->exec('ALTER TABLE buddies ADD COLUMN `name` TEXT');
+
+    $dbh->exec('CREATE INDEX IF NOT EXISTS `name` ON `buddies` (`name`)');
 
     $dbh->exec('UPDATE buddies SET userid = "100829969894177493033", name = "Oliver Lau" WHERE userid = "ola"');
     $dbh->exec('UPDATE locations SET userid = "100829969894177493033" WHERE userid = "ola"');

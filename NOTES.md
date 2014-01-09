@@ -10,7 +10,6 @@ Features
 Fehler
 ======
  
- * Karte wird nicht richtig initialisiert, wenn die User-Leiste leer ist
  * Tracks des aktuellen Users werden manchmal nicht angezeigt, obwohl er ausgewählt ist
  * Track muss beim Eintreffen neuer Standortdaten verlängert werden
  * Kreis um Symbol wandert nicht bei Standortänderungen mit
