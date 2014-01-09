@@ -55,6 +55,19 @@ html, body {
     font-size: smaller;
   }
 
+  #logon a {
+    text-decoration: none;
+    color: #e8e8e8;
+  }
+
+  #logon a:hover {
+    text-decoration: underline;
+  }
+
+  #logon a:visited {
+    color: #d8d8d8;
+  }
+
 #user-info {
   display: inline-block;
 }

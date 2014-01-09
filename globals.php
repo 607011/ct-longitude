@@ -4,10 +4,10 @@
 //////////////////////////////////
 $GOOGLE_OAUTH_CLIENT_ID = '794079768346.apps.googleusercontent.com';
 
-// $DB_PATH = '/var/www';
-$APP_URI = 'http://localhost/ctlat';
+// $DB_PATH = '/var/www/sqlite';
 $DB_PATH = 'D:/Developer/xampp/';
-$DB_NAME = "$DB_PATH/ctlat.sqlite";
+$DB_NAME = "$DB_PATH/ctlon2.sqlite";
+$APP_URI = 'http://localhost/ctlat';
 
 // set this option to true to enable persistent database connections; set to false for debugging
 $DB_PERSISTENT = false;

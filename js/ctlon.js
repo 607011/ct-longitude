@@ -126,16 +126,17 @@ var CTLON = (function () {
     MOBILE = navigator.userAgent.indexOf('Mobile') >= 0,
     DEFAULT_AVATAR = 'img/default-avatar.jpg',
     MaxDistance = 200 * 1000 /* meters */,
-    GoogleOAuthClientId = '794079768346.apps.googleusercontent.com',
+    GoogleOAuthClientId = '', /* will be read from attribute "data-clientid" of <span class="g-signin"> in index.html */
     DevicePixelRatio = window.devicePixelRatio ? window.devicePixelRatio : 1,
     Avatar = { Width: DevicePixelRatio * 44, Height: DevicePixelRatio * 44, backgroundColor: '#000' },
     Symbol = { Width: 46, Height: 53 },
     TrackColor = '#039',
     appInitialized = false,
+    firstLoad = true,
     geocoder = new google.maps.Geocoder(),
     map = null, overlay = null, circle = null, polyline = null, infoWindow = null,
     markers = {},
-    me = { id: undefined, latLng: null, avatar: null, oauth: { clientId: null, token: null, expiresAt: null, expiresIn: null }, profile: null },
+    me = { id: undefined, latLng: null, avatar: null, name: null, oauth: { clientId: null, token: null, expiresAt: null, expiresIn: null }, profile: null },
     getFriendsPending = false,
     watchId = undefined,
     selectedUser = undefined,
@@ -240,10 +241,11 @@ var CTLON = (function () {
 
 
   function highlightFriend(userid, centerMap) {
-    var m, accuracy, userIDs, found = false, isCluster = false;
+    var m, accuracy, userIDs, buddy, found = false, isCluster = false;
     if (typeof userid !== 'string')
       return;
     m = markers[userid];
+    buddy = $('#buddy-' + userid);
     if (polyline)
       polyline.setMap(null);
     if ($('#show-tracks').is(':checked'))
@@ -266,7 +268,7 @@ var CTLON = (function () {
       map.setCenter(m.getPosition());
     m.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
     if (!isCluster) {
-      accuracy = parseInt($('#buddy-' + userid).attr('data-accuracy'), 10);
+      accuracy = parseInt(buddy.attr('data-accuracy'), 10);
       if (circle === null) {
         circle = new google.maps.Circle({
           map: map,
@@ -284,8 +286,8 @@ var CTLON = (function () {
         infoWindow = new google.maps.InfoWindow();
       infoWindow.setMap(map);
       infoWindow.setPosition(m.getPosition());
-      infoWindow.setContent('<p><strong>' + userid + '</strong><br/>' +
-        $('#buddy-' + userid).attr('data-last-update') + '</p>' +
+      infoWindow.setContent('<p><strong>' + buddy.attr('data-last-update') + '</strong><br/>' +
+        buddy.attr('data-name') + '</p>' +
         '<p id="address"></p>');
       geocoder.geocode({ 'latLng': m.getPosition() }, function (results, status) {
         if (status == google.maps.GeocoderStatus.OK) {
@@ -302,7 +304,7 @@ var CTLON = (function () {
 
 
   function clusteredFriends(userData) {
-    var clustered = [], cluster, userIDs = Object.keys(userData), currentUser, currentUserId, p0,
+    var clustered = [], cluster, userIDs = Object.keys(userData), currentUser, currentUserId, P0,
       projection = overlay.getProjection(), sqr = function (a) { return a * a; },
       distance = (Avatar.Width + Avatar.Height) / 3;
     while (userIDs.length > 0) {
@@ -313,16 +315,16 @@ var CTLON = (function () {
       cluster = [currentUser];
       currentUser.id = currentUserId;
       currentUser.latLng = new google.maps.LatLng(currentUser.lat, currentUser.lng);
-      p0 = projection.fromLatLngToDivPixel(currentUser.latLng);
+      P0 = projection.fromLatLngToDivPixel(currentUser.latLng);
       $.each(userIDs, function (i, userid) {
-        var p1, p0p1;
+        var P1, P0P1;
         if (userIDs[i] === null)
           return;
         userData[userid].latLng = new google.maps.LatLng(userData[userid].lat, userData[userid].lng);
         userData[userid].id = userid;
-        p1 = projection.fromLatLngToDivPixel(userData[userid].latLng);
-        p0p1 = Math.sqrt(sqr(p1.x - p0.x) + sqr(p1.y - p0.y));
-        if (p0p1 < distance) {
+        P1 = projection.fromLatLngToDivPixel(userData[userid].latLng);
+        P0P1 = Math.sqrt(sqr(P1.x - P0.x) + sqr(P1.y - P0.y));
+        if (P0P1 < distance) {
           cluster.push(userData[userid]);
           userIDs[i] = null;
         }
@@ -343,6 +345,7 @@ var CTLON = (function () {
           me.latLng = new google.maps.LatLng(friend.lat, friend.lng);
         buddy = $('<span></span>')
               .addClass('buddy').attr('id', 'buddy-' + friend.id)
+              .attr('data-name', friend.name)
               .attr('data-lat', friend.lat)
               .attr('data-lng', friend.lng)
               .attr('data-accuracy', friend.accuracy)
@@ -391,12 +394,13 @@ var CTLON = (function () {
             };
           }
           markers[friend.id] = new google.maps.Marker({
-            title: friend.id + (friend.readableTimestamp ? (' (' + friend.readableTimestamp + ')') : ''),
+            title: friend.name + (friend.readableTimestamp ? (' (' + friend.readableTimestamp + ')') : ''),
             icon: icon,
             map: map
           });
           google.maps.event.addListener(markers[friend.id], 'click', function () {
-            console.log('clicked on ' + friend.id);
+            // TODO: do something useful when symbol is clicked
+            console.log('clicked on ' + friend.name + ' (' + friend.id + ')');
           });
         }
         markers[friend.id].setPosition(friend.latLng);
@@ -422,7 +426,8 @@ var CTLON = (function () {
       }
       else if (cluster.length > 1) { // cluster
         (function () {
-          var canvas = document.createElement('canvas'), ctx = canvas.getContext('2d'),
+          var canvas = document.createElement('canvas'),
+            ctx = canvas.getContext('2d'),
             rect = new Rect(0, 0, Avatar.Width, Avatar.Height),
             slices = rect.partitioned(cluster.length),
             imagesLoaded = 0,
@@ -567,28 +572,32 @@ var CTLON = (function () {
 
 
   function setPosition(pos) {
-    var location, pendingLocations;
+    var data, pendingLocations;
     me.timestamp = Math.floor(pos.timestamp / 1000);
     me.latLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
-    console.log(infoWindow, me.id, selectedUser, me.latLng);
+    console.log('setPosition()', infoWindow, me.id, selectedUser, me.latLng.lat(), me.latLng.lng());
     if (infoWindow !== null && me.id === selectedUser)
       infoWindow.setPosition(me.latLng);
     if (markers.hasOwnProperty(me.id))
       markers[me.id].setPosition(me.latLng);
+    if (firstLoad) {
+      map.setCenter(me.latLng);
+      firstLoad = false;
+    }
     localStorage.setItem('my-last-position', pos.coords.latitude + ',' + pos.coords.longitude)
     $('#userid').attr('data-lat', pos.coords.latitude).attr('data-lng', pos.coords.longitude);
-    location = {
+    data = {
       userid: me.id,
       oauth: me.oauth,
       lat: pos.coords.latitude,
       lng: pos.coords.longitude,
       timestamp: me.timestamp
     };
-    location.accuracy = pos.coords.accuracy ? pos.coords.accuracy : undefined;
-    location.heading = pos.coords.heading ? pos.coords.heading : undefined;
-    location.speed = pos.coords.speed ? pos.coords.speed : undefined;
-    location.altitude = pos.coords.altitude ? pos.coords.altitude : undefined;
-    location.altitudeaccuracy = pos.coords.altitudeAccuracy ? pos.coords.altitudeAccuracy : undefined;
+    data.accuracy = pos.coords.accuracy ? pos.coords.accuracy : undefined;
+    data.heading = pos.coords.heading ? pos.coords.heading : undefined;
+    data.speed = pos.coords.speed ? pos.coords.speed : undefined;
+    data.altitude = pos.coords.altitude ? pos.coords.altitude : undefined;
+    data.altitudeaccuracy = pos.coords.altitudeAccuracy ? pos.coords.altitudeAccuracy : undefined;
     if (!navigator.onLine || $('#offline-mode').is(':checked')) {
       try {
         pendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
@@ -597,17 +606,17 @@ var CTLON = (function () {
         console.error(e, data);
         return;
       }
-      delete location.userid;
-      pendingLocations.push(location);
+      delete data.userid;
+      pendingLocations.push(data);
       localStorage.setItem('pending-locations', JSON.stringify(pendingLocations));
     }
-    else if (!$('#incognito').is(':checked')) {
-      // send own location to server
+    else if (!$('#incognito').is(':checked') && !$('#offline.mode').is(':checked')) {
+      // send own data to server
       $.ajax({
         url: 'setloc.php',
         type: 'POST',
         accepts: 'json',
-        data: location
+        data: data
       }).done(function (data) {
         if (!data) {
           criticalError('Fehler beim Übertragen deines Standorts');
@@ -638,8 +647,8 @@ var CTLON = (function () {
           url: 'setoption.php',
           type: 'POST',
           data: {
-            option: 'avatar',
             oauth: me.oauth,
+            option: 'avatar',
             value: dataUrl
           }
         }).done(function (data) {
@@ -885,6 +894,9 @@ var CTLON = (function () {
 
       me.id = data.userid;
 
+      if (typeof data.name === 'string')
+        me.name = data.name;
+
       if (typeof data.avatar === 'string' && data.avatar.indexOf('data:image/png;base64,') === 0) {
         me.avatar = data.avatar;
         $('#avatar').css('background-image', 'url(' + me.avatar + ')');
@@ -901,12 +913,6 @@ var CTLON = (function () {
       else {
         me.latLng = new google.maps.LatLng(51, 10.3); // last resort (center of Germany)
       }
-
-      if (data.name === null) {
-        me.name = me.profile.displayName;
-        // XXX: Name an Server senden?
-      }
-
 
       $('#userid').click(function () {
         hideInfoWindow();
@@ -945,12 +951,15 @@ var CTLON = (function () {
       }).prop('checked', localStorage.getItem('show-tracks') === 'true');
 
       $('#share-my-tracks').change(function (e) {
-        var checked = $('#share-my-tracks').is(':checked')
+        var checked = $('#share-my-tracks').is(':checked');
         localStorage.setItem('share-my-tracks', checked);
         $.ajax({
-          url: 'setoption.php?option=sharetracks&value=' + encodeURIComponent(checked),
+          url: 'setoption.php',
+          type: 'POST',
           data: {
-            oauth: me.oauth
+            oauth: me.oauth,
+            option: 'sharetracks',
+            value: encodeURIComponent(checked)
           },
           accepts: 'json'
         })
@@ -1043,13 +1052,49 @@ var CTLON = (function () {
           gapi.client.plus.people.get({
             'userId': 'me'
           }).execute(function loadProfileCallback(response) {
-            var img = new Image;
-            img.crossOrigin = 'anonymous';
+            var img;
+            console.log('loadProfileCallback()');
             me.profile = response;
-            img.onload = function () {
-              uploadAvatar(img);
-            };
-            img.src = me.profile.image.url;
+            if (me.avatar === null) {
+              img = new Image;
+              img.crossOrigin = 'anonymous';
+              img.onload = function () {
+                uploadAvatar(img);
+              };
+              img.src = me.profile.image.url;
+            }
+            if (me.name === null) {
+              me.name = me.profile.displayName;
+              $.ajax({
+                url: 'setoption.php',
+                type: 'POST',
+                data: {
+                  oauth: me.oauth,
+                  option: 'name',
+                  value: me.name
+                }
+              }).done(function (data) {
+                if (!data) {
+                  criticalError('Fehler beim Übertragen deines Namens!');
+                  return;
+                }
+                try {
+                  data = JSON.parse(data);
+                }
+                catch (e) {
+                  criticalError('Fehler beim Übertragen deines Namens: ' + e);
+                  return;
+                }
+                if (data.status === 'ok') {
+                  // TODO?
+                }
+                else {
+                  criticalError('Fehler beim Speichern deines Namens: ' + data.error);
+                }
+              }).error(function (jqXHR, textStatus, errorThrown) {
+                criticalError('Fehler beim Übertragen deines Namens [' + textStatus + ': ' + errorThrown + ']');
+              });
+            }
           });
         });
       }
@@ -1077,6 +1122,7 @@ var CTLON = (function () {
 
   return {
     init: function () {
+      GoogleOAuthClientId = ($('.g-signin').attr('data-clientid'));
       $('<script>').attr('type', 'text/javascript').attr('async', true).attr('src', 'https://apis.google.com/js/client:plusone.js').insertBefore($('script'));
     },
     googleSigninCallback: googleSigninCallback

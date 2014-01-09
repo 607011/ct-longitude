@@ -39,6 +39,7 @@ if ($dbh) {
         "   locations.timestamp > $t0" .
         " GROUP BY locations.userid" .
         " ORDER BY locations.timestamp DESC";
+    $res['query'] = $q;
     $rows = $dbh->query($q);
     foreach($rows as $row)  {
         $lat = floatval($row[2]);
@@ -55,7 +56,7 @@ if ($dbh) {
             'heading' => floatval($row[7]),
             'speed' => floatval($row[8]), 
             'avatar' => $row[9],
-            'name' => $row[9]
+            'name' => $row[10]
         );
     }
     $res['status'] = 'ok';

@@ -26,9 +26,18 @@ $value = $_REQUEST['value'];
 
 if ($dbh) {
     switch ($option) {
+        case 'name':
+            $v = filter_var($value, FILTER_SANITIZE_SPECIAL_CHARS);
+            $q = "UPDATE `buddies` SET `name` = '$v' WHERE `userid` = '$userid'";
+            $dbh->exec($q);
+            $res['status'] = 'ok';
+            $res['userid'] = $userid;
+            $res['option'] = $option;
+            $res['value'] = $v;
+            break;
         case 'sharetracks':
             $v = in_array($value, array('1', 'ok', 'yes', 'true')) ? 1 : 0;
-            $q = "UPDATE buddies SET sharetracks = $v WHERE userid = '$userid'";
+            $q = "UPDATE `buddies` SET `sharetracks` = $v WHERE `userid` = '$userid'";
             $dbh->exec($q);
             $res['status'] = 'ok';
             $res['userid'] = $userid;
@@ -38,7 +47,7 @@ if ($dbh) {
         case 'avatar':
             if (strpos($value, 'data:image/png;base64,') === 0) {
                 $value = filter_var($value, FILTER_SANITIZE_SPECIAL_CHARS);
-                $q = "UPDATE buddies SET avatar = '$value' WHERE userid = '$userid'";
+                $q = "UPDATE `buddies` SET `avatar` = '$value' WHERE `userid` = '$userid'";
                 $dbh->exec($q);
                 $res['status'] = 'ok';
                 $res['userid'] = $userid;

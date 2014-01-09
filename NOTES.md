@@ -6,9 +6,6 @@ Features
  * Fake-Standort durch Tippen/Klicken auf Karte setzen
  * Upload von KML- und GPX-Trackdaten
  * für Retina-Display: Avatar in doppelter Auflösung speichern
- * Authentifizierung mit Google Konto
-
- * PHP-Skripte: filter_var() statt Regex zur URL-Parameter-Prüfung
 
 Fehler
 ======
