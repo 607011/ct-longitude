@@ -5,7 +5,8 @@
 
 html, body {
   height: 100%;
-  font: 17px/21px -apple-system-font, Helvetica, Arial, Verdana, sans-serif;
+  font-family: -apple-system-font, Helvetica, Arial, Verdana, sans-serif;
+  font-size: 17px;
   overflow: hidden;
   background-color: #111;
 }
@@ -34,7 +35,7 @@ html, body {
 
 #logon {
   text-align: center;
-  padding: 25% 0;
+  padding: 10% 0 0 0;
   background-color: #333;
   color: #eee;
   height: 100%;

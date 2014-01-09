@@ -860,8 +860,6 @@ var CTLON = (function () {
 
     showProgressInfo();
 
-    preloadImages();
-
     if (DEBUG)
       $('#info-bar-container').before($('<div id="log" style="position: fixed; top: 0; left: 0; right: 0; height: 100px; background-color: rgba(0,0,0,0.45); line-height: 11px; font-size: 9px; color: white; text-shadow: 1px 1px 0 black; padding: 2px 4px;"></div>'));
 
@@ -1123,6 +1121,7 @@ var CTLON = (function () {
   return {
     init: function () {
       GoogleOAuthClientId = ($('.g-signin').attr('data-clientid'));
+      preloadImages();
       $('<script>').attr('type', 'text/javascript').attr('async', true).attr('src', 'https://apis.google.com/js/client:plusone.js').insertBefore($('script'));
     },
     googleSigninCallback: googleSigninCallback
