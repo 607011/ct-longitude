@@ -128,7 +128,7 @@ var CTLON = (function () {
     MaxDistance = 200 * 1000 /* meters */,
     GoogleOAuthClientId = '', /* will be read from attribute "data-clientid" of <span class="g-signin"> in index.html */
     DevicePixelRatio = window.devicePixelRatio ? window.devicePixelRatio : 1,
-    Avatar = { Width: 44, Height: 44, InternalWidth: 88, InternalHeight: 88, MaxWidth: 512, MaxHeight: 512, backgroundColor: '#000' },
+    Avatar = { Width: 44, Height: 44, OptimalWidth: 88, OptimalHeight: 88, MaxWidth: 512, MaxHeight: 512, backgroundColor: '#000' },
     Symbol = { Width: 46, Height: 53 },
     TrackColor = '#039',
     appInitialized = false,
@@ -396,7 +396,7 @@ var CTLON = (function () {
             };
           }
           markers[friend.id] = new google.maps.Marker({
-            title: friend.name + (friend.readableTimestamp ? (' (' + friend.readableTimestamp + ')') : ''),
+            title: isClustered ? 'einige deiner Freunde' : friend.name + (friend.readableTimestamp ? (' (' + friend.readableTimestamp + ')') : ''),
             icon: icon,
             map: map
           });
@@ -413,7 +413,7 @@ var CTLON = (function () {
           var img = new Image, friend = cluster[0];
           img.onload = function () {
             var canvas = document.createElement('canvas'), ctx = canvas.getContext('2d'),
-              avatarImg = new Image(Avatar.InternalWidth, Avatar.InternalHeight);
+              avatarImg = new Image(Avatar.OptimalWidth, Avatar.OptimalHeight);
             process(friend);
             avatarImg.src = friend.avatar || DEFAULT_AVATAR;
             canvas.width = Symbol.Width;
@@ -678,23 +678,23 @@ var CTLON = (function () {
       },
       fitImage = function () {
         var aspectRatio, canvas, ctx, w, h, xoff, yoff;
-        if (img.width !== Avatar.InternalWidth || img.height !== Avatar.InternalHeight) {
+        if (img.width !== Avatar.OptimalWidth || img.height !== Avatar.OptimalHeight) {
           // scale image
           canvas = document.createElement('canvas');
           ctx = canvas.getContext('2d');
-          canvas.width = Avatar.InternalWidth;
-          canvas.height = Avatar.InternalHeight;
+          canvas.width = Avatar.OptimalWidth;
+          canvas.height = Avatar.OptimalHeight;
           aspectRatio = img.width / img.height;
           if (aspectRatio > 1) {
-            w = Avatar.InternalWidth;
-            h = Math.round(Avatar.InternalHeight / aspectRatio);
+            w = Avatar.OptimalWidth;
+            h = Math.round(Avatar.OptimalHeight / aspectRatio);
             xoff = 0;
-            yoff = Math.round((Avatar.InternalHeight - h) / 2);
+            yoff = Math.round((Avatar.OptimalHeight - h) / 2);
           }
           else {
-            w = Math.round(Avatar.InternalWidth * aspectRatio);
-            h = Avatar.InternalHeight;
-            xoff = Math.round((Avatar.InternalWidth - w) / 2);
+            w = Math.round(Avatar.OptimalWidth * aspectRatio);
+            h = Avatar.OptimalHeight;
+            xoff = Math.round((Avatar.OptimalWidth - w) / 2);
             yoff = 0;
           }
           ctx.fillStyle = Avatar.backgroundColor;
@@ -929,12 +929,10 @@ var CTLON = (function () {
 
       $('#avatar').css('width', Avatar.Width + 'px').css('height', Avatar.Height + 'px');
 
-      $('#avatar-max-width').text(Avatar.Width);
-
-      $('#avatar-max-height').text(Avatar.Height);
+      $('#avatar-optimal-width').text(Avatar.OptimalWidth);
+      $('#avatar-optimal-height').text(Avatar.OptimalHeight);
 
       $('#settings-icon').click(showHideSettings);
-
       $('#buddies').enableHorizontalSlider();
 
       $("#settings .colorpicker").spectrum({

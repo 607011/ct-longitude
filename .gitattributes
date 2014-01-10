@@ -1,9 +1,10 @@
-* text=auto
-*.sln text eol=crlf
-*.php text
-*.css text
-*.html text
-*.md text
-*.png binary
-*.jpg binary
+*	text=auto
+*.sln	text eol=crlf
+*.php	text
+*.css	text
+*.js	text
+*.html	text diff=html
+*.md	text
+*.png	binary
+*.jpg	binary
 
