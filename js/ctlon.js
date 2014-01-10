@@ -269,7 +269,14 @@ var CTLON = (function () {
     if (centerMap)
       map.setCenter(m.getPosition());
     m.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
-    if (!isCluster) {
+    if (isCluster) {
+      if (infoWindow === null)
+        infoWindow = new google.maps.InfoWindow();
+      infoWindow.setMap(map);
+      infoWindow.setPosition(m.getPosition());
+      infoWindow.setContent(m.getTitle());
+    }
+    else {
       accuracy = parseInt(buddy.attr('data-accuracy'), 10);
       if (circle === null) {
         circle = new google.maps.Circle({
@@ -396,7 +403,7 @@ var CTLON = (function () {
             };
           }
           markers[friend.id] = new google.maps.Marker({
-            title: isClustered ? 'einige deiner Freunde' : friend.name + (friend.readableTimestamp ? (' (' + friend.readableTimestamp + ')') : ''),
+            title: isClustered ? friend.name : friend.name + (friend.readableTimestamp ? (' (' + friend.readableTimestamp + ')') : ''),
             icon: icon,
             map: map
           });
@@ -434,7 +441,8 @@ var CTLON = (function () {
             slices = rect.partitioned(cluster.length),
             imagesLoaded = 0,
             clusteredFriends = {
-              id: [],
+              ids: [],
+              names: [],
               latLng: null,
               avatar: null,
               bounds: new google.maps.LatLngBounds()
@@ -451,11 +459,13 @@ var CTLON = (function () {
                 ctx.drawImage(img, img.width / 4, 0, img.width / 2, img.height, slice.left() + 1, slice.top() + 1, sliceW, sliceH);
               else
                 ctx.drawImage(img, 0, 0, img.width, img.height, slice.left() + 1, slice.top() + 1, sliceW, sliceH);
-              clusteredFriends.id.push(friend.id);
+              clusteredFriends.ids.push(friend.id);
+              clusteredFriends.names.push(friend.name);
               clusteredFriends.bounds.extend(friend.latLng);
               if (++imagesLoaded === slices.length) {
                 clusteredFriends.avatar = canvas.toDataURL('image/png');
-                clusteredFriends.id = clusteredFriends.id.join('/');
+                clusteredFriends.id = clusteredFriends.ids.join('/');
+                clusteredFriends.name = clusteredFriends.names.join(', ');
                 clusteredFriends.latLng = clusteredFriends.bounds.getCenter();
                 placeMarker(clusteredFriends, true);
               }

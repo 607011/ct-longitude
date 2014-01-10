@@ -46,7 +46,7 @@ Rect.prototype.slices = function () {
   }
   else {
     h2 = h / 2;
-    return [new Rect(this.x0, this.y0, this.x1, this.y1 - h2), new Rect(this.x0, this.y0 + h2, this.x1, this.y1)];
+    return [new Rect(this.x0, this.y0 + h2, this.x1, this.y1), new Rect(this.x0, this.y0, this.x1, this.y1 - h2)];
   }
 };
 Rect.prototype.partitioned = function (numTiles) {
@@ -59,8 +59,8 @@ Rect.prototype.partitioned = function (numTiles) {
       }
       mid = ((lo + hi) / 2) >> 0;
       slices = rect.slices();
-      makeTree(lo, mid - 1, slices[0]);
-      makeTree(mid + 1, hi, slices[1]);
+      makeTree(lo, mid - 1, slices[1]);
+      makeTree(mid + 1, hi, slices[0]);
     }
   makeTree(0, numTiles - 2, this);
   return partitions;
