@@ -1,0 +1,9 @@
+* text=auto
+*.sln text eol=crlf
+*.php text
+*.css text
+*.html text
+*.md text
+*.png binary
+*.jpg binary
+

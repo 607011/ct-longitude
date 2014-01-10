@@ -11,7 +11,7 @@ function haversineDistance($lat1, $lng1, $lat2, $lng2) {
 
 if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['oauth']['token'])) {
     $res['status'] = 'error';
-    $res['error'] = 'no authenticated user';
+    $res['error'] = 'authentication failed: no valid token given';
     goto end;
 }
 $token = $_REQUEST['oauth']['token'];
@@ -54,7 +54,7 @@ if ($dbh) {
             'altitude' => floatval($row[5]),
             'altitudeaccuracy' => floatval($row[6]),
             'heading' => floatval($row[7]),
-            'speed' => floatval($row[8]), 
+            'speed' => floatval($row[8]),
             'avatar' => $row[9],
             'name' => $row[10]
         );
