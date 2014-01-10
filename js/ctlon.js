@@ -353,7 +353,7 @@ var CTLON = (function () {
               .attr('data-accuracy', friend.accuracy)
               .attr('data-timestamp', friend.timestamp)
               .attr('data-last-update', friend.readableTimestamp)
-              .attr('title', friend.id + ' - letzte Aktualisierung: ' + friend.readableTimestamp)
+              .attr('title', friend.name + ' - letzte Aktualisierung: ' + friend.readableTimestamp)
             .click(function () {
               hideInfoWindow();
               highlightFriend(friend.id, true);
@@ -402,7 +402,7 @@ var CTLON = (function () {
           });
           google.maps.event.addListener(markers[friend.id], 'click', function () {
             // TODO: do something useful when symbol is clicked
-            console.log('clicked on ' + friend.name + ' (' + friend.id + ')');
+            console.log('clicked on ' + (isClustered ? 'einige deiner Freunde' : friend.name) + ' (' + friend.id + ')');
           });
         }
         markers[friend.id].setPosition(friend.latLng);
@@ -891,12 +891,19 @@ var CTLON = (function () {
         return;
       }
 
-      me.id = data.userid;
+      if (typeof data.userid === 'string') {
+        me.id = data.userid;
+      }
+      else {
+        console.error('`me.php` returned an invalid or no userid');
+      }
 
-      if (typeof data.name === 'string')
+      if (typeof data.name === 'string') {
         me.name = data.name;
+        $('#userid').attr('title', 'angemeldet als ' + me.name);
+      }
 
-      if (typeof data.avatar === 'string' && data.avatar.indexOf('data:image/png;base64,') === 0) {
+      if (typeof data.avatar === 'string' && data.avatar.indexOf('data:image') === 0) {
         me.avatar = data.avatar;
         $('#avatar').css('background-image', 'url(' + me.avatar + ')');
         $('#userid').css('background-image', 'url(' + me.avatar + ')');
@@ -1053,7 +1060,6 @@ var CTLON = (function () {
             'userId': 'me'
           }).execute(function loadProfileCallback(response) {
             var img;
-            console.log('loadProfileCallback()');
             me.profile = response;
             if (me.avatar === null) {
               img = new Image;
