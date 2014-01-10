@@ -6,6 +6,9 @@ if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['
     $res['error'] = 'no authenticated user';
     goto end;
 }
+$token = $_REQUEST['oauth']['token'];
+$userid = $_SESSION[$token]['user_id'];
+
 
 if (!isset($_REQUEST['userid'])) {
     $res['error'] = 'userid is missing';
@@ -13,9 +16,9 @@ if (!isset($_REQUEST['userid'])) {
     goto end;
 }
 
-$userid = $_REQUEST['userid'];
-if (!preg_match('/^\\w+$/', $userid)) {
-    $res['error'] = 'bad userid: ' . $userid;
+$requested_userid = $_REQUEST['userid'];
+if (!preg_match('/^\\w+$/', $requested_userid)) {
+    $res['error'] = 'bad userid: ' . $requested_userid;
     $res['status'] = 'error';
     goto end;
 }
@@ -27,25 +30,25 @@ $t0 = isset($_REQUEST['t0']) ? intval($_REQUEST['t0']) : 'STRFTIME("%s", "now", 
 $t1 = isset($_REQUEST['t1']) ? intval($_REQUEST['t1']) : 'STRFTIME("%s", "now", "localtime")';
 
 if ($dbh) {
-    if ($userid != $_SERVER['PHP_AUTH_USER']) {
-        $q = "SELECT sharetracks FROM buddies WHERE userid = '$userid'";
+    if ($requested_userid !== $userid) {
+        $q = "SELECT sharetracks FROM buddies WHERE userid = '$requested_userid'";
         $rows = $dbh->query($q);
         $row = $rows->fetch();
         if (!$row[0]) {
-            $res['error'] = "user '$userid' does not share tracks";
+            $res['error'] = "user '$requested_userid' does not share tracks";
             $res['status'] = 'error';
             goto end;
         }
     }
     $q = "SELECT timestamp, lat, lng FROM locations " .
-            "WHERE userid = '$userid' " .
+            "WHERE userid = '$requested_userid' " .
             "  AND timestamp > $t0 " .
             "  AND timestamp < $t1 " .
             "ORDER BY timestamp ASC";
     $rows = $dbh->query($q);
     switch($format) {
         case 'json':
-            $res['userid'] = $userid;
+            $res['userid'] = $requested_userid;
             // $res['query'] = $q;
             $res['path'] = array();
             foreach($rows as $row)  {

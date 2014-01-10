@@ -69,6 +69,14 @@ html, body {
     color: #d8d8d8;
   }
 
+  #loader-icon {
+    background-image: url(../img/ajax-loader.gif);
+    width: 43px;
+    height: 11px;
+    margin: 12px auto;
+    display: block;
+  }
+
 #user-info {
   display: inline-block;
 }
@@ -267,8 +275,23 @@ html, body {
   vertical-align: top;
 }
 
+.loader-5-0 {
+  display: inline-block;
+  width: 44px;
+  height: 4px;
+  background-image: url(../img/loader-5-0.gif);
+  background-repeat: no-repeat;
+  background-position: 6px 6px;
+}
+
 #avatar {
   border: 1px solid #222;
+  -moz-background-size: contain;
+  -o-background-size: contain;
+  -webkit-background-size: contain;
+  background-size: contain;
+  background-position: left top;
+  background-repeat: no-repeat;
   background-image: url(../img/default-avatar.jpg);
   margin: 2px 0 4px 0;
   display: inline-block;

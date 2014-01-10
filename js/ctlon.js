@@ -128,7 +128,7 @@ var CTLON = (function () {
     MaxDistance = 200 * 1000 /* meters */,
     GoogleOAuthClientId = '', /* will be read from attribute "data-clientid" of <span class="g-signin"> in index.html */
     DevicePixelRatio = window.devicePixelRatio ? window.devicePixelRatio : 1,
-    Avatar = { Width: DevicePixelRatio * 44, Height: DevicePixelRatio * 44, backgroundColor: '#000' },
+    Avatar = { Width: 44, Height: 44, InternalWidth: 88, InternalHeight: 88, MaxWidth: 512, MaxHeight: 512, backgroundColor: '#000' },
     Symbol = { Width: 46, Height: 53 },
     TrackColor = '#039',
     appInitialized = false,
@@ -244,6 +244,7 @@ var CTLON = (function () {
     var m, accuracy, userIDs, buddy, found = false, isCluster = false;
     if (typeof userid !== 'string')
       return;
+    console.log('highlightFriend("' + userid + '")');
     m = markers[userid];
     buddy = $('#buddy-' + userid);
     if (polyline)
@@ -264,6 +265,7 @@ var CTLON = (function () {
         return;
     }
     selectedUser = userid;
+    console.log('selectedUser = ' + selectedUser);
     if (centerMap)
       map.setCenter(m.getPosition());
     m.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
@@ -411,7 +413,7 @@ var CTLON = (function () {
           var img = new Image, friend = cluster[0];
           img.onload = function () {
             var canvas = document.createElement('canvas'), ctx = canvas.getContext('2d'),
-              avatarImg = new Image(Avatar.Width, Avatar.Height);
+              avatarImg = new Image(Avatar.InternalWidth, Avatar.InternalHeight);
             process(friend);
             avatarImg.src = friend.avatar || DEFAULT_AVATAR;
             canvas.width = Symbol.Width;
@@ -676,34 +678,34 @@ var CTLON = (function () {
       },
       fitImage = function () {
         var aspectRatio, canvas, ctx, w, h, xoff, yoff;
-        if (img.width !== Avatar.Width || img.height !== Avatar.Height) {
+        if (img.width !== Avatar.InternalWidth || img.height !== Avatar.InternalHeight) {
           // scale image
           canvas = document.createElement('canvas');
           ctx = canvas.getContext('2d');
-          canvas.width = Avatar.Width;
-          canvas.height = Avatar.Height;
+          canvas.width = Avatar.InternalWidth;
+          canvas.height = Avatar.InternalHeight;
           aspectRatio = img.width / img.height;
           if (aspectRatio > 1) {
-            w = Avatar.Width;
-            h = Math.round(Avatar.Height / aspectRatio);
+            w = Avatar.InternalWidth;
+            h = Math.round(Avatar.InternalHeight / aspectRatio);
             xoff = 0;
-            yoff = Math.round((Avatar.Height - h) / 2);
+            yoff = Math.round((Avatar.InternalHeight - h) / 2);
           }
           else {
-            w = Math.round(Avatar.Width * aspectRatio);
-            h = Avatar.Height;
-            xoff = Math.round((Avatar.Width - w) / 2);
+            w = Math.round(Avatar.InternalWidth * aspectRatio);
+            h = Avatar.InternalHeight;
+            xoff = Math.round((Avatar.InternalWidth - w) / 2);
             yoff = 0;
           }
           ctx.fillStyle = Avatar.backgroundColor;
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(img, 0, 0, img.width, img.height, xoff, yoff, w, h);
-          dataUrl = canvas.toDataURL('image/png');
+          dataUrl = canvas.toDataURL('image/jpg');
         }
         send();
       };
 
-    avatar.css('background', 'none').css('background-color', 'white').append($('<span style="display: inline-block; width: ' + Avatar.Width + 'px; height: ' + Avatar.Height + 'px; background-image: url(img/loader-5-0.gif); background-repeat: no-repeat; background-position: 6px 6px"></span>'));
+    avatar.css('background-image', 'none').css('background-color', 'white').append($('<span></span>').addClass('loader-5-0'));
 
     if (blob instanceof Image) { // blob contains image
       img = blob;
@@ -830,7 +832,7 @@ var CTLON = (function () {
 
 
   function preloadImages() {
-    var imgFiles = ['loader-5-0.gif', 'single-symbol.png'];
+    var imgFiles = ['ajax-loader.gif', 'loader-5-0.gif', 'single-symbol.png'];
     $.each(imgFiles, function (i, f) {
       var img = new Image;
       img.src = 'img/' + f;
@@ -944,6 +946,7 @@ var CTLON = (function () {
         localStorage.setItem('show-tracks', checked);
         if (checked)
           getTrack(selectedUser);
+        console.log(selectedUser);
         if (polyline !== null)
           polyline.setVisible(checked);
       }).prop('checked', localStorage.getItem('show-tracks') === 'true');
@@ -1034,7 +1037,7 @@ var CTLON = (function () {
 
   function googleSigninCallback(authResult) {
     console.log('googleSigninCallback()');
-    hideProgressInfo();
+    $('#loader-icon').css('display', 'none');
     if (authResult['status']['signed_in']) {
       $('#logon').removeClass('show').addClass('hide');
       $('#app').removeClass('hide').addClass('show').css('visibility', 'visible');
@@ -1120,7 +1123,7 @@ var CTLON = (function () {
 
   return {
     init: function () {
-      GoogleOAuthClientId = ($('.g-signin').attr('data-clientid'));
+      GoogleOAuthClientId = $('.g-signin').attr('data-clientid');
       preloadImages();
       $('<script>').attr('type', 'text/javascript').attr('async', true).attr('src', 'https://apis.google.com/js/client:plusone.js').insertBefore($('script'));
     },

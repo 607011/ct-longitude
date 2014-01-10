@@ -45,7 +45,7 @@ if ($dbh) {
             $res['value'] = $v;
             break;
         case 'avatar':
-            if (strpos($value, 'data:image/png;base64,') === 0) {
+            if (strpos($value, 'data:image') === 0) {
                 $value = filter_var($value, FILTER_SANITIZE_SPECIAL_CHARS);
                 $q = "UPDATE `buddies` SET `avatar` = '$value' WHERE `userid` = '$userid'";
                 $dbh->exec($q);
