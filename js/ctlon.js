@@ -832,7 +832,7 @@ var CTLON = (function () {
 
 
   function preloadImages() {
-    var imgFiles = ['ajax-loader.gif', 'loader-5-0.gif', 'single-symbol.png'];
+    var imgFiles = ['loader-5-0.gif', 'single-symbol.png'];
     $.each(imgFiles, function (i, f) {
       var img = new Image;
       img.src = 'img/' + f;
@@ -852,7 +852,6 @@ var CTLON = (function () {
     else {
       alert('Dein Browser stellt keine Standortabfragen zur Verfügung.');
     }
-
   }
 
   function initApp() {
@@ -1125,7 +1124,6 @@ var CTLON = (function () {
     init: function () {
       GoogleOAuthClientId = $('.g-signin').attr('data-clientid');
       preloadImages();
-      $('<script>').attr('type', 'text/javascript').attr('async', true).attr('src', 'https://apis.google.com/js/client:plusone.js').insertBefore($('script'));
     },
     googleSigninCallback: googleSigninCallback
   };
