@@ -255,16 +255,6 @@ var CTLON = (function () {
       map.setCenter(m.getPosition());
     m.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
     accuracy = parseInt(buddy.attr('data-accuracy'), 10);
-    if (circle === null) {
-      circle = new google.maps.Circle({
-        map: map,
-        strokeColor: '#f00',
-        strokeOpacity: 0.7,
-        strokeWeight: 2,
-        fillColor: '#f00',
-        fillOpacity: 0.1
-      });
-    }
     circle.setRadius(accuracy);
     circle.setCenter(m.getPosition());
     circle.setVisible($('#show-accuracy').is(':checked'));
@@ -322,7 +312,7 @@ var CTLON = (function () {
     $.each(clusteredFriends(users), function (i, cluster) {
 
       function process(friend) {
-        var buddy;
+        var buddy, latLng;
         friend.readableTimestamp = new Date(friend.timestamp * 1000).toLocaleString();
         if (me.latLng === null) // location queries disabled, use first friend's position for range calculation
           me.latLng = new google.maps.LatLng(friend.lat, friend.lng);
@@ -344,6 +334,13 @@ var CTLON = (function () {
           buddy.css('display', 'none');
         else
           buddy.css('background-image', 'url(' + (friend.avatar ? friend.avatar : DEFAULT_AVATAR) + ')');
+        if (friend.id === selectedUser) {
+          latLng = new google.maps.LatLng(friend.lat, friend.lng);
+          if (circle)
+            circle.setCenter(latLng);
+          if (infoWindow)
+            infoWindow.setPosition(latLng);
+        }
         if ($('#buddies').children().length === 0) {
           $('#buddies').append(buddy);
         }
@@ -1009,7 +1006,20 @@ var CTLON = (function () {
         computeDistanceBetween = google.maps.geometry.spherical.computeDistanceBetween;
       map.setCenter(me.latLng);
 
-      infoWindow = new google.maps.InfoWindow();
+      circle = new google.maps.Circle({
+        map: map,
+        visible: false,
+        strokeColor: '#f00',
+        strokeOpacity: 0.7,
+        strokeWeight: 2,
+        fillColor: '#f00',
+        fillOpacity: 0.1
+      });
+
+      infoWindow = new google.maps.InfoWindow({
+        map: map,
+        visible: false
+      });
 
       overlay = new google.maps.OverlayView();
       overlay.draw = function () { };

@@ -12,5 +12,3 @@ Fehler
  
  * Tracks des aktuellen Users werden manchmal nicht angezeigt, obwohl er ausgewählt ist
  * Track muss beim Eintreffen neuer Standortdaten verlängert werden
- * Kreis um Symbol wandert nicht bei Standortänderungen mit
- * `InfoWindow` für ausgewählten User bleibt stehen, obwohl `processFriends()` neue Standortdaten für den User geliefert hat
