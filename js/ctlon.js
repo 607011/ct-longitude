@@ -241,74 +241,48 @@ var CTLON = (function () {
 
 
   function highlightFriend(userid, centerMap) {
-    var m, accuracy, userIDs, buddy, found = false, isCluster = false;
+    var m, accuracy, userIDs, buddy, found = false;
     if (typeof userid !== 'string')
       return;
-    console.log('highlightFriend("' + userid + '")');
     m = markers[userid];
-    buddy = $('#buddy-' + userid);
+    buddy = $('#buddy-' + userid.replace(/([!"#$%&'\(\)\*\+,\.\/:;<=>\?@\[\]^`\{\|\}~])/g, '\\$1'));
     if (polyline)
       polyline.setMap(null);
     if ($('#show-tracks').is(':checked'))
       getTrack(userid);
-    if (typeof m !== 'object') { // user is possibly clustered, find user
-      $.each(Object.keys(markers), function (i, uid) {
-        if (uid.split('/').indexOf(userid) >= 0) {
-          userid = uid;
-          m = markers[userid];
-          found = true;
-          isCluster = true;
-          return false;
-        }
-      });
-      if (!found)
-        return;
-    }
     selectedUser = userid;
-    console.log('selectedUser = ' + selectedUser);
     if (centerMap)
       map.setCenter(m.getPosition());
     m.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
-    if (isCluster) {
-      if (infoWindow === null)
-        infoWindow = new google.maps.InfoWindow();
-      infoWindow.setMap(map);
-      infoWindow.setPosition(m.getPosition());
-      infoWindow.setContent(m.getTitle());
-    }
-    else {
-      accuracy = parseInt(buddy.attr('data-accuracy'), 10);
-      if (circle === null) {
-        circle = new google.maps.Circle({
-          map: map,
-          strokeColor: '#f00',
-          strokeOpacity: 0.7,
-          strokeWeight: 2,
-          fillColor: '#f00',
-          fillOpacity: 0.1
-        });
-      }
-      circle.setRadius(accuracy);
-      circle.setCenter(m.getPosition());
-      circle.setVisible($('#show-accuracy').is(':checked'));
-      if (infoWindow === null)
-        infoWindow = new google.maps.InfoWindow();
-      infoWindow.setMap(map);
-      infoWindow.setPosition(m.getPosition());
-      infoWindow.setContent('<p><strong>' + buddy.attr('data-last-update') + '</strong><br/>' +
-        buddy.attr('data-name') + '</p>' +
-        '<p id="address"></p>');
-      geocoder.geocode({ 'latLng': m.getPosition() }, function (results, status) {
-        if (status == google.maps.GeocoderStatus.OK) {
-          if (results[1]) {
-            $('#address').text(results[1].formatted_address);
-          }
-        }
-        else {
-          console.warn('Umgekehrtes Geocoding fehlgeschlagen: ' + status);
-        }
+    accuracy = parseInt(buddy.attr('data-accuracy'), 10);
+    if (circle === null) {
+      circle = new google.maps.Circle({
+        map: map,
+        strokeColor: '#f00',
+        strokeOpacity: 0.7,
+        strokeWeight: 2,
+        fillColor: '#f00',
+        fillOpacity: 0.1
       });
     }
+    circle.setRadius(accuracy);
+    circle.setCenter(m.getPosition());
+    circle.setVisible($('#show-accuracy').is(':checked'));
+    infoWindow.setMap(map);
+    infoWindow.setPosition(m.getPosition());
+    infoWindow.setContent('<p><strong>' + buddy.attr('data-last-update') + '</strong><br/>' +
+      buddy.attr('data-name') + '</p>' +
+      '<p id="address"></p>');
+    geocoder.geocode({ 'latLng': m.getPosition() }, function (results, status) {
+      if (status == google.maps.GeocoderStatus.OK) {
+        if (results[1]) {
+          $('#address').text(results[1].formatted_address);
+        }
+      }
+      else {
+        console.warn('Umgekehrtes Geocoding fehlgeschlagen: ' + status);
+      }
+    });
   }
 
 
@@ -385,8 +359,9 @@ var CTLON = (function () {
         }
       }
 
-      function placeMarker(friend, isClustered) {
+      function placeMarker(friend, isClustered, visible) {
         var icon;
+        visible = (typeof visible === 'undefined') ? true : visible;
         if (typeof markers[friend.id] === 'undefined') {
           if (isClustered) {
             icon = {
@@ -404,12 +379,13 @@ var CTLON = (function () {
           }
           markers[friend.id] = new google.maps.Marker({
             title: isClustered ? friend.name : friend.name + (friend.readableTimestamp ? (' (' + friend.readableTimestamp + ')') : ''),
+            visible: visible,
             icon: icon,
             map: map
           });
           google.maps.event.addListener(markers[friend.id], 'click', function () {
             // TODO: do something useful when symbol is clicked
-            console.log('clicked on ' + (isClustered ? 'einige deiner Freunde' : friend.name) + ' (' + friend.id + ')');
+            console.log('clicked on ' + (isClustered ? 'einige deiner Freunde' : friend.name));
           });
         }
         markers[friend.id].setPosition(friend.latLng);
@@ -469,6 +445,7 @@ var CTLON = (function () {
                 clusteredFriends.latLng = clusteredFriends.bounds.getCenter();
                 placeMarker(clusteredFriends, true);
               }
+              placeMarker(friend, false, false);
             };
             img.src = friend.avatar || DEFAULT_AVATAR;
             process(friend);
@@ -587,8 +564,7 @@ var CTLON = (function () {
     var data, pendingLocations;
     me.timestamp = Math.floor(pos.timestamp / 1000);
     me.latLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
-    console.log('setPosition()', infoWindow, me.id, selectedUser, me.latLng.lat(), me.latLng.lng());
-    if (infoWindow !== null && me.id === selectedUser)
+    if (me.id === selectedUser)
       infoWindow.setPosition(me.latLng);
     if (markers.hasOwnProperty(me.id))
       markers[me.id].setPosition(me.latLng);
@@ -1033,6 +1009,8 @@ var CTLON = (function () {
         computeDistanceBetween = google.maps.geometry.spherical.computeDistanceBetween;
       map.setCenter(me.latLng);
 
+      infoWindow = new google.maps.InfoWindow();
+
       overlay = new google.maps.OverlayView();
       overlay.draw = function () { };
       overlay.setMap(map);
@@ -1058,9 +1036,8 @@ var CTLON = (function () {
       $('#googleSigninButton').removeClass('show').addClass('hide');
       me.oauth.token = authResult.id_token;
       me.oauth.clientId = authResult.client_id;
-      me.oauth.expiresAt = parseInt(authResult.expires_at);
-      me.oauth.expiresIn = parseInt(authResult.expires_in);
-      console.log('authResult -->', authResult, 'me.oauth -->', me.oauth);
+      me.oauth.expiresAt = parseInt(authResult.expires_at, 10);
+      me.oauth.expiresIn = parseInt(authResult.expires_in, 10);
       setTimeout(googleAuthorize, 1000 * me.oauth.expiresIn);
       if (me.profile === null) {
         gapi.client.load('plus', 'v1', function loadProfile() {

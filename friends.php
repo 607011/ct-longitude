@@ -37,7 +37,6 @@ if ($dbh) {
         "   timestamp > $t0" .
         " GROUP BY locations.userid" .
         " ORDER BY timestamp DESC";
-    $res['query'] = $q;
     $rows = $dbh->query($q);
     foreach($rows as $row)  {
         $lat = floatval($row[2]);
