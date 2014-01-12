@@ -30,32 +30,38 @@ if (isset($_REQUEST['maxdist']))
 $checkdist = isset($reflat) && isset($reflng) && isset($maxdist);
 
 if ($dbh) {
-    $q = "SELECT locations.userid, timestamp, lat, lng, accuracy, altitude, altitudeaccuracy, heading, speed, buddies.avatar, buddies.name" .
-        " FROM buddies LEFT OUTER JOIN locations ON locations.userid = buddies.userid" .
-        " WHERE timestamp > $t0" .
-        " GROUP BY locations.userid" .
-        " ORDER BY timestamp DESC";
-    $rows = $dbh->query($q);
-    foreach($rows as $row)  {
-        $lat = floatval($row[2]);
-        $lng = floatval($row[3]);
-        if ($checkdist && haversineDistance($reflat, $reflng, $lat, $lng) > $maxdist)
-            continue;
-        $res['users'][$row[0]] = array(
-            'timestamp' => intval($row[1]),
-            'lat' => $lat,
-            'lng' => $lng,
-            'accuracy' => floatval($row[4]),
-            'altitude' => floatval($row[5]),
-            'altitudeaccuracy' => floatval($row[6]),
-            'heading' => floatval($row[7]),
-            'speed' => floatval($row[8]),
-            'avatar' => $row[9],
-            'name' => $row[10]
-        );
+    $buddies = $dbh->query("SELECT `userid`, `name`, `avatar` FROM buddies");
+    $location_query = $dbh->prepare("SELECT `timestamp`, `lat`, `lng`, `accuracy`, `altitude`, `altitudeaccuracy`, `heading`, `speed`" .
+        " FROM `locations`" .
+        " WHERE `userid` = :userid AND `timestamp` > :t0" .
+        " ORDER BY `timestamp` DESC" .
+        " LIMIT 1");
+    foreach ($buddies as $buddy) {
+        $buddy_id = $buddy[0];
+        $buddy_name = $buddy[1];
+        $buddy_avatar = $buddy[2];
+        $location_query->execute(array($buddy_id, $t0));
+        foreach($location_query->fetchAll() as $row)  {
+            $lat = floatval($row[1]);
+            $lng = floatval($row[2]);
+            if ($checkdist && haversineDistance($reflat, $reflng, $lat, $lng) > $maxdist)
+                continue;
+            $res['users'][$buddy_id] = array(
+                'timestamp' => intval($row[0]),
+                'lat' => $lat,
+                'lng' => $lng,
+                'accuracy' => floatval($row[3]),
+                'altitude' => floatval($row[4]),
+                'altitudeaccuracy' => floatval($row[5]),
+                'heading' => floatval($row[6]),
+                'speed' => floatval($row[7]),
+                'avatar' =>$buddy_avatar,
+                'name' => $buddy_name
+            );
+        }
     }
+    
     $res['status'] = 'ok';
-    $res['q'] = $q;
     $res['user_id'] = $_SESSION[$token]['user_id'];
     $res['processing_time'] = round(microtime(true) - $T0, 3);
 }
