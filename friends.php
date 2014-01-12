@@ -30,11 +30,9 @@ if (isset($_REQUEST['maxdist']))
 $checkdist = isset($reflat) && isset($reflng) && isset($maxdist);
 
 if ($dbh) {
-    $q = "SELECT buddies.userid, timestamp, lat, lng, accuracy, altitude, altitudeaccuracy, heading, speed, buddies.avatar, buddies.name" .
-        " FROM buddies LEFT OUTER JOIN locations" .
-        " WHERE " .
-        "   timestamp > $t0 AND" .
-        "   locations.userid = buddies.userid" .
+    $q = "SELECT locations.userid, timestamp, lat, lng, accuracy, altitude, altitudeaccuracy, heading, speed, buddies.avatar, buddies.name" .
+        " FROM buddies LEFT OUTER JOIN locations ON locations.userid = buddies.userid" .
+        " WHERE timestamp > $t0" .
         " GROUP BY locations.userid" .
         " ORDER BY timestamp DESC";
     $rows = $dbh->query($q);
@@ -57,7 +55,9 @@ if ($dbh) {
         );
     }
     $res['status'] = 'ok';
+    $res['q'] = $q;
     $res['user_id'] = $_SESSION[$token]['user_id'];
+    $res['processing_time'] = round(microtime(true) - $T0, 3);
 }
 
 end:

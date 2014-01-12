@@ -65,4 +65,6 @@ function validateGoogleOauthToken($token) {
     }
     return false;
 }
+
+$T0 = microtime(true);
 ?>

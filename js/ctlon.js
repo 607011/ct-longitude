@@ -155,12 +155,6 @@ var CTLON = (function () {
   }
 
 
-  function hideInfoWindow() {
-    if (infoWindow)
-      infoWindow.setMap(null);
-  }
-
-
   function showProgressInfo() {
     $('#info-bar-container').addClass('barberpole');
     $('#buddy-container').addClass('opaque');
@@ -178,12 +172,6 @@ var CTLON = (function () {
   function removeAllMarkers() {
     $.each(markers, function (i, marker) { marker.setMap(null); });
     markers = {};
-  }
-
-
-  function hideCircle() {
-    if (circle)
-      circle.setVisible(false);
   }
 
 
@@ -326,9 +314,7 @@ var CTLON = (function () {
               .attr('data-last-update', friend.readableTimestamp)
               .attr('title', friend.name + ' - letzte Aktualisierung: ' + friend.readableTimestamp)
             .click(function () {
-              hideInfoWindow();
               highlightFriend(friend.id, true);
-              hideCircle();
             }.bind(friend));
         if (friend.id === me.id)
           buddy.css('display', 'none');
@@ -826,7 +812,8 @@ var CTLON = (function () {
   function startPolling() {
     if (navigator.geolocation) {
       watchId = navigator.geolocation.watchPosition(setPosition, function () {
-        alert('Standortabfrage fehlgeschlagen.');
+        // alert('Standortabfrage fehlgeschlagen.');
+        console.warn('Standortabfrage fehlgeschlagen.');
       });
       if (pollingId)
         clearInterval(pollingId);
@@ -904,10 +891,7 @@ var CTLON = (function () {
       }
 
       $('#userid').click(function () {
-        hideInfoWindow();
-        console.log(me);
         highlightFriend(me.id, true);
-        hideCircle();
       });
 
       $('#avatar').css('width', Avatar.Width + 'px').css('height', Avatar.Height + 'px');
@@ -1038,8 +1022,8 @@ var CTLON = (function () {
 
 
   function googleSigninCallback(authResult) {
-    console.log('googleSigninCallback()');
     $('#loader-icon').css('display', 'none');
+    hideProgressInfo();
     if (authResult['status']['signed_in']) {
       $('#logon').removeClass('show').addClass('hide');
       $('#app').removeClass('hide').addClass('show').css('visibility', 'visible');
@@ -1111,7 +1095,6 @@ var CTLON = (function () {
 
 
   function googleAuthorize() {
-    console.log('googleAuthorize()');
     showProgressInfo();
     gapi.auth.authorize({
       immediate: true,

@@ -35,7 +35,7 @@ html, body {
 
 #logon {
   text-align: center;
-  padding: 10% 0 0 0;
+  padding: 20% 8px 8px;
   background-color: #333;
   color: #eee;
   height: 100%;
@@ -225,7 +225,6 @@ html, body {
   left: 0;
   right: 0;
   bottom: 44px;
-  opacity: 0;
   background-color: rgba(55, 55, 55, 0.9);
   color: #eee;
   -webkit-text-shadow: #000 1px 1px 0;
@@ -260,13 +259,18 @@ html, body {
   text-align: right;
 }
 
-#settings td, tr {
+#settings td, tr, th {
   vertical-align: top;
   padding: 4px;
 }
 
 #settings tr {
   border-top: 1px solid #999;
+}
+
+#settings th {
+  text-align: left;
+  font-weight: bold;
 }
 
 #settings .sp-replacer {
