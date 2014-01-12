@@ -34,6 +34,7 @@ if ($dbh) {
         $res['lat'] = floatval($row[0]);
         $res['lng'] = floatval($row[1]);
     }
+    $res['processing_time'] = round(microtime(true) - $T0, 3);
 }
 
 end:

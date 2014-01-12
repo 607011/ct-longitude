@@ -61,6 +61,7 @@ if ($dbh) {
             $res['status'] = 'ok';
             break;
     }
+    $res['processing_time'] = round(microtime(true) - $T0, 3);
 }
 
 end:

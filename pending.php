@@ -28,13 +28,6 @@ $sth->bindParam(':altitudeaccuracy', $altitudeaccuracy);
 $sth->bindParam(':heading', $heading);
 $sth->bindParam(':speed', $speed);
 
-$userid = $_REQUEST['userid'];
-if (!preg_match('/^\\w+$/', $userid)) {
-    $res['status'] = 'error';
-    $res['error'] = 'bad userid:' + $userid;
-    goto end;
-}
-
 try {
     $locations = json_decode($_REQUEST['locations']);
 }
@@ -79,6 +72,7 @@ foreach ($locations as $location) {
     }
 }
 
+$res['processing_time'] = round(microtime(true) - $T0, 3);
 
 
 end:

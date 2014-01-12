@@ -532,10 +532,13 @@ var CTLON = (function () {
     }).done(function (data) {
       hideProgressInfo();
       if (!data) {
-        criticalError('Fehler beim Abfragen deiner Daten!');
+        criticalError('Fehler beim Übertragen der zwischengespeicherten Standorte!');
       }
       else if (data.status === 'ok') {
         localStorage.setItem('pending-locations', '[]');
+      }
+      else if (data.status === 'error') {
+        criticalError('Fehler beim Übertragen der zwischengespeicherten Standorte: ' + data.error);
       }
     }).error(function (jqXHR, textStatus, errorThrown) {
       criticalError('Fehler beim Übertragen der zwischengespeicherten Standorte [' + textStatus + ': ' + errorThrown + ']');
@@ -902,6 +905,7 @@ var CTLON = (function () {
       $('#settings-icon').click(showHideSettings);
       $('#buddies').enableHorizontalSlider();
 
+      $('#settings').css('z-index', google.maps.Marker.MAX_ZINDEX + 1000);
       $("#settings .colorpicker").spectrum({
         color: Avatar.backgroundColor,
         showInitial: true,
