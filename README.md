@@ -12,4 +12,4 @@ Falls Sie beabsichtigen, den Code in eigenen Produkten zu verwenden,
 so ist das im Rahmen der GPL v3 kostenfrei gestattet (siehe die
 Datei LICENSE.txt für weitere Informationen).
 
-Copyright (c) 2013 Oliver Lau <<ola@ct.de>>, Heise Zeitschriften Verlag
+Copyright (c) 2013-2014 Oliver Lau <<ola@ct.de>>, Heise Zeitschriften Verlag

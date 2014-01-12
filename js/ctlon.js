@@ -182,7 +182,7 @@ var CTLON = (function () {
       return;
     showProgressInfo();
     $.ajax({
-      url: 'gettrack.php',
+      url: 'ajax/gettrack.php',
       type: 'POST',
       accepts: 'json',
       data: {
@@ -462,7 +462,7 @@ var CTLON = (function () {
       data.maxdist = rangeConstraint;
     }
     $.ajax({
-      url: 'friends.php',
+      url: 'ajax/friends.php',
       type: 'POST',
       data: data,
       accepts: 'json'
@@ -521,7 +521,7 @@ var CTLON = (function () {
     if (!pendingLocations || pendingLocations.length === 0)
       return;
     $.ajax({
-      url: 'pending.php',
+      url: 'ajax/pending.php',
       type: 'POST',
       accepts: 'json',
       data: {
@@ -550,8 +550,10 @@ var CTLON = (function () {
     var data, pendingLocations;
     me.timestamp = Math.floor(pos.timestamp / 1000);
     me.latLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
-    if (me.id === selectedUser)
+    if (me.id === selectedUser) {
       infoWindow.setPosition(me.latLng);
+      circle.setPosition(me.latLng);
+    }
     if (markers.hasOwnProperty(me.id))
       markers[me.id].setPosition(me.latLng);
     if (firstLoad) {
@@ -587,7 +589,7 @@ var CTLON = (function () {
     else if (!$('#incognito').is(':checked') && !$('#offline.mode').is(':checked')) {
       // send own data to server
       $.ajax({
-        url: 'setloc.php',
+        url: 'ajax/setloc.php',
         type: 'POST',
         accepts: 'json',
         data: data
@@ -603,8 +605,8 @@ var CTLON = (function () {
             console.error(e, data);
             return;
           }
-          if (data.status === 'ok' && data.userid === me.id) {
-            // XXX?
+          if (data.status === 'error') {
+            criticalError('Fehler beim Übertragen deines Standorts: ' + data.error);
           }
         }
       }).error(function (jqXHR, textStatus, errorThrown) {
@@ -618,7 +620,7 @@ var CTLON = (function () {
     var reader = new FileReader, img, avatar = $('#avatar'), dataUrl,
       send = function () {
         $.ajax({
-          url: 'setoption.php',
+          url: 'ajax/setoption.php',
           type: 'POST',
           data: {
             oauth: me.oauth,
@@ -841,7 +843,7 @@ var CTLON = (function () {
 
     // get http basic auth user
     $.ajax({
-      url: 'me.php',
+      url: 'ajax/me.php',
       accepts: 'json',
       data: {
         oauth: me.oauth
@@ -930,7 +932,7 @@ var CTLON = (function () {
         var checked = $('#share-my-tracks').is(':checked');
         localStorage.setItem('share-my-tracks', checked);
         $.ajax({
-          url: 'setoption.php',
+          url: 'ajax/setoption.php',
           type: 'POST',
           data: {
             oauth: me.oauth,
@@ -1055,7 +1057,7 @@ var CTLON = (function () {
             if (me.name === null) {
               me.name = me.profile.displayName;
               $.ajax({
-                url: 'setoption.php',
+                url: 'ajax/setoption.php',
                 type: 'POST',
                 data: {
                   oauth: me.oauth,
