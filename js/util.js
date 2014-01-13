@@ -26,61 +26,63 @@
 })();
 
 
-var GPXParser = function (xmlDoc, callback) {
+var GPXParser = function (xmlDoc) {
   "use strict";
-  var reader;
   this.xml = null;
+  this.xmlDoc = xmlDoc;
   this.track = [];
-  if (typeof xmlDoc === 'string') {
-    this.parse(xmlDoc);
-    callback(this);
+  this.successCallback = function () { };
+  this.errorCallback = function () { };
+};
+GPXParser.prototype.parse = function () {
+  var parser, tracks, reader, i;
+  if (typeof this.xmlDoc === 'string') {
+    if (window.DOMParser) {
+      parser = new DOMParser();
+      this.xml = parser.parseFromString(this.xmlDoc, 'text/xml');
+    }
+    else { // Internet Explorer
+      this.xml = new ActiveXObject('Microsoft.XMLDOM');
+      this.xml.async = false;
+      this.xml.loadXML(this.xmlDoc);
+    }
+    if (this.xml !== null) {
+      tracks = this.xml.documentElement.getElementsByTagName('trk'), i;
+      for (i = 0; i < tracks.length; ++i)
+        this.addTrack(tracks[i]);
+    }
+    this.successCallback(this);
   }
   else {
     reader = new FileReader();
     reader.onload = function (e) {
       if (e.target.readyState === FileReader.DONE) {
-        this.parse(e.target.result);
-        callback(this);
+        this.xmlDoc = e.target.result;
+        this.parse();
       }
     }.bind(this);
     reader.onerror = function (e) {
       switch (e.target.error.code) {
         case e.target.error.NOT_FOUND_ERR:
-          console.error('XML-Datei nicht gefunden.');
+          this.errorCallback({ error: 'XML-Datei nicht gefunden.' });
           break;
         case e.target.error.NOT_READABLE_ERR:
-          console.error('XML-Datei ist nicht lesbar.');
+          this.errorCallback({ error: 'XML-Datei ist nicht lesbar.' });
           break;
         case e.target.error.ABORT_ERR:
           console.warn('Lesen der XML-Datei abgebrochen.');
           break;
         default:
-          console.error('Beim Zugriff auf die XML-Datei ist ein Fehler aufgetreten.');
+          this.errorCallback({ error: 'Beim Zugriff auf die XML-Datei ist ein Fehler aufgetreten.' });
           break;
       }
-    };
+    }.bind(this);
     reader.onabort = function () {
       console.error('Lesen der Datei abgebrochen.');
-    };
-    reader.readAsText(xmlDoc);
+    }.bind(this);
+    reader.readAsText(this.xmlDoc);
   }
-};
-GPXParser.prototype.parse = function (xmlDoc) {
-  var parser, tracks, i;
-  if (window.DOMParser) {
-    parser = new DOMParser();
-    this.xml = parser.parseFromString(xmlDoc, 'text/xml');
-  }
-  else { // Internet Explorer
-    this.xml = new ActiveXObject('Microsoft.XMLDOM');
-    this.xml.async = false;
-    this.xml.loadXML(xmlDoc);
-  }
-  if (this.xml !== null) {
-    tracks = this.xml.documentElement.getElementsByTagName('trk'), i;
-    for (i = 0; i < tracks.length; ++i)
-      this.addTrack(tracks[i]);
-  }
+  return this;
 };
 GPXParser.prototype.addTrack = function (track) {
   var segments = track.getElementsByTagName('trkseg'), i;
@@ -95,17 +97,35 @@ GPXParser.prototype.addTrackSegment = function (track) {
     t = trkpt.getElementsByTagName('time');
     altitude = (ele.length > 0) ? Math.round(parseFloat(ele[0].textContent)) : undefined;
     timestamp = (t.length > 0) ? Math.floor(Date.parse(t[0].textContent) / 1000) : undefined;
-    this.track.push({
-      lat: parseFloat(trkpt.getAttribute('lat')),
-      lng: parseFloat(trkpt.getAttribute('lon')),
-      altitude: altitude,
-      timestamp: timestamp
-    });
+    if (!!timestamp) {
+      this.track.push({
+        lat: parseFloat(trkpt.getAttribute('lat')),
+        lng: parseFloat(trkpt.getAttribute('lon')),
+        altitude: altitude,
+        timestamp: timestamp
+      });
+    }
+    else {
+      this.errorCallback({ error: 'Fehlende(r) Zeitstempel.' });
+      return;
+    }
   }
 };
 GPXParser.prototype.getTrack = function () {
   return this.track;
 };
+GPXParser.prototype.done = function (callback) {
+  this.successCallback = callback;
+  return this;
+};
+GPXParser.prototype.error = function (callback) {
+  this.errorCallback = callback;
+  return this;
+};
+
+function GPX(xmlDoc) {
+  return new GPXParser(xmlDoc);
+}
 
 
 var Rect = function (x0, y0, x1, y1) {

@@ -191,19 +191,14 @@ var CTLON = (function () {
         oauth: me.oauth
     }
     }).done(function (data) {
-      var path;
       try {
         data = JSON.parse(data);
       }
       catch (e) {
-        console.error(e, data);
+        console.error(e);
         return;
       }
       if (data.status === OK) {
-        path = $.map(data.path, function (i, key) {
-          var loc = data.path[key];
-          return new google.maps.LatLng(loc.lat, loc.lng);
-        });
         if (polyline === null)
           polyline = new google.maps.Polyline({
             map: map,
@@ -212,7 +207,10 @@ var CTLON = (function () {
             strokeWeight: 2,
             geodesic: true
           });
-        polyline.setPath(path);
+        polyline.setPath($.map(data.path, function (i, key) {
+          var loc = data.path[key];
+          return new google.maps.LatLng(loc.lat, loc.lng);
+        }));
         polyline.setMap(map);
       }
       else {
@@ -474,7 +472,7 @@ var CTLON = (function () {
           data = JSON.parse(data);
         }
         catch (e) {
-          console.error(e, data);
+          console.error(e);
           return;
         }
         if (data.status !== 'ok') {
@@ -522,7 +520,7 @@ var CTLON = (function () {
         data = JSON.parse(data);
       }
       catch (e) {
-        console.error(e, data);
+        console.error(e);
         callback({ status: 'error', error: 'Fehlerhafte Antwort vom Server: JSON-Daten können nicht dekodiert werden.' });
         return;
       }
@@ -603,7 +601,7 @@ var CTLON = (function () {
         pendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
       }
       catch (e) {
-        console.error(e, data);
+        console.error(e);
         return;
       }
       delete data.userid;
@@ -626,7 +624,7 @@ var CTLON = (function () {
             data = JSON.parse(data);
           }
           catch (e) {
-            console.error(e, data);
+            console.error(e);
             return;
           }
           if (data.status === 'error') {
@@ -641,18 +639,21 @@ var CTLON = (function () {
 
 
   function uploadTracks(blobs) {
-    $.each(blobs, function (i, blob) {
-      var gpx;
+    var i, blob, N;
+    for (i = 0; i < blobs.length; ++i) {
+      blob = blobs[i];
       if (blob instanceof File) {
         $('#track-file-loader-icon').css('visibility', 'visible');
-        gpx = new GPXParser(blob, function (gpxParser) {
+        GPX(blob).done(function (gpxParser) {
           transferLocations(gpxParser.getTrack(), function gpxCallback(data) {
             console.log('gpxCallback()', data);
             $('#track-file-loader-icon').css('visibility', 'hidden');
           });
-        });
+        }).error(function (e) {
+          alert('Fehler beim Verarbeiten der GPX-Datei: ' + e.error);
+        }).parse();
       }
-    });
+    };
   }
 
 
@@ -908,7 +909,7 @@ var CTLON = (function () {
         data = JSON.parse(data);
       }
       catch (e) {
-        console.error(e, data);
+        console.error(e);
         return;
       }
 
@@ -1169,11 +1170,22 @@ var CTLON = (function () {
             alert('Konfiguration kann nicht geladen werden. Abbruch.');
             return;
           }
-          GoogleOAuthClientId = data.GoogleOAuthClientId;
-          $('.g-signin').attr('data-clientid', GoogleOAuthClientId);
-          $('<script>').attr('type', 'text/javascript').attr('async', true).attr('src', 'https://apis.google.com/js/client:plusone.js').insertBefore($('script'));
+          if (!data) {
+            alert('Konfigurationsdaten fehlen. Abbruch.');
+            return;
+          }
+          else if (data.status === 'ok' && data.GoogleOAuthClientId && typeof data.GoogleOAuthClientId === 'string') {
+            GoogleOAuthClientId = data.GoogleOAuthClientId;
+            $('.g-signin').attr('data-clientid', GoogleOAuthClientId);
+            $('<script>').attr('type', 'text/javascript').attr('async', true).attr('src', 'https://apis.google.com/js/client:plusone.js').insertBefore($('script'));
+          }
+          else {
+            alert('Fehlerhafte Konfigurationsdaten. Abbruch.');
+            return;
+          }
         })
         .error(function (e) {
+          alert('Konfiguration kann nicht geladen werden. Abbruch. [' + e + ']');
         });
       preloadImages();
     },

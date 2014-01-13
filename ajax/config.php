@@ -19,6 +19,7 @@ $DB_NAME = "$DB_PATH/ctlon.sqlite";
 
 if (substr($_SERVER['REQUEST_URI'], -strlen('config.php')) === 'config.php') {
     $res = array(
+        'status' => 'ok',
         'GoogleOAuthClientId' => $GOOGLE_OAUTH_CLIENT_ID
     );
     echo json_encode($res);

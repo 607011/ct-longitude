@@ -37,24 +37,25 @@ catch (Exception $e) {
 }
 
 $dbh->exec('BEGIN TRANSACTION');
+$res['inserted'] = 0;
 foreach ($locations as $location) {
-    if (!preg_match('/^\\d+\\.\\d+$/', $location['lat'])) {
+    if (!isset($location['lat']) || !preg_match('/^[+-]?\\d+\\.\\d+$/', $location['lat'])) {
         $res['status'] = 'error';
-        $res['error'] = 'Ungültige Breitengradangabe:' . $location['lat'];
+        $res['error'] = 'Ungültige oder fehlende Breitengradangabe.';
         goto end;
     }
     $lat = floatval($location['lat']);
 
-    if (!preg_match('/^\\d+\\.\\d+$/', $location['lng'])) {
+    if (!isset($location['lng']) || !preg_match('/^[+-]?\\d+\\.\\d+$/', $location['lng'])) {
         $res['status'] = 'error';
-        $res['error'] = 'Ungültige Längengradangabe: ' . $location['lng'];
+        $res['error'] = 'Ungültige oder fehlende Längengradangabe.';
         goto end;
     }
     $lng = floatval($location['lng']);
 
     if (!isset($location['timestamp']) || !preg_match('/^\\d+$/', $location['timestamp'])) {
         $res['status'] = 'error';
-        $res['error'] = 'Ungültiger Zeitstempel: ' . $location['timestamp'];
+        $res['error'] = 'Ungültiger oder fehlender Zeitstempel.';
         goto end;
     }
     $timestamp = intval($location['timestamp']);
@@ -69,9 +70,9 @@ foreach ($locations as $location) {
     if (!$ok) {
         $res['status'] = 'error';
         $res['error'] = $dbh->errorInfo();
-        $dbh->exec('ROLLBACK');
         goto end;
     }
+    ++$res['inserted'];
 }
 $dbh->exec('END TRANSACTION');
 
@@ -81,5 +82,11 @@ $res['userid'] = $userid;
 $res['processing_time'] = round(microtime(true) - $T0, 3);
 
 end:
+if ($res['status'] === 'error') {
+    $dbh->exec('ROLLBACK');
+    $res['inserted'] = 0;
+}
+
+
 echo json_encode($res);
 ?>
