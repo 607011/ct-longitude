@@ -224,6 +224,7 @@ var CTLON = (function () {
           latLng = new google.maps.LatLng(friend.lat, friend.lng);
           setCircle(friend.accuracy, latLng)
           setInfoWindow(friend.readableTimestamp, friend.name, latLng);
+          getTrack(friend.id);
         }
         if ($('#buddies').children().length === 0) {
           $('#buddies').append(buddy);
@@ -376,7 +377,7 @@ var CTLON = (function () {
           console.error(e);
           return;
         }
-        if (data.status !== 'ok') {
+        if (data.status !== OK) {
           console.error(data.error);
           return;
         }
@@ -397,16 +398,18 @@ var CTLON = (function () {
 
   function goOnline() {
     console.log('Online.');
+    $('#settings-icon').removeClass('offline');
     transferPendingLocations();
   }
 
 
   function goOffline() {
-    console.warn('Offline.');
+    $('#settings-icon').addClass('offline');
   }
 
 
-  function transferLocations(locations, callback) {
+  function transferLocations(locations, fileName, callback) {
+    console.log('transferLocations()', locations);
     $.ajax({
       url: 'ajax/settrack.php',
       type: 'POST',
@@ -430,7 +433,7 @@ var CTLON = (function () {
           callback(data);
         criticalError('Fehler beim Übertragen der zwischengespeicherten Standorte!');
       }
-      else if (data.status === 'ok') {
+      else if (data.status === OK) {
         if (typeof callback === 'function')
           callback(data);
       }
@@ -450,32 +453,37 @@ var CTLON = (function () {
   function transferPendingLocations() {
     var pendingLocations;
     console.log('transferPendingLocations()');
-    showProgressInfo();
     try {
       pendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
     }
     catch (e) {
       console.error('Ungültige Daten in localStorage["pending-locations"]');
-      hideProgressInfo();
-      return;
     }
     if (pendingLocations && pendingLocations.length > 0) {
-      transferLocations(pendingLocations, function (data) {
+      showProgressInfo();
+      transferLocations(pendingLocations, null, function transferLocationsCallback(data) {
         hideProgressInfo();
-        if (data.status === 'ok')
+        if (data.status === OK) {
           localStorage.setItem('pending-locations', '[]');
+          $('#settings-icon').removeClass('pending');
+        }
       });
     }
   }
 
 
   function setPosition(pos) {
-    var data, pendingLocations;
+    var data, pendingLocations, path;
     me.timestamp = Math.floor(pos.timestamp / 1000);
     me.latLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
     if (me.id === selectedUser) {
       infoWindow.setPosition(me.latLng);
       circle.setPosition(me.latLng);
+      if (polyline) {
+        path = polyline.getPath();
+        path.push(me.latLng);
+        polyline.setPath(path);
+      }
     }
     if (markers.hasOwnProperty(me.id))
       markers[me.id].setPosition(me.latLng);
@@ -508,6 +516,7 @@ var CTLON = (function () {
       delete data.userid;
       pendingLocations.push(data);
       localStorage.setItem('pending-locations', JSON.stringify(pendingLocations));
+      $('#settings-icon').addClass('pending');
     }
     else if (!$('#incognito').is(':checked') && !$('#offline.mode').is(':checked')) {
       // send own data to server
@@ -539,20 +548,20 @@ var CTLON = (function () {
   }
 
 
-  function uploadTracks(blobs) {
-    var i, blob, N;
-    for (i = 0; i < blobs.length; ++i) {
-      blob = blobs[i];
-      if (blob instanceof File) {
+  function uploadTracks(files) {
+    var i, file, N;
+    for (i = 0; i < files.length; ++i) {
+      file = files[i];
+      if (file instanceof File) {
         $('#track-file-loader-icon').css('visibility', 'visible');
         GPX().done(function (gpxParser) {
-          transferLocations(gpxParser.getTrack(), function gpxCallback(data) {
+          transferLocations(gpxParser.getTrack(), file.name, function gpxCallback(data) {
             console.log('gpxCallback()', data);
             $('#track-file-loader-icon').css('visibility', 'hidden');
           });
         }).error(function (e) {
           alert('Fehler beim Verarbeiten der GPX-Datei: ' + e.error);
-        }).parse(blob);
+        }).parse(file);
       }
     };
   }
@@ -581,7 +590,7 @@ var CTLON = (function () {
             criticalError('Fehler beim Übertragen deines Avatars: ' + e);
             return;
           }
-          if (data.status === 'ok') {
+          if (data.status === OK) {
             avatar.empty().css('background-image', 'url(' + dataUrl + ')');
             $('#userid').css('background-image', 'url(' + dataUrl + ')');
           }
@@ -688,7 +697,7 @@ var CTLON = (function () {
       {
         start: function () {
           settings.css('top', $('#info-bar-container').offset().top + 'px').css('display', 'block');
-          settingsIcon.css('background-color', '#ccc');
+          settingsIcon.addClass('active');
         },
         easing: 'easeInOutCubic',
         duration: 350,
@@ -740,7 +749,7 @@ var CTLON = (function () {
       }, {
         complete: function () {
           settings.css('display', 'none');
-          settingsIcon.css('background-color', '');
+          settingsIcon.removeClass('active');
           $(document).unbind('paste');
           avatarFile.unbind('change');
           trackFile.unbind('change');
@@ -795,7 +804,7 @@ var CTLON = (function () {
     }).error(function (jqXHR, textStatus, errorThrown) {
       criticalError('Fehler beim Abfragen deiner Daten [' + textStatus + ': ' + errorThrown + ']');
     }).done(function (data) {
-      var myPos;
+      var myPos, pendingLocations;
       hideProgressInfo();
       if (!data) {
         criticalError('Fehler beim Abfragen deiner Daten!');
@@ -848,6 +857,17 @@ var CTLON = (function () {
       $('#avatar-optimal-height').text(Avatar.OptimalHeight);
 
       $('#settings-icon').click(showHideSettings);
+      if (!navigator.onLine)
+        $('#settings-icon').addClass('offline');
+      try {
+        pendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
+      }
+      catch (e) {
+        console.error('Ungültige Daten in localStorage["pending-locations"]');
+      }
+      if (pendingLocations && pendingLocations.length > 0)
+        $('#settings-icon').addClass('pending-locations');
+
       $('#buddies').enableHorizontalSlider();
 
       $('#settings').css('z-index', google.maps.Marker.MAX_ZINDEX + 1000);
@@ -886,7 +906,7 @@ var CTLON = (function () {
         });
       }).prop('checked', data.sharetracks === 'true');
 
-      if (MOBILE)
+      if (/(iOS|iPad|iPod|iPhone)/.test(navigator.userAgent))
         $('.no-mobile').css('display', 'none');
 
       $('#incognito').change(function (e) {
@@ -897,14 +917,18 @@ var CTLON = (function () {
       $('#offline-mode').change(function (e) {
         var checked = $('#offline-mode').is(':checked');
         localStorage.setItem('offline-mode', checked);
-        if (!checked)
+        if (checked) {
+          $('#settings-icon').addClass('offline');
+        }
+        else {
+          $('#settings-icon').removeClass('offline');
           transferPendingLocations();
+        }
       }).prop('checked', localStorage.getItem('offline-mode') === 'true');
 
       $('#show-accuracy').change(function (e) {
         var checked = $('#show-accuracy').is(':checked');
         localStorage.setItem('show-accuracy', checked);
-        // TODO: show circle for selectedUser
         circle.setVisible(checked);
       }).prop('checked', localStorage.getItem('show-accuracy') === 'true');
 
@@ -1020,7 +1044,7 @@ var CTLON = (function () {
                   criticalError('Fehler beim Übertragen deines Namens: ' + e);
                   return;
                 }
-                if (data.status === 'ok') {
+                if (data.status === OK) {
                   // TODO?
                 }
                 else {
@@ -1069,7 +1093,7 @@ var CTLON = (function () {
             alert('Konfigurationsdaten fehlen. Abbruch.');
             return;
           }
-          else if (data.status === 'ok' && data.GoogleOAuthClientId && typeof data.GoogleOAuthClientId === 'string') {
+          else if (data.status === OK && data.GoogleOAuthClientId && typeof data.GoogleOAuthClientId === 'string') {
             GoogleOAuthClientId = data.GoogleOAuthClientId;
             $('.g-signin').attr('data-clientid', GoogleOAuthClientId);
             $('<script>').attr('type', 'text/javascript').attr('async', true).attr('src', 'https://apis.google.com/js/client:plusone.js').insertBefore($('script'));

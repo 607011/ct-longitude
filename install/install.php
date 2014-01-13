@@ -32,11 +32,11 @@ if ($dbh) {
     $dbh->exec('CREATE INDEX IF NOT EXISTS `name` ON `buddies` (`name`)');
     echo "Table 'buddies' created.<br/>\n";
     
-    
     $dbh->exec('CREATE TABLE IF NOT EXISTS `files` (' .
         ' `id` INTEGER PRIMARY KEY AUTOINCREMENT,' .
         ' `filename` TEXT NOT NULL' .
         ')');
+    $dbh->exec('CREATE INDEX IF NOT EXISTS `filename` ON `files` (`filename`)');
     echo "Table 'files' created.<br/>\n";
 }
 ?>

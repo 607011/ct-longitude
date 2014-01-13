@@ -175,7 +175,24 @@ html, body {
   background-image: url(../img/settings-icon.png);
   background-repeat: no-repeat;
   background-position: center center;
+  background-color: transparent;
   cursor: pointer;
+}
+
+#settings-icon.active {
+  background-color: #ccc;
+}
+
+#settings-icon.offline {
+  background-color: #c33;
+}
+
+#settings-icon.offline.pending-locations {
+  background-color: #f93;
+}
+
+#settings-icon.pending-locations {
+  background-color: #bd0;
 }
 
 #buddy-container {

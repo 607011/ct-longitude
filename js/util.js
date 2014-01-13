@@ -128,12 +128,13 @@ jQuery.fn.enableHorizontalSlider = function () {
 };
 
 
-var GPXParser = function () {
+var GPXParser = function (opts) {
   "use strict";
+  opts = opts || {};
   this.xml = null;
   this.track = [];
-  this.successCallback = function () { console.warning('GPXParser: You should define a callback with GPX.done().'); };
-  this.errorCallback = function () { console.warning('GPXParser: You should define a callback with GPX.error().'); };
+  this.successCallback = opts.success ? opts.success : function () { console.warning('GPXParser: You should define a callback with GPX.done().'); };
+  this.errorCallback = opts.error ? opts.error : function () { console.warning('GPXParser: You should define a callback with GPX.error().'); };
 };
 GPXParser.prototype.parse = function (xmlDoc) {
   var parser, tracks, reader, i;
@@ -219,12 +220,12 @@ GPXParser.prototype.addTrackSegment = function (track) {
 GPXParser.prototype.getTrack = function () {
   return this.track;
 };
-GPXParser.prototype.done = function (callback) {
-  this.successCallback = callback;
+GPXParser.prototype.done = function (successCallback) {
+  this.successCallback = successCallback;
   return this;
 };
-GPXParser.prototype.error = function (callback) {
-  this.errorCallback = callback;
+GPXParser.prototype.error = function (errorCallback) {
+  this.errorCallback = errorCallback;
   return this;
 };
 
