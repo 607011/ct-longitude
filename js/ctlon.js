@@ -71,6 +71,21 @@ var CTLON = (function () {
   }
 
 
+  function showDialog(title, msg) {
+    var popup = $('<div id="popup"><h1>' + title + ' </h1><p>' + msg + '</p><button id="ok-button">OK</div>');
+    $('#app').append(popup);
+    popup.animate({ opacity: 1 }, {
+      complete: function () {
+        $('#ok-button').click(function () {
+          popup.animate({ opacity: 0 }, {
+            complete: function () { popup.remove(); }
+          });
+        });
+      }
+    });
+  }
+
+
   function getTrack(userid) {
     var maxAge = parseInt($('#max-waypoint-age').val(), 10),
       t1 = Math.floor(Date.now() / 1000), t0 = (maxAge < 0) ? 0 : t1 - maxAge;
@@ -549,7 +564,7 @@ var CTLON = (function () {
 
 
   function uploadTracks(files) {
-    var i, file, N;
+    var i, file, uploadedFiles = 0;
     for (i = 0; i < files.length; ++i) {
       file = files[i];
       if (file instanceof File) {
@@ -558,6 +573,10 @@ var CTLON = (function () {
           .done(function (gpxParser) {
             transferLocations(gpxParser.getTrack(), this.fileName, function gpxCallback(data) {
               $('#track-file-loader-icon').css('visibility', 'hidden');
+              ++uploadedFiles;
+              console.log(uploadedFiles, files.length);
+              if (uploadedFiles === files.length)
+                showDialog('Upload erfolgreich', 'Alle GPX-Dateien wurden erfolgreich hochgeladen.');
             });
           }.bind({ fileName: file.name }))
           .error(function (e) {
@@ -786,6 +805,7 @@ var CTLON = (function () {
       alert('Dein Browser stellt keine Standortabfragen zur Verfügung.');
     }
   }
+
 
   function initApp() {
     if (appInitialized)
