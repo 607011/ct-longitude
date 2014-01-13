@@ -16,7 +16,7 @@ if (!isset($_REQUEST['userid'])) {
     goto end;
 }
 
-$requested_userid = $_REQUEST['userid'];
+$requested_userid = filter_var($_REQUEST['userid'], FILTER_SANITIZE_MAGIC_QUOTES);
 
 $format = isset($_REQUEST['format'])? $_REQUEST['format'] : 'json';
 

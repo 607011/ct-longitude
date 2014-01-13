@@ -417,6 +417,7 @@ var CTLON = (function () {
       data: {
         userid: me.id,
         locations: JSON.stringify(locations),
+        filename: fileName,
         oauth: me.oauth
       }
     }).done(function transferLocationsCallback(data) {
@@ -458,13 +459,14 @@ var CTLON = (function () {
     }
     catch (e) {
       console.error('Ungültige Daten in localStorage["pending-locations"]');
+      return;
     }
     if (pendingLocations && pendingLocations.length > 0) {
       showProgressInfo();
       transferLocations(pendingLocations, null, function transferLocationsCallback(data) {
         hideProgressInfo();
         if (data.status === OK) {
-          localStorage.setItem('pending-locations', '[]');
+          localStorage.removeItem('pending-locations');
           $('#settings-icon').removeClass('pending');
         }
       });
@@ -554,14 +556,16 @@ var CTLON = (function () {
       file = files[i];
       if (file instanceof File) {
         $('#track-file-loader-icon').css('visibility', 'visible');
-        GPX().done(function (gpxParser) {
-          transferLocations(gpxParser.getTrack(), file.name, function gpxCallback(data) {
-            console.log('gpxCallback()', data);
-            $('#track-file-loader-icon').css('visibility', 'hidden');
-          });
-        }).error(function (e) {
-          alert('Fehler beim Verarbeiten der GPX-Datei: ' + e.error);
-        }).parse(file);
+        GPX()
+          .done(function (gpxParser) {
+            transferLocations(gpxParser.getTrack(), this.fileName, function gpxCallback(data) {
+              console.log('gpxCallback()', data);
+              $('#track-file-loader-icon').css('visibility', 'hidden');
+            });
+          }.bind({ fileName: file.name }))
+          .error(function (e) {
+            alert('Fehler beim Verarbeiten der GPX-Datei: ' + e.error);
+          }).parse(file);
       }
     };
   }
@@ -865,8 +869,11 @@ var CTLON = (function () {
       catch (e) {
         console.error('Ungültige Daten in localStorage["pending-locations"]');
       }
-      if (pendingLocations && pendingLocations.length > 0)
+      if (pendingLocations && pendingLocations.length > 0) {
         $('#settings-icon').addClass('pending-locations');
+        if (navigator.onLine)
+          transferPendingLocations();
+      }
 
       $('#buddies').enableHorizontalSlider();
 

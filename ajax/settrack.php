@@ -16,8 +16,17 @@ if (!$dbh) {
     goto end;
 }
 
-$sth = $dbh->prepare("INSERT INTO locations (userid, timestamp, lat, lng, accuracy, altitude, altitudeaccuracy, heading, speed) " .
-        "VALUES(:userid, :timestamp, :lat, :lng, :accuracy, :altitude, :altitudeaccuracy, :heading, :speed)");
+if (isset($_REQUEST['filename'])) {
+    $filename = filter_var($_REQUEST['filename'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    $dbh->exec("INSERT INTO `files` (`filename`) VALUES('$filename')");
+    $fileid = $dbh->lastInsertId();
+}
+else {
+    $fileid = null;
+}
+
+$sth = $dbh->prepare("INSERT INTO `locations` (`userid`, `timestamp`, `lat`, `lng`, `accuracy`, `altitude`, `altitudeaccuracy`, `heading`, `speed`, `file_id`) " .
+        "VALUES(:userid, :timestamp, :lat, :lng, :accuracy, :altitude, :altitudeaccuracy, :heading, :speed, :fileid)");
 $sth->bindParam(':userid', $userid);
 $sth->bindParam(':timestamp', $timestamp);
 $sth->bindParam(':lat', $lat);
@@ -27,6 +36,7 @@ $sth->bindParam(':altitude', $altitude);
 $sth->bindParam(':altitudeaccuracy', $altitudeaccuracy);
 $sth->bindParam(':heading', $heading);
 $sth->bindParam(':speed', $speed);
+$sth->bindParam(':fileid', $fileid);
 
 try {
     $locations = json_decode($_REQUEST['locations'], true);
@@ -34,19 +44,20 @@ try {
 catch (Exception $e) {
     $res['status'] = 'error';
     $res['error'] = $e->getMessage();
+    goto end;
 }
 
 $dbh->exec('BEGIN TRANSACTION');
 $res['inserted'] = 0;
 foreach ($locations as $location) {
-    if (!isset($location['lat']) || !preg_match('/^[+-]?\\d+\\.\\d+$/', $location['lat'])) {
+    if (!isset($location['lat']) || !is_numeric($location['lat'])) {
         $res['status'] = 'error';
         $res['error'] = 'Ungültige oder fehlende Breitengradangabe.';
         goto end;
     }
     $lat = floatval($location['lat']);
 
-    if (!isset($location['lng']) || !preg_match('/^[+-]?\\d+\\.\\d+$/', $location['lng'])) {
+    if (!isset($location['lng']) || !is_numeric($location['lng'])) {
         $res['status'] = 'error';
         $res['error'] = 'Ungültige oder fehlende Längengradangabe.';
         goto end;
@@ -82,7 +93,7 @@ $res['userid'] = $userid;
 $res['processing_time'] = round(microtime(true) - $T0, 3);
 
 end:
-if ($res['status'] === 'error') {
+if (isset($res['status']) && $res['status'] === 'error') {
     $dbh->exec('ROLLBACK');
     $res['inserted'] = 0;
 }

@@ -9,21 +9,19 @@ if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['
 $token = $_REQUEST['oauth']['token'];
 $userid = $_SESSION[$token]['user_id'];
 
-$lat = $_REQUEST['lat'];
-if (!preg_match('/^\\d+\\.\\d+$/', $lat)) {
+if (!isset($_REQUEST['lat']) || !is_numeric($_REQUEST['lat'])) {
     $res['status'] = 'error';
-    $res['error'] = 'Ungültige Breitengradangabe:' . $lat;
+    $res['error'] = 'Ungültige Breitengradangabe:' . $_REQUEST['lat'];
     goto end;
 }
-$lat = floatval($lat);
+$lat = floatval($_REQUEST['lat']);
 
-$lng = $_REQUEST['lng'];
-if (!preg_match('/^\\d+\\.\\d+$/', $lng)) {
+if (!isset($_REQUEST['lng']) || !is_numeric($_REQUEST['lng'])) {
     $res['status'] = 'error';
-    $res['error'] = 'Ungültige Längengradangabe:' . $lng;
+    $res['error'] = 'Ungültige Längengradangabe:' . $_REQUEST['lng'];
     goto end;
 }
-$lng = floatval($lng);
+$lng = floatval($_REQUEST['lng']);
 
 $timestamp = isset($_REQUEST['timestamp']) ? $_REQUEST['timestamp'] : time();
 if (!preg_match('/^\\d+$/', $timestamp)) {
@@ -40,7 +38,7 @@ $heading = isset($_REQUEST['heading']) ? floatval($_REQUEST['heading']) : 'NULL'
 $speed = isset($_REQUEST['speed']) ? floatval($_REQUEST['speed']) : 'NULL';
 
 if ($dbh) {
-    $q = "INSERT INTO locations (userid, timestamp, lat, lng, accuracy, altitude, altitudeaccuracy, heading, speed) " .
+    $q = "INSERT INTO `locations` (`userid`, `timestamp`, `lat`, `lng`, `accuracy`, `altitude`, `altitudeaccuracy`, `heading`, `speed`) " .
          "VALUES('$userid', $timestamp, $lat, $lng, $accuracy, $altitude, $altitudeaccuracy, $heading, $speed)";
     $dbh->exec($q);
     $res['id'] = $dbh->lastInsertId();

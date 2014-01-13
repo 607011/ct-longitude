@@ -17,7 +17,7 @@ if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['
 $token = $_REQUEST['oauth']['token'];
 $userid = $_SESSION[$token]['user_id'];
 
-$maxage = isset($_REQUEST['maxage']) ? intval($_REQUEST['maxage']) : time();
+$maxage = (isset($_REQUEST['maxage']) && is_numeric($_REQUEST['maxage'])) ? intval($_REQUEST['maxage']) : time();
 $t0 = time() - $maxage;
 
 if (isset($_REQUEST['lat']))
