@@ -26,7 +26,90 @@
 })();
 
 
+var GPXParser = function (xmlDoc, callback) {
+  "use strict";
+  var reader;
+  this.xml = null;
+  this.track = [];
+  if (typeof xmlDoc === 'string') {
+    this.parse(xmlDoc);
+    callback(this);
+  }
+  else {
+    reader = new FileReader();
+    reader.onload = function (e) {
+      if (e.target.readyState === FileReader.DONE) {
+        this.parse(e.target.result);
+        callback(this);
+      }
+    }.bind(this);
+    reader.onerror = function (e) {
+      switch (e.target.error.code) {
+        case e.target.error.NOT_FOUND_ERR:
+          console.error('XML-Datei nicht gefunden.');
+          break;
+        case e.target.error.NOT_READABLE_ERR:
+          console.error('XML-Datei ist nicht lesbar.');
+          break;
+        case e.target.error.ABORT_ERR:
+          console.warn('Lesen der XML-Datei abgebrochen.');
+          break;
+        default:
+          console.error('Beim Zugriff auf die XML-Datei ist ein Fehler aufgetreten.');
+          break;
+      }
+    };
+    reader.onabort = function () {
+      console.error('Lesen der Datei abgebrochen.');
+    };
+    reader.readAsText(xmlDoc);
+  }
+};
+GPXParser.prototype.parse = function (xmlDoc) {
+  var parser, tracks, i;
+  if (window.DOMParser) {
+    parser = new DOMParser();
+    this.xml = parser.parseFromString(xmlDoc, 'text/xml');
+  }
+  else { // Internet Explorer
+    this.xml = new ActiveXObject('Microsoft.XMLDOM');
+    this.xml.async = false;
+    this.xml.loadXML(xmlDoc);
+  }
+  if (this.xml !== null) {
+    tracks = this.xml.documentElement.getElementsByTagName('trk'), i;
+    for (i = 0; i < tracks.length; ++i)
+      this.addTrack(tracks[i]);
+  }
+};
+GPXParser.prototype.addTrack = function (track) {
+  var segments = track.getElementsByTagName('trkseg'), i;
+  for (i = 0; i < segments.length; ++i)
+    this.addTrackSegment(segments[i]);
+};
+GPXParser.prototype.addTrackSegment = function (track) {
+  var trackpoints = track.getElementsByTagName('trkpt'), i, trkpt, altitude, timestamp, ele, time;
+  for (i = 0; i < trackpoints.length; ++i) {
+    trkpt = trackpoints[i];
+    ele = trkpt.getElementsByTagName('ele');
+    t = trkpt.getElementsByTagName('time');
+    altitude = (ele.length > 0) ? Math.round(parseFloat(ele[0].textContent)) : undefined;
+    timestamp = (t.length > 0) ? Math.floor(Date.parse(t[0].textContent) / 1000) : undefined;
+    this.track.push({
+      lat: parseFloat(trkpt.getAttribute('lat')),
+      lng: parseFloat(trkpt.getAttribute('lon')),
+      altitude: altitude,
+      timestamp: timestamp
+    });
+  }
+};
+GPXParser.prototype.getTrack = function () {
+  return this.track;
+};
+
+
 var Rect = function (x0, y0, x1, y1) {
+  "use strict";
   this.x0 = x0;
   this.y0 = y0;
   this.x1 = x1;
@@ -61,10 +144,10 @@ Rect.prototype.partitioned = function (numTiles) {
       slices = rect.slices();
       makeTree(lo, mid - 1, slices[1]);
       makeTree(mid + 1, hi, slices[0]);
-    }
+    };
   makeTree(0, numTiles - 2, this);
   return partitions;
-}
+};
 
 
 function haversineDistance(latLng1, latLng2) {
@@ -93,7 +176,7 @@ function downScaleImage(img, scale) {
 // scales the canvas by (float) scale < 1
 // returns a new canvas containing the scaled image.
 function downScaleCanvas(cv, scale) {
-  if (!(scale < 1) || !(scale > 0)) throw ('scale must be a positive number <1 ');
+  if (scale >= 1 || scale <= 0) throw ('scale must be a positive number <1 ');
   var sqScale = scale * scale; // square scale = area of source pixel within target
   var sw = cv.width; // source image width
   var sh = cv.height; // source image height
@@ -118,7 +201,7 @@ function downScaleCanvas(cv, scale) {
     ty = sy * scale; // y src position within target
     tY = 0 | ty;     // rounded : target pixel's y
     yIndex = 3 * tY * tw;  // line index within target array
-    crossY = (tY != (0 | ty + scale));
+    crossY = (tY !== (0 | ty + scale));
     if (crossY) { // if pixel is crossing botton target pixel
       wy = (tY + 1 - ty); // weight of point within target pixel
       nwy = (ty + scale - tY - 1); // ... within y+1 target pixel
@@ -127,7 +210,7 @@ function downScaleCanvas(cv, scale) {
       tx = sx * scale; // x src position within target
       tX = 0 | tx;    // rounded : target pixel's x
       tIndex = yIndex + tX * 3; // target pixel index within target array
-      crossX = (tX != (0 | tx + scale));
+      crossX = (tX !== (0 | tx + scale));
       if (crossX) { // if pixel is crossing target pixel's right
         wx = (tX + 1 - tx); // weight of point within target pixel
         nwx = (tx + scale - tX - 1); // ... within x+1 target pixel
@@ -157,7 +240,7 @@ function downScaleCanvas(cv, scale) {
         tBuffer[tIndex + 1] += sG * w;
         tBuffer[tIndex + 2] += sB * w;
         // add weighted component for next (tX+1) px                
-        nw = nwx * scale
+        nw = nwx * scale;
         tBuffer[tIndex + 3] += sR * nw;
         tBuffer[tIndex + 4] += sG * nw;
         tBuffer[tIndex + 5] += sB * nw;
@@ -168,7 +251,7 @@ function downScaleCanvas(cv, scale) {
         tBuffer[tIndex + 1] += sG * w;
         tBuffer[tIndex + 2] += sB * w;
         // add weighted component for next (tY+1) px                
-        nw = nwy * scale
+        nw = nwy * scale;
         tBuffer[tIndex + 3 * tw] += sR * nw;
         tBuffer[tIndex + 3 * tw + 1] += sG * nw;
         tBuffer[tIndex + 3 * tw + 2] += sB * nw;

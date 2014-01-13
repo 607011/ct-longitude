@@ -138,11 +138,10 @@ var CTLON = (function () {
     markers = {},
     me = { id: undefined, latLng: null, avatar: null, name: null, oauth: { clientId: null, token: null, expiresAt: null, expiresIn: null }, profile: null },
     getFriendsPending = false,
-    watchId = undefined,
-    selectedUser = undefined,
-    pollingId = undefined,
+    watchId,
+    selectedUser,
+    pollingId,
     computeDistanceBetween = haversineDistance;
-
 
   function softError(msg) {
     alert(msg);
@@ -233,7 +232,7 @@ var CTLON = (function () {
     if (typeof userid !== 'string')
       return;
     m = markers[userid];
-    buddy = $('#buddy-' + userid.replace(/([!"#$%&'\(\)\*\+,\.\/:;<=>\?@\[\]^`\{\|\}~])/g, '\\$1'));
+    buddy = $('#buddy-' + userid.replace(/([!"#$%&'\(\)\*\+,\.\/:;<=>\?@\[\]\^`\{\|\}~])/g, '\\$1'));
     if (polyline)
       polyline.setMap(null);
     if ($('#show-tracks').is(':checked'))
@@ -252,7 +251,7 @@ var CTLON = (function () {
       buddy.attr('data-name') + '</p>' +
       '<p id="address"></p>');
     geocoder.geocode({ 'latLng': m.getPosition() }, function (results, status) {
-      if (status == google.maps.GeocoderStatus.OK) {
+      if (status === google.maps.GeocoderStatus.OK) {
         if (results[1]) {
           $('#address').text(results[1].formatted_address);
         }
@@ -376,7 +375,7 @@ var CTLON = (function () {
 
       if (cluster.length === 1) { // single
         (function () {
-          var img = new Image, friend = cluster[0];
+          var img = new Image(), friend = cluster[0];
           img.onload = function () {
             var canvas = document.createElement('canvas'), ctx = canvas.getContext('2d'),
               avatarImg = new Image(Avatar.OptimalWidth, Avatar.OptimalHeight);
@@ -411,7 +410,7 @@ var CTLON = (function () {
           ctx.fillStyle = '#000';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           $.each(cluster, function (i, friend) {
-            var img = new Image;
+            var img = new Image();
             img.onload = function () {
               var slice = slices[i], sliceW = slice.width(), sliceH = slice.height();
               if (sliceH > sliceW)
@@ -508,6 +507,47 @@ var CTLON = (function () {
   }
 
 
+  function transferLocations(locations, callback) {
+    $.ajax({
+      url: 'ajax/settrack.php',
+      type: 'POST',
+      accepts: 'json',
+      data: {
+        userid: me.id,
+        locations: JSON.stringify(locations),
+        oauth: me.oauth
+      }
+    }).done(function transferLocationsCallback(data) {
+      try {
+        data = JSON.parse(data);
+      }
+      catch (e) {
+        console.error(e, data);
+        callback({ status: 'error', error: 'Bad response. Cannot decode JSON data from server.' });
+        return;
+      }
+      if (!data) {
+        if (typeof callback === 'function')
+          callback(data);
+        criticalError('Fehler beim Übertragen der zwischengespeicherten Standorte!');
+      }
+      else if (data.status === 'ok') {
+        if (typeof callback === 'function')
+          callback(data);
+      }
+      else if (data.status === 'error') {
+        if (typeof callback === 'function')
+          callback(data);
+        criticalError('Fehler beim Übertragen der zwischengespeicherten Standorte: ' + data.error);
+      }
+    }).error(function (jqXHR, textStatus, errorThrown) {
+      if (typeof callback === 'function')
+        callback(data);
+      criticalError('Fehler beim Übertragen der zwischengespeicherten Standorte [' + textStatus + ': ' + errorThrown + ']');
+    });
+  }
+
+
   function transferPendingLocations() {
     var pendingLocations;
     console.log('transferPendingLocations()');
@@ -517,32 +557,16 @@ var CTLON = (function () {
     }
     catch (e) {
       console.error('invalid data in localStorage["pending-locations"]');
-    }
-    if (!pendingLocations || pendingLocations.length === 0)
-      return;
-    $.ajax({
-      url: 'ajax/pending.php',
-      type: 'POST',
-      accepts: 'json',
-      data: {
-        userid: pendingLocations[0].userid,
-        locations: pendingLocations,
-        oauth: me.oauth
-      }
-    }).done(function (data) {
       hideProgressInfo();
-      if (!data) {
-        criticalError('Fehler beim Übertragen der zwischengespeicherten Standorte!');
-      }
-      else if (data.status === 'ok') {
-        localStorage.setItem('pending-locations', '[]');
-      }
-      else if (data.status === 'error') {
-        criticalError('Fehler beim Übertragen der zwischengespeicherten Standorte: ' + data.error);
-      }
-    }).error(function (jqXHR, textStatus, errorThrown) {
-      criticalError('Fehler beim Übertragen der zwischengespeicherten Standorte [' + textStatus + ': ' + errorThrown + ']');
-    });
+      return;
+    }
+    if (pendingLocations && pendingLocations.length > 0) {
+      transferLocations(pendingLocations, function (data) {
+        hideProgressInfo();
+        if (data.status === 'ok')
+          localStorage.setItem('pending-locations', '[]');
+      });
+    }
   }
 
 
@@ -560,7 +584,7 @@ var CTLON = (function () {
       map.setCenter(me.latLng);
       firstLoad = false;
     }
-    localStorage.setItem('my-last-position', pos.coords.latitude + ',' + pos.coords.longitude)
+    localStorage.setItem('my-last-position', pos.coords.latitude + ',' + pos.coords.longitude);
     $('#userid').attr('data-lat', pos.coords.latitude).attr('data-lng', pos.coords.longitude);
     data = {
       userid: me.id,
@@ -616,8 +640,24 @@ var CTLON = (function () {
   }
 
 
+  function uploadTracks(blobs) {
+    $.each(blobs, function (i, blob) {
+      var gpx;
+      if (blob instanceof File) {
+        $('#track-file-loader-icon').css('visibility', 'visible');
+        gpx = new GPXParser(blob, function (gpxParser) {
+          transferLocations(gpxParser.getTrack(), function gpxCallback(data) {
+            console.log('gpxCallback()', data);
+            $('#track-file-loader-icon').css('visibility', 'hidden');
+          });
+        });
+      }
+    });
+  }
+
+
   function uploadAvatar(blob) {
-    var reader = new FileReader, img, avatar = $('#avatar'), dataUrl,
+    var reader = new FileReader(), img, avatar = $('#avatar'), dataUrl,
       send = function () {
         $.ajax({
           url: 'ajax/setoption.php',
@@ -686,9 +726,9 @@ var CTLON = (function () {
       fitImage();
     }
     else {
-      img = new Image;
+      img = new Image();
       reader.onload = function (e) {
-        if (e.target.readyState == FileReader.DONE) {
+        if (e.target.readyState === FileReader.DONE) {
           dataUrl = 'data:image/png;base64,' + btoa(
           (function (bytes) {
             var binary = '', len = bytes.byteLength, i;
@@ -737,7 +777,7 @@ var CTLON = (function () {
 
   function showHideSettings() {
     var settings = $('#settings'), settingsIcon = $('#settings-icon'),
-      avatar = $('#avatar'), avatarFile = $('#avatar-file');
+      avatar = $('#avatar'), avatarFile = $('#avatar-file'), trackFile = $('#track-file');
     if (settings.css('display') === 'none') {
       settings.animate({
         opacity: 1,
@@ -752,6 +792,11 @@ var CTLON = (function () {
         duration: 350,
         complete: function () {
           $(document).bind({ paste: pasteHandler });
+          trackFile.bind({
+            change: function (e) {
+              uploadTracks(e.target.files);
+            }
+          });
           avatarFile.bind({
             change: function (e) {
               var files = e.target.files;
@@ -796,6 +841,7 @@ var CTLON = (function () {
           settingsIcon.css('background-color', '');
           $(document).unbind('paste');
           avatarFile.unbind('change');
+          trackFile.unbind('change');
           avatar.unbind('dragover').unbind('dragleave').unbind('drop');
         },
         easing: 'easeInOutCubic',
@@ -808,7 +854,7 @@ var CTLON = (function () {
   function preloadImages() {
     var imgFiles = ['loader-5-0.gif', 'single-symbol.png'];
     $.each(imgFiles, function (i, f) {
-      var img = new Image;
+      var img = new Image();
       img.src = 'img/' + f;
     });
   }
@@ -888,7 +934,7 @@ var CTLON = (function () {
         me.latLng = new google.maps.LatLng(data.lat, data.lng);
       }
       else if (myPos = localStorage.getItem('my-last-position')) {
-        myPos = myPos.split(',')
+        myPos = myPos.split(',');
         me.latLng = (myPos.length === 2) ? new google.maps.LatLng(myPos[0], myPos[1]) : new google.maps.LatLng(51, 10.3);
       }
       else {
@@ -940,23 +986,26 @@ var CTLON = (function () {
             value: encodeURIComponent(checked)
           },
           accepts: 'json'
-        })
+        });
       }).prop('checked', data.sharetracks === 'true');
 
+      if (MOBILE)
+        $('.no-mobile').css('display', 'none');
+
       $('#incognito').change(function (e) {
-        var checked = $('#incognito').is(':checked')
+        var checked = $('#incognito').is(':checked');
         localStorage.setItem('incognito', checked);
       }).prop('checked', localStorage.getItem('incognito') === 'true');
 
       $('#offline-mode').change(function (e) {
-        var checked = $('#offline-mode').is(':checked')
+        var checked = $('#offline-mode').is(':checked');
         localStorage.setItem('offline-mode', checked);
         if (!checked)
           transferPendingLocations();
       }).prop('checked', localStorage.getItem('offline-mode') === 'true');
 
       $('#show-accuracy').change(function (e) {
-        var checked = $('#show-accuracy').is(':checked')
+        var checked = $('#show-accuracy').is(':checked');
         localStorage.setItem('show-accuracy', checked);
         // TODO: show circle for selectedUser
         if (circle !== null)
@@ -984,7 +1033,6 @@ var CTLON = (function () {
       }).children('option').filter('[value=' + (localStorage.getItem('range-constraint') || '-1') + ']').prop('selected', true);
 
       // init Google Maps
-      google.maps.visualRefresh = true;
       map = new google.maps.Map(document.getElementById('map-canvas'), {
         mapTypeId: google.maps.MapTypeId.ROADMAP,
         bounds_changed: function () {
@@ -1030,7 +1078,7 @@ var CTLON = (function () {
   function googleSigninCallback(authResult) {
     $('#loader-icon').css('display', 'none');
     hideProgressInfo();
-    if (authResult['status']['signed_in']) {
+    if (authResult.status.signed_in) {
       $('#logon').removeClass('show').addClass('hide');
       $('#app').removeClass('hide').addClass('show').css('visibility', 'visible');
       $('#googleSigninButton').removeClass('show').addClass('hide');
@@ -1047,7 +1095,7 @@ var CTLON = (function () {
             var img;
             me.profile = response;
             if (me.avatar === null) {
-              img = new Image;
+              img = new Image();
               img.crossOrigin = 'anonymous';
               img.onload = function () {
                 uploadAvatar(img);
@@ -1106,7 +1154,7 @@ var CTLON = (function () {
       immediate: true,
       client_id: GoogleOAuthClientId,
       scope: 'https://www.googleapis.com/auth/plus.login'
-    }, googleSigninCallback)
+    }, googleSigninCallback);
   }
 
 

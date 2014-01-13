@@ -239,6 +239,7 @@ html, body {
 
 #settings .hint {
   font-size: smaller;
+  margin-bottom: 4px;
 }
 
 #settings .hint:before {
@@ -277,6 +278,14 @@ html, body {
   margin: 2px 0 4px 0;
   display: inline-block;
   vertical-align: top;
+}
+
+#track-file-loader-icon {
+  width: 16px;
+  height: 11px;
+  background-image: url(../img/loader-38-0.gif);
+  background-repeat: no-repeat;
+  display: inline-block;
 }
 
 .loader-5-0 {
