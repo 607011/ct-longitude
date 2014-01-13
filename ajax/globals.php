@@ -1,21 +1,7 @@
 <?php
-//////////////////////////////////
-/// CONFIGURATION OPTIONS
-//////////////////////////////////
-$GOOGLE_OAUTH_CLIENT_ID = '794079768346.apps.googleusercontent.com';
-
-// $DB_PATH = '/var/www/sqlite';
-$DB_PATH = 'D:/Developer/xampp/';
-$DB_NAME = "$DB_PATH/ctlon.sqlite";
-$APP_URI = 'http://localhost/ctlat';
-
-// set this option to true to enable persistent database connections; set to false for debugging
-$DB_PERSISTENT = false;
+require_once 'config.php';
 
 
-///////////////////////////////////
-/// DO NOT CHANGE ANYTHING BELOW
-///////////////////////////////////
 $dbh = new PDO("sqlite:$DB_NAME", null, null, array(
      PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
      PDO::ATTR_PERSISTENT => $DB_PERSISTENT

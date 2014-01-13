@@ -1160,7 +1160,21 @@ var CTLON = (function () {
 
   return {
     init: function () {
-      GoogleOAuthClientId = $('.g-signin').attr('data-clientid');
+      $.ajax('ajax/config.php')
+        .done(function (data) {
+          try {
+            data = JSON.parse(data);
+          }
+          catch (e) {
+            alert('Konfiguration kann nicht geladen werden. Abbruch.');
+            return;
+          }
+          GoogleOAuthClientId = data.GoogleOAuthClientId;
+          $('.g-signin').attr('data-clientid', GoogleOAuthClientId);
+          $('<script>').attr('type', 'text/javascript').attr('async', true).attr('src', 'https://apis.google.com/js/client:plusone.js').insertBefore($('script'));
+        })
+        .error(function (e) {
+        });
       preloadImages();
     },
     googleSigninCallback: googleSigninCallback
