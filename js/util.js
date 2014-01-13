@@ -26,7 +26,10 @@
 })();
 
 
-/* Taken from jQuery Easing v1.3 - Copyright © 2008 George McGinley Smith - http://gsgd.co.uk/sandbox/jquery/easing/ */
+Math.sqr = function (x) { return x*x; };
+
+
+/* Taken from jQuery Easing v1.3 - Copyright 2008 George McGinley Smith - http://gsgd.co.uk/sandbox/jquery/easing/ */
 jQuery.extend(jQuery.easing, {
   easeInOutCubic: function (x, t, b, c, d) {
     if ((t /= d / 2) < 1) return c / 2 * t * t * t + b;
@@ -65,7 +68,7 @@ jQuery.fn.enableHorizontalSlider = function () {
     mouseup = function (e) {
       var dt = Date.now() - t0, pixelsPerSec = dx / dt * 1000,
         duration, elapsed, animStart = null,
-        /* t is the current time (or position) of the tween. This can be seconds or frames, steps, seconds, ms, whatever – as long as the unit is the same as is used for the total time [3].
+        /* t is the current time (or position) of the tween. This can be seconds or frames, steps, seconds, ms, whatever â€“ as long as the unit is the same as is used for the total time [3].
            b is the beginning value of the property.
            c is the change between the beginning and destination value of the property.
            d is the total time of the tween. */
@@ -125,25 +128,24 @@ jQuery.fn.enableHorizontalSlider = function () {
 };
 
 
-var GPXParser = function (xmlDoc) {
+var GPXParser = function () {
   "use strict";
   this.xml = null;
-  this.xmlDoc = xmlDoc;
   this.track = [];
-  this.successCallback = function () { };
-  this.errorCallback = function () { };
+  this.successCallback = function () { console.warning('GPXParser: You should define a callback with GPX.done().'); };
+  this.errorCallback = function () { console.warning('GPXParser: You should define a callback with GPX.error().'); };
 };
-GPXParser.prototype.parse = function () {
+GPXParser.prototype.parse = function (xmlDoc) {
   var parser, tracks, reader, i;
-  if (typeof this.xmlDoc === 'string') {
+  if (typeof xmlDoc === 'string') {
     if (window.DOMParser) {
       parser = new DOMParser();
-      this.xml = parser.parseFromString(this.xmlDoc, 'text/xml');
+      this.xml = parser.parseFromString(xmlDoc, 'text/xml');
     }
     else { // Internet Explorer
       this.xml = new ActiveXObject('Microsoft.XMLDOM');
       this.xml.async = false;
-      this.xml.loadXML(this.xmlDoc);
+      this.xml.loadXML(xmlDoc);
     }
     if (this.xml !== null) {
       tracks = this.xml.documentElement.getElementsByTagName('trk'), i;
@@ -152,12 +154,12 @@ GPXParser.prototype.parse = function () {
     }
     this.successCallback(this);
   }
-  else {
+  else if (xmlDoc instanceof File) {
+    console.log(xmlDoc);
     reader = new FileReader();
     reader.onload = function (e) {
       if (e.target.readyState === FileReader.DONE) {
-        this.xmlDoc = e.target.result;
-        this.parse();
+        this.parse(e.target.result);
       }
     }.bind(this);
     reader.onerror = function (e) {
@@ -179,7 +181,11 @@ GPXParser.prototype.parse = function () {
     reader.onabort = function () {
       console.error('Lesen der Datei abgebrochen.');
     }.bind(this);
-    reader.readAsText(this.xmlDoc);
+    reader.readAsText(xmlDoc);
+  }
+  else {
+    this.errorCallback({ error: 'UngÃ¼ltiger Parameter fÃ¼r GPXParser.parse()' });
+    return null;
   }
   return this;
 };

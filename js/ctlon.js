@@ -122,30 +122,17 @@ var CTLON = (function () {
   }
 
 
-  function highlightFriend(userid, centerMap) {
-    var m, accuracy, userIDs, buddy, found = false;
-    if (typeof userid !== 'string')
-      return;
-    m = markers[userid];
-    buddy = $('#buddy-' + userid.replace(/([!"#$%&'\(\)\*\+,\.\/:;<=>\?@\[\]\^`\{\|\}~])/g, '\\$1'));
-    if (polyline)
-      polyline.setMap(null);
-    if ($('#show-tracks').is(':checked'))
-      getTrack(userid);
-    selectedUser = userid;
-    if (centerMap)
-      map.setCenter(m.getPosition());
-    m.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
-    accuracy = parseInt(buddy.attr('data-accuracy'), 10);
+  function setCircle(accuracy, latLng) {
     circle.setRadius(accuracy);
-    circle.setCenter(m.getPosition());
+    circle.setCenter(latLng);
     circle.setVisible($('#show-accuracy').is(':checked'));
-    infoWindow.setMap(map);
-    infoWindow.setPosition(m.getPosition());
-    infoWindow.setContent('<p><strong>' + buddy.attr('data-last-update') + '</strong><br/>' +
-      buddy.attr('data-name') + '</p>' +
-      '<p id="address"></p>');
-    geocoder.geocode({ 'latLng': m.getPosition() }, function (results, status) {
+  }
+
+
+  function setInfoWindow(updated, name, latLng) {
+    infoWindow.setPosition(latLng);
+    infoWindow.setContent('<p><strong>' + updated + '</strong><br/>' + name + '</p>' + '<p id="address"></p>');
+    geocoder.geocode({ 'latLng': latLng }, function (results, status) {
       if (status === google.maps.GeocoderStatus.OK) {
         if (results[1]) {
           $('#address').text(results[1].formatted_address);
@@ -158,9 +145,28 @@ var CTLON = (function () {
   }
 
 
+  function highlightFriend(userid, centerMap) {
+    var m, userIDs, buddy, found = false;
+    if (typeof userid !== 'string')
+      return;
+    m = markers[userid];
+    buddy = $('#buddy-' + userid.replace(/([!"#$%&'\(\)\*\+,\.\/:;<=>\?@\[\]\^`\{\|\}~])/g, '\\$1'));
+    if (polyline)
+      polyline.setMap(null);
+    if ($('#show-tracks').is(':checked'))
+      getTrack(userid);
+    selectedUser = userid;
+    if (centerMap)
+      map.setCenter(m.getPosition());
+    m.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
+    setCircle(parseInt(buddy.attr('data-accuracy'), 10), m.getPosition());
+    setInfoWindow(buddy.attr('data-last-update'), buddy.attr('data-name'), m.getPosition());
+  }
+
+
   function clusteredFriends(userData) {
     var clustered = [], cluster, userIDs = Object.keys(userData), currentUser, currentUserId, P0,
-      projection = overlay.getProjection(), sqr = function (a) { return a * a; },
+      projection = overlay.getProjection(),
       distance = (Avatar.Width + Avatar.Height) / 3;
     while (userIDs.length > 0) {
       currentUserId = userIDs.pop();
@@ -178,7 +184,7 @@ var CTLON = (function () {
         userData[userid].latLng = new google.maps.LatLng(userData[userid].lat, userData[userid].lng);
         userData[userid].id = userid;
         P1 = projection.fromLatLngToDivPixel(userData[userid].latLng);
-        P0P1 = Math.sqrt(sqr(P1.x - P0.x) + sqr(P1.y - P0.y));
+        P0P1 = Math.sqrt(Math.sqr(P1.x - P0.x) + Math.sqr(P1.y - P0.y));
         if (P0P1 < distance) {
           cluster.push(userData[userid]);
           userIDs[i] = null;
@@ -216,10 +222,8 @@ var CTLON = (function () {
           buddy.css('background-image', 'url(' + (friend.avatar ? friend.avatar : DEFAULT_AVATAR) + ')');
         if (friend.id === selectedUser) {
           latLng = new google.maps.LatLng(friend.lat, friend.lng);
-          if (circle)
-            circle.setCenter(latLng);
-          if (infoWindow)
-            infoWindow.setPosition(latLng);
+          setCircle(friend.accuracy, latLng)
+          setInfoWindow(friend.readableTimestamp, friend.name, latLng);
         }
         if ($('#buddies').children().length === 0) {
           $('#buddies').append(buddy);
@@ -541,14 +545,14 @@ var CTLON = (function () {
       blob = blobs[i];
       if (blob instanceof File) {
         $('#track-file-loader-icon').css('visibility', 'visible');
-        GPX(blob).done(function (gpxParser) {
+        GPX().done(function (gpxParser) {
           transferLocations(gpxParser.getTrack(), function gpxCallback(data) {
             console.log('gpxCallback()', data);
             $('#track-file-loader-icon').css('visibility', 'hidden');
           });
         }).error(function (e) {
           alert('Fehler beim Verarbeiten der GPX-Datei: ' + e.error);
-        }).parse();
+        }).parse(blob);
       }
     };
   }
@@ -901,8 +905,7 @@ var CTLON = (function () {
         var checked = $('#show-accuracy').is(':checked');
         localStorage.setItem('show-accuracy', checked);
         // TODO: show circle for selectedUser
-        if (circle !== null)
-          circle.setVisible(checked);
+        circle.setVisible(checked);
       }).prop('checked', localStorage.getItem('show-accuracy') === 'true');
 
       $('#max-location-age').change(function (e) {
