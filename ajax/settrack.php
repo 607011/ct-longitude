@@ -3,7 +3,7 @@ require_once 'globals.php';
 
 if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['oauth']['token'])) {
     $res['status'] = 'error';
-    $res['error'] = 'no authenticated user';
+    $res['error'] = 'Ungültige Authentifizierungsdaten: OAuth-Token fehlt oder ist falsch.';
     goto end;
 }
 $token = $_REQUEST['oauth']['token'];
@@ -12,7 +12,7 @@ $userid = $_SESSION[$token]['user_id'];
 
 if (!$dbh) {
     $res['status'] = 'error';
-    $res['error'] = 'cannot connect to database';
+    $res['error'] = 'Verbindung zur Datenbank fehlgeschlagen.';
     goto end;
 }
 
@@ -40,21 +40,21 @@ $dbh->exec('BEGIN TRANSACTION');
 foreach ($locations as $location) {
     if (!preg_match('/^\\d+\\.\\d+$/', $location['lat'])) {
         $res['status'] = 'error';
-        $res['error'] = 'bad latitude';
+        $res['error'] = 'Ungültige Breitengradangabe:' . $location['lat'];
         goto end;
     }
     $lat = floatval($location['lat']);
 
     if (!preg_match('/^\\d+\\.\\d+$/', $location['lng'])) {
         $res['status'] = 'error';
-        $res['error'] = 'bad longitude';
+        $res['error'] = 'Ungültige Längengradangabe: ' . $location['lng'];
         goto end;
     }
     $lng = floatval($location['lng']);
 
     if (!isset($location['timestamp']) || !preg_match('/^\\d+$/', $location['timestamp'])) {
         $res['status'] = 'error';
-        $res['error'] = 'bad timestamp';
+        $res['error'] = 'Ungültiger Zeitstempel: ' . $location['timestamp'];
         goto end;
     }
     $timestamp = intval($location['timestamp']);

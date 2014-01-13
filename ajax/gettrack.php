@@ -3,7 +3,7 @@ include('globals.php');
 
 if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['oauth']['token'])) {
     $res['status'] = 'error';
-    $res['error'] = 'no authenticated user';
+    $res['error'] = 'Ungültige Authentifizierungsdaten: OAuth-Token fehlt oder ist falsch.';
     goto end;
 }
 $token = $_REQUEST['oauth']['token'];
@@ -11,7 +11,7 @@ $userid = $_SESSION[$token]['user_id'];
 
 
 if (!isset($_REQUEST['userid'])) {
-    $res['error'] = 'userid is missing';
+    $res['error'] = '`userid` fehlt';
     $res['status'] = 'error';
     goto end;
 }
@@ -26,20 +26,20 @@ $t1 = isset($_REQUEST['t1']) ? intval($_REQUEST['t1']) : 'STRFTIME("%s", "now", 
 
 if ($dbh) {
     if ($requested_userid !== $userid) {
-        $q = "SELECT sharetracks FROM buddies WHERE userid = '$requested_userid'";
+        $q = "SELECT `sharetracks` FROM `buddies` WHERE `userid` = '$requested_userid'";
         $rows = $dbh->query($q);
         $row = $rows->fetch();
         if (!$row[0]) {
-            $res['error'] = "user '$requested_userid' does not share tracks";
             $res['status'] = 'error';
+            $res['error'] = "Der User '$requested_userid' teilt seine Tracks nicht mit anderen.";
             goto end;
         }
     }
-    $q = "SELECT timestamp, lat, lng FROM locations " .
-            "WHERE userid = '$requested_userid' " .
-            "  AND timestamp > $t0 " .
-            "  AND timestamp < $t1 " .
-            "ORDER BY timestamp ASC";
+    $q = "SELECT `timestamp`, `lat`, `lng` FROM `locations` " .
+            "WHERE `userid` = '$requested_userid' " .
+            "  AND `timestamp` > $t0 " .
+            "  AND `timestamp` < $t1 " .
+            "ORDER BY `timestamp` ASC";
     $rows = $dbh->query($q);
     switch($format) {
         case 'json':

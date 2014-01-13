@@ -3,7 +3,7 @@ require_once 'globals.php';
 
 if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['oauth']['token'])) {
     $res['status'] = 'error';
-    $res['error'] = 'no authenticated user';
+    $res['error'] = 'Ungültige Authentifizierungsdaten: OAuth-Token fehlt oder ist falsch.';
     goto end;
 }
 $token = $_REQUEST['oauth']['token'];
@@ -11,13 +11,13 @@ $userid = $_SESSION[$token]['user_id'];
 
 if (!isset($_REQUEST['option'])) {
     $res['status'] = 'error';
-    $res['error'] = 'no option given';
+    $res['error'] = 'Option fehlt';
     goto end;
 }
 
 if (!isset($_REQUEST['value'])) {
     $res['status'] = 'error';
-    $res['error'] = 'no value given';
+    $res['error'] = 'Wert fehlt';
     goto end;
 }
 
@@ -52,11 +52,11 @@ if ($dbh) {
                 $res['status'] = 'ok';
                 $res['userid'] = $userid;
                 $res['option'] = $option;
-                $res['value'] = '<...present...>';
+                $res['value'] = '<...vorhanden...>';
             }
             else {
                 $res['status'] = 'error';
-                $res['error'] = 'value is not a data URL';
+                $res['error'] = 'Wert ist keine gültige DataURL';
             }
             break;
         default:

@@ -497,13 +497,13 @@ var CTLON = (function () {
 
 
   function goOnline() {
-    console.log('went online.');
+    console.log('Online.');
     transferPendingLocations();
   }
 
 
   function goOffline() {
-    console.warn('went offline.');
+    console.warn('Offline.');
   }
 
 
@@ -523,7 +523,7 @@ var CTLON = (function () {
       }
       catch (e) {
         console.error(e, data);
-        callback({ status: 'error', error: 'Bad response. Cannot decode JSON data from server.' });
+        callback({ status: 'error', error: 'Fehlerhafte Antwort vom Server: JSON-Daten können nicht dekodiert werden.' });
         return;
       }
       if (!data) {
@@ -556,7 +556,7 @@ var CTLON = (function () {
       pendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
     }
     catch (e) {
-      console.error('invalid data in localStorage["pending-locations"]');
+      console.error('Ungültige Daten in localStorage["pending-locations"]');
       hideProgressInfo();
       return;
     }
