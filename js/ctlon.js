@@ -409,7 +409,6 @@ var CTLON = (function () {
 
 
   function transferLocations(locations, fileName, callback) {
-    console.log('transferLocations()', locations);
     $.ajax({
       url: 'ajax/settrack.php',
       type: 'POST',
@@ -453,7 +452,6 @@ var CTLON = (function () {
 
   function transferPendingLocations() {
     var pendingLocations;
-    console.log('transferPendingLocations()');
     try {
       pendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
     }
@@ -559,7 +557,6 @@ var CTLON = (function () {
         GPX()
           .done(function (gpxParser) {
             transferLocations(gpxParser.getTrack(), this.fileName, function gpxCallback(data) {
-              console.log('gpxCallback()', data);
               $('#track-file-loader-icon').css('visibility', 'hidden');
             });
           }.bind({ fileName: file.name }))
@@ -893,7 +890,6 @@ var CTLON = (function () {
         localStorage.setItem('show-tracks', checked);
         if (checked)
           getTrack(selectedUser);
-        console.log(selectedUser);
         if (polyline !== null)
           polyline.setVisible(checked);
       }).prop('checked', localStorage.getItem('show-tracks') === 'true');

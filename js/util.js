@@ -156,7 +156,6 @@ GPXParser.prototype.parse = function (xmlDoc) {
     this.successCallback(this);
   }
   else if (xmlDoc instanceof File) {
-    console.log(xmlDoc);
     reader = new FileReader();
     reader.onload = function (e) {
       if (e.target.readyState === FileReader.DONE) {
