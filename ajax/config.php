@@ -4,6 +4,8 @@
 /// CONFIGURATION OPTIONS
 //////////////////////////////////
 
+$res = array('status' => 'ok');
+
 if ($_SERVER['SERVER_NAME'] === 'localhost' && strpos($_SERVER['REQUEST_URI'], '/ctlat') === 0) {
     $GOOGLE_OAUTH_CLIENT_ID = '794079768346.apps.googleusercontent.com';
     $DB_PATH = 'D:/Developer/xampp/';
@@ -18,12 +20,12 @@ $DB_PERSISTENT = false;
 
 $DB_NAME = "$DB_PATH/ctlon.sqlite";
 
-if (substr($_SERVER['REQUEST_URI'], -strlen('config.php')) === 'config.php') {
-    $res = array(
-        'status' => 'ok',
-        'GoogleOAuthClientId' => $GOOGLE_OAUTH_CLIENT_ID
-    );
+if (substr(str_replace("\\", '/', __FILE__), -strlen($_SERVER['PHP_SELF'])) === $_SERVER['PHP_SELF']) {
+    $res['GoogleOAuthClientId'] = $GOOGLE_OAUTH_CLIENT_ID;
+    if (!isset($GOOGLE_OAUTH_CLIENT_ID))
+        $res['status'] = 'error';
     echo json_encode($res);
 }
+
 
 ?>

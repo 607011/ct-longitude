@@ -1,14 +1,6 @@
 <?php
 require_once 'config.php';
 
-
-$dbh = new PDO("sqlite:$DB_NAME", null, null, array(
-     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-     PDO::ATTR_PERSISTENT => $DB_PERSISTENT
-));
-$res = array();
-
-
 function validateGoogleOauthToken($token) {
     global $GOOGLE_OAUTH_CLIENT_ID;
     session_start();
@@ -53,4 +45,10 @@ function validateGoogleOauthToken($token) {
 }
 
 $T0 = microtime(true);
+
+$dbh = new PDO("sqlite:$DB_NAME", null, null, array(
+     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+     PDO::ATTR_PERSISTENT => $DB_PERSISTENT
+));
+
 ?>
