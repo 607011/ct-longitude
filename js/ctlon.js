@@ -710,57 +710,57 @@ var CTLON = (function () {
     var settings = $('#settings'), settingsIcon = $('#settings-icon'),
       avatar = $('#avatar'), avatarFile = $('#avatar-file'), trackFile = $('#track-file');
     if (settings.css('display') === 'none') {
-      settings.animate({
-        opacity: 1,
-        top: '0px'
-      },
-      {
-        start: function () {
-          settings.css('top', $('#info-bar-container').offset().top + 'px').css('display', 'block');
-          settingsIcon.addClass('active');
-        },
-        easing: 'easeInOutCubic',
-        duration: 350,
-        complete: function () {
-          $(document).bind({ paste: pasteHandler });
-          trackFile.bind({
-            change: function (e) {
-              uploadTracks(e.target.files);
-            }
-          });
-          avatarFile.bind({
-            change: function (e) {
-              var files = e.target.files;
-              if (files.length === 1)
-                uploadAvatar(files[0]);
-            }
-          });
-          avatar.bind({
-            dragover: function (event) {
-              var e = event.originalEvent;
-              e.stopPropagation();
-              e.preventDefault();
-              e.dataTransfer.dropEffect = 'copy';
-              avatar.addClass('over');
-            },
-            dragleave: function (event) {
-              var e = event.originalEvent;
-              e.stopPropagation();
-              e.preventDefault();
-              avatar.removeClass('over');
-            },
-            drop: function (event) {
-              var e = event.originalEvent,
-                files = e.dataTransfer.files;
-              e.stopPropagation();
-              e.preventDefault();
-              avatar.removeClass('over');
-              if (files.length === 1)
-                uploadAvatar(files[0]);
-            }
-          });
-        }
-      });
+      settingsIcon.addClass('active');
+      settings
+        .css('top', $('#info-bar-container').offset().top + 'px')
+        .css('display', 'block').css('overflow', 'hidden')
+        .animate({
+          opacity: 1,
+          top: '0px'
+        }, {
+          easing: 'easeInOutCubic',
+          duration: 350,
+          complete: function () {
+            settings.css('overflow', 'auto');
+            $(document).bind({ paste: pasteHandler });
+            trackFile.bind({
+              change: function (e) {
+                uploadTracks(e.target.files);
+              }
+            });
+            avatarFile.bind({
+              change: function (e) {
+                var files = e.target.files;
+                if (files.length === 1)
+                  uploadAvatar(files[0]);
+              }
+            });
+            avatar.bind({
+              dragover: function (event) {
+                var e = event.originalEvent;
+                e.stopPropagation();
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'copy';
+                avatar.addClass('over');
+              },
+              dragleave: function (event) {
+                var e = event.originalEvent;
+                e.stopPropagation();
+                e.preventDefault();
+                avatar.removeClass('over');
+              },
+              drop: function (event) {
+                var e = event.originalEvent,
+                  files = e.dataTransfer.files;
+                e.stopPropagation();
+                e.preventDefault();
+                avatar.removeClass('over');
+                if (files.length === 1)
+                  uploadAvatar(files[0]);
+              }
+            });
+          }
+        });
     }
     else {
       settings.animate({
