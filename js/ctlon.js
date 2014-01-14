@@ -577,7 +577,7 @@ var CTLON = (function () {
     me.latLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
     if (me.id === selectedUser) {
       infoWindow.setPosition(me.latLng);
-      circle.setPosition(me.latLng);
+      circle.setCenter(me.latLng);
       if (polyline) {
         path = polyline.getPath();
         path.push(me.latLng);
