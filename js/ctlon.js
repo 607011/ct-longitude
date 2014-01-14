@@ -35,6 +35,7 @@ var CTLON = (function () {
     infoWindow = null, infoWindowClosed = false,
     markers = {},
     avatars = {},
+    clusters = [],
     me = { id: undefined, latLng: null, avatar: null, name: null, oauth: { clientId: null, token: null, expiresAt: null, expiresIn: null }, profile: null },
     getFriendsPending = false,
     watchId,
@@ -146,21 +147,28 @@ var CTLON = (function () {
   }
 
 
-  function setInfoWindow(updated, name, latLng, reopen) {
+  function setInfoWindow(updated, name, latLng) {
     if (!infoWindowClosed)
       infoWindow.open(map);
-    infoWindow.setPosition(latLng);
-    infoWindow.setContent('<p><strong>' + updated + '</strong><br/>' + name + '</p>' + '<p id="address"></p>');
-    geocoder.geocode({ 'latLng': latLng }, function (results, status) {
-      if (status === google.maps.GeocoderStatus.OK) {
-        if (results[1]) {
-          $('#address').text(results[1].formatted_address);
+    infoWindow.setContent('<p><b>' + name + '</b><br/>' + updated + '</p>' + '<p id="address"></p>');
+    if (!latLng.equals(infoWindow.getPosition())) {
+      infoWindow.setPosition(latLng);
+      geocoder.geocode({ 'latLng': latLng }, function (results, status) {
+        if (status === google.maps.GeocoderStatus.OK) {
+          if (results[1]) {
+            $('#address').text(results[1].formatted_address);
+          }
         }
-      }
-      else {
-        console.warn('Umgekehrtes Geocoding fehlgeschlagen: ' + status);
-      }
-    });
+        else {
+          console.warn('Umgekehrtes Geocoding fehlgeschlagen: ' + status);
+        }
+      });
+    }
+  }
+
+
+  function getBuddyElement(userid) {
+    return $('#buddy-' + userid.replace(/([!"#$%&'\(\)\*\+,\.\/:;<=>\?@\[\]\^`\{\|\}~])/g, '\\$1'))
   }
 
 
@@ -169,7 +177,7 @@ var CTLON = (function () {
     if (typeof userid !== 'string')
       return;
     m = markers[userid];
-    buddy = $('#buddy-' + userid.replace(/([!"#$%&'\(\)\*\+,\.\/:;<=>\?@\[\]\^`\{\|\}~])/g, '\\$1'));
+    buddy = getBuddyElement(userid);
     if (polyline)
       polyline.setMap(null);
     if ($('#show-tracks').is(':checked'))
@@ -216,7 +224,9 @@ var CTLON = (function () {
 
 
   function processFriends(users) {
-    $.each(clusteredFriends(users), function (i, cluster) {
+    clusters = clusteredFriends(users);
+    
+    $.each(clusters, function (i, cluster) {
 
       function process(friend, opts) {
         var buddy, latLng;
@@ -283,7 +293,7 @@ var CTLON = (function () {
           latLng = new google.maps.LatLng(friend.lat, friend.lng);
           setCircle(friend.accuracy, latLng)
           setInfoWindow(friend.readableTimestamp, friend.name, latLng);
-          getTrack(friend.id);
+          // getTrack(friend.id);
         }
         if ($('#buddies').children().length === 0) {
           $('#buddies').append(buddy);
@@ -526,6 +536,7 @@ var CTLON = (function () {
 
   function transferPendingLocations() {
     var pendingLocations;
+    console.log('transferPendingLocations()');
     try {
       pendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
     }
@@ -539,10 +550,23 @@ var CTLON = (function () {
         hideProgressInfo();
         if (data.status === OK) {
           localStorage.removeItem('pending-locations');
-          $('#settings-icon').removeClass('pending');
+          $('#settings-icon').removeClass('pending-locations');
+          console.log('Pending locations successfully transferred.');
         }
       });
     }
+  }
+
+
+  function isClustered(userid) {
+    var inCluster = false;
+    $.each(clusters, function (i, cluster) {
+      if (cluster.filter(function (buddy) { return buddy.id === userid; }).length > 0) {
+        inCluster = true;
+        return false;
+      }
+    });
+    return inCluster;
   }
 
 
@@ -575,11 +599,11 @@ var CTLON = (function () {
       lng: pos.coords.longitude,
       timestamp: me.timestamp
     };
-    data.accuracy = pos.coords.accuracy ? pos.coords.accuracy : undefined;
-    data.heading = pos.coords.heading ? pos.coords.heading : undefined;
-    data.speed = pos.coords.speed ? pos.coords.speed : undefined;
-    data.altitude = pos.coords.altitude ? pos.coords.altitude : undefined;
-    data.altitudeaccuracy = pos.coords.altitudeAccuracy ? pos.coords.altitudeAccuracy : undefined;
+    data.accuracy = pos.coords.accuracy ? pos.coords.accuracy : void 0;
+    data.heading = pos.coords.heading ? pos.coords.heading : void 0;
+    data.speed = pos.coords.speed ? pos.coords.speed : void 0;
+    data.altitude = pos.coords.altitude ? pos.coords.altitude : void 0;
+    data.altitudeaccuracy = pos.coords.altitudeAccuracy ? pos.coords.altitudeAccuracy : void 0;
     if (!navigator.onLine || $('#offline-mode').is(':checked')) {
       try {
         pendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
@@ -588,10 +612,13 @@ var CTLON = (function () {
         console.error(e);
         return;
       }
-      delete data.userid;
-      pendingLocations.push(data);
+      pendingLocations.push({
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        timestamp: me.timestamp
+      });
       localStorage.setItem('pending-locations', JSON.stringify(pendingLocations));
-      $('#settings-icon').addClass('pending');
+      $('#settings-icon').addClass('pending-locations');
     }
     else if (!$('#incognito').is(':checked') && !$('#offline.mode').is(':checked')) {
       // send own data to server
@@ -612,9 +639,15 @@ var CTLON = (function () {
             console.error(e);
             return;
           }
-          if (data.status === 'error') {
+          if (data.status === OK) {
+            if (isClustered(me.id)) {
+              // TODO: wenn sich der User in einer Gruppe befindet und aus ihr herausbewegt, muss sein Symbol aus der Gruppe herausgelöst werden
+            }
+          }
+          else if (data.status === 'error') {
             criticalError('Fehler beim Übertragen deines Standorts: ' + data.error);
           }
+          
         }
       }).error(function (jqXHR, textStatus, errorThrown) {
         criticalError('Fehler beim Übertragen deines Standorts [' + textStatus + ': ' + errorThrown + ']');
@@ -1068,7 +1101,9 @@ var CTLON = (function () {
 
       $(window).bind({
         online: goOnline,
-        offline: goOffline
+        offline: goOffline,
+        blur: function (e) { console.log(e); },
+        focus: function (e) { console.log(e); }
       });
 
       google.maps.event.addListenerOnce(map, 'idle', getFriends);
