@@ -24,7 +24,7 @@ if ($dbh) {
         $res['avatar'] = $row[0];
         $res['name'] = $row[1];
         $res['status'] = 'ok';
-        $res['user_id'] = $_SESSION[$token]['user_id'];
+        $res['userid'] = $requested_userid;
         $res['processing_time'] = processingTime();
     }
     else {

@@ -33,6 +33,7 @@ var CTLON = (function () {
     geocoder = new google.maps.Geocoder(),
     map = null, overlay = null, circle = null, polyline = null, infoWindow = null,
     markers = {},
+    avatars = {},
     me = { id: undefined, latLng: null, avatar: null, name: null, oauth: { clientId: null, token: null, expiresAt: null, expiresIn: null }, profile: null },
     getFriendsPending = false,
     watchId,
@@ -219,7 +220,8 @@ var CTLON = (function () {
         friend.readableTimestamp = new Date(friend.timestamp * 1000).toLocaleString();
         if (me.latLng === null) // location queries disabled, use first friend's position for range calculation
           me.latLng = new google.maps.LatLng(friend.lat, friend.lng);
-        if (!friend.avatar && !opts.avatarRequested) {
+        if (!avatars.hasOwnProperty(friend.id) && !opts.avatarRequestPending) {
+          opts.avatarRequestPending = true;
           $.ajax({
             url: 'ajax/avatar.php',
             type: 'POST',
@@ -244,11 +246,12 @@ var CTLON = (function () {
                 console.error(data.error);
                 return;
               }
-              if (data.avatar.indexOf('data:image') === 0)
-                friend.avatar = data.avatar;
-              else
-                opts.error.call('Keinen Avatar für `' + friend.id + '` gefunden.');
-              opts.avatarRequested = true;
+              if (data.avatar.indexOf('data:image') === 0) {
+                avatars[data.userid] = data.avatar;
+              }
+              else {
+                opts.error.call('Keinen Avatar für `' + data.userid + '` gefunden.');
+              }
               process(friend, opts);
             }
           }).error(function (jqXHR, textStatus, errorThrown) {
@@ -257,21 +260,21 @@ var CTLON = (function () {
           return;
         }
         buddy = $('<span></span>')
-              .addClass('buddy').attr('id', 'buddy-' + friend.id)
-              .attr('data-name', friend.name)
-              .attr('data-lat', friend.lat)
-              .attr('data-lng', friend.lng)
-              .attr('data-accuracy', friend.accuracy)
-              .attr('data-timestamp', friend.timestamp)
-              .attr('data-last-update', friend.readableTimestamp)
-              .attr('title', friend.name + ' - letzte Aktualisierung: ' + friend.readableTimestamp)
-            .click(function () {
-              highlightFriend(friend.id, true);
-            }.bind(friend));
+          .addClass('buddy').attr('id', 'buddy-' + friend.id)
+          .attr('data-name', friend.name)
+          .attr('data-lat', friend.lat)
+          .attr('data-lng', friend.lng)
+          .attr('data-accuracy', friend.accuracy)
+          .attr('data-timestamp', friend.timestamp)
+          .attr('data-last-update', friend.readableTimestamp)
+          .attr('title', friend.name + ' - letzte Aktualisierung: ' + friend.readableTimestamp)
+          .click(function () {
+            highlightFriend(friend.id, true);
+          }.bind(friend));
         if (friend.id === me.id)
           buddy.css('display', 'none');
         else
-          buddy.css('background-image', 'url(' + (friend.avatar ? friend.avatar : DEFAULT_AVATAR) + ')');
+          buddy.css('background-image', 'url(' + (avatars[friend.id] ? avatars[friend.id] : DEFAULT_AVATAR) + ')');
         if (friend.id === selectedUser) {
           latLng = new google.maps.LatLng(friend.lat, friend.lng);
           setCircle(friend.accuracy, latLng)
@@ -336,7 +339,7 @@ var CTLON = (function () {
                   var canvas = document.createElement('canvas'),
                     ctx = canvas.getContext('2d'),
                     avatarImg = new Image(Avatar.OptimalWidth, Avatar.OptimalHeight);
-                  avatarImg.src = friend.avatar || DEFAULT_AVATAR;
+                  avatarImg.src = avatars[friend.id] || DEFAULT_AVATAR;
                   canvas.width = Symbol.Width;
                   canvas.height = Symbol.Height;
                   ctx.drawImage(img, 0, 0);
@@ -393,7 +396,7 @@ var CTLON = (function () {
                     }
                     placeMarker(friend, false, false);
                   };
-                  img.src = friend.avatar || DEFAULT_AVATAR;
+                  img.src = avatars[friend.id] || DEFAULT_AVATAR;
                 },
                 error: function (e) {
                   console.warn(e);
@@ -403,7 +406,6 @@ var CTLON = (function () {
         })();
       }
     });
-
   }
 
 
@@ -836,10 +838,10 @@ var CTLON = (function () {
 
 
   function preloadImages() {
-    var imgFiles = ['loader-5-0.gif', 'single-symbol.png'];
+    var imgFiles = [DEFAULT_AVATAR, 'img/loader-5-0.gif', 'img/single-symbol.png'];
     $.each(imgFiles, function (i, f) {
       var img = new Image();
-      img.src = 'img/' + f;
+      img.src = f;
     });
   }
 
