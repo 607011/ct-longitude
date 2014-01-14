@@ -90,7 +90,7 @@ $dbh->exec('END TRANSACTION');
 
 $res['status'] = 'ok';
 $res['userid'] = $userid;
-$res['processing_time'] = round(microtime(true) - $T0, 3);
+$res['processing_time'] = processingTime();
 
 end:
 if (isset($res['status']) && $res['status'] === 'error') {

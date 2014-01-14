@@ -61,9 +61,10 @@ if ($dbh) {
             break;
         default:
             $res['status'] = 'error';
-            $res['error'] = 'invalid option: ' + $option;
+            $res['error'] = 'Ungültige Option: ' + $option;
             break;
     }
+    $res['processing_time'] = processingTime();
 }
 else {
     $res['status'] = 'error';

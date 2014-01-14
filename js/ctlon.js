@@ -71,7 +71,7 @@ var CTLON = (function () {
   }
 
 
-  function showDialog(title, msg) {
+  function showPopup(title, msg) {
     var popup = $('<div id="popup"><h1>' + title + ' </h1><p>' + msg + '</p><button id="ok-button">OK</div>');
     $('#app').append(popup);
     popup.animate({ opacity: 1 }, {
@@ -93,7 +93,7 @@ var CTLON = (function () {
       return;
     showProgressInfo();
     $.ajax({
-      url: 'ajax/gettrack.php',
+      url: 'ajax/track.php',
       type: 'POST',
       accepts: 'json',
       data: {
@@ -173,7 +173,6 @@ var CTLON = (function () {
     selectedUser = userid;
     if (centerMap)
       map.setCenter(m.getPosition());
-    m.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
     setCircle(parseInt(buddy.attr('data-accuracy'), 10), m.getPosition());
     setInfoWindow(buddy.attr('data-last-update'), buddy.attr('data-name'), m.getPosition());
   }
@@ -214,11 +213,49 @@ var CTLON = (function () {
   function processFriends(users) {
     $.each(clusteredFriends(users), function (i, cluster) {
 
-      function process(friend) {
+      function process(friend, opts) {
         var buddy, latLng;
+        opts = opts || {};
         friend.readableTimestamp = new Date(friend.timestamp * 1000).toLocaleString();
         if (me.latLng === null) // location queries disabled, use first friend's position for range calculation
           me.latLng = new google.maps.LatLng(friend.lat, friend.lng);
+        if (!friend.avatar && !opts.avatarRequested) {
+          $.ajax({
+            url: 'ajax/avatar.php',
+            type: 'POST',
+            accepts: 'json',
+            data: {
+              userid: friend.id,
+              oauth: me.oauth
+            }
+          }).done(function (data) {
+            if (!data) {
+              criticalError('Fehler beim Abfragen des Avatars!');
+            }
+            else {
+              try {
+                data = JSON.parse(data);
+              }
+              catch (e) {
+                console.error(e);
+                return;
+              }
+              if (data.status !== OK) {
+                console.error(data.error);
+                return;
+              }
+              if (data.avatar.indexOf('data:image') === 0)
+                friend.avatar = data.avatar;
+              else
+                opts.error.call('Keinen Avatar für `' + friend.id + '` gefunden.');
+              opts.avatarRequested = true;
+              process(friend, opts);
+            }
+          }).error(function (jqXHR, textStatus, errorThrown) {
+            criticalError('Fehler beim Abfragen des Avatars [' + textStatus + ': ' + errorThrown + ']');
+          });
+          return;
+        }
         buddy = $('<span></span>')
               .addClass('buddy').attr('id', 'buddy-' + friend.id)
               .attr('data-name', friend.name)
@@ -254,6 +291,7 @@ var CTLON = (function () {
               $('#buddies').append(buddy);
           });
         }
+        opts.success.call();
       }
 
       function placeMarker(friend, isClustered, visible) {
@@ -292,16 +330,24 @@ var CTLON = (function () {
         (function () {
           var img = new Image(), friend = cluster[0];
           img.onload = function () {
-            var canvas = document.createElement('canvas'), ctx = canvas.getContext('2d'),
-              avatarImg = new Image(Avatar.OptimalWidth, Avatar.OptimalHeight);
-            process(friend);
-            avatarImg.src = friend.avatar || DEFAULT_AVATAR;
-            canvas.width = Symbol.Width;
-            canvas.height = Symbol.Height;
-            ctx.drawImage(img, 0, 0);
-            ctx.drawImage(avatarImg, 1, 8, Avatar.Width, Avatar.Height);
-            friend.avatar = canvas.toDataURL('image/png');
-            placeMarker(friend, false);
+            process(friend,
+              {
+                success: function () {
+                  var canvas = document.createElement('canvas'),
+                    ctx = canvas.getContext('2d'),
+                    avatarImg = new Image(Avatar.OptimalWidth, Avatar.OptimalHeight);
+                  avatarImg.src = friend.avatar || DEFAULT_AVATAR;
+                  canvas.width = Symbol.Width;
+                  canvas.height = Symbol.Height;
+                  ctx.drawImage(img, 0, 0);
+                  ctx.drawImage(avatarImg, 1, 8, Avatar.Width, Avatar.Height);
+                  friend.avatar = canvas.toDataURL('image/png');
+                  placeMarker(friend, false);
+                },
+                error: function (e) {
+                  console.warn(e);
+                }
+              });
           };
           img.src = 'img/single-symbol.png';
         })();
@@ -325,27 +371,34 @@ var CTLON = (function () {
           ctx.fillStyle = '#000';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           $.each(cluster, function (i, friend) {
-            var img = new Image();
-            img.onload = function () {
-              var slice = slices[i], sliceW = slice.width(), sliceH = slice.height();
-              if (sliceH > sliceW)
-                ctx.drawImage(img, img.width / 4, 0, img.width / 2, img.height, slice.left() + 1, slice.top() + 1, sliceW, sliceH);
-              else
-                ctx.drawImage(img, 0, 0, img.width, img.height, slice.left() + 1, slice.top() + 1, sliceW, sliceH);
-              clusteredFriends.ids.push(friend.id);
-              clusteredFriends.names.push(friend.name);
-              clusteredFriends.bounds.extend(friend.latLng);
-              if (++imagesLoaded === slices.length) {
-                clusteredFriends.avatar = canvas.toDataURL('image/png');
-                clusteredFriends.id = clusteredFriends.ids.join('/');
-                clusteredFriends.name = clusteredFriends.names.join(', ');
-                clusteredFriends.latLng = clusteredFriends.bounds.getCenter();
-                placeMarker(clusteredFriends, true);
-              }
-              placeMarker(friend, false, false);
-            };
-            img.src = friend.avatar || DEFAULT_AVATAR;
-            process(friend);
+            process(friend,
+              {
+                success: function () {
+                  var img = new Image();
+                  img.onload = function () {
+                    var slice = slices[i], sliceW = slice.width(), sliceH = slice.height();
+                    if (sliceH > sliceW)
+                      ctx.drawImage(img, img.width / 4, 0, img.width / 2, img.height, slice.left() + 1, slice.top() + 1, sliceW, sliceH);
+                    else
+                      ctx.drawImage(img, 0, 0, img.width, img.height, slice.left() + 1, slice.top() + 1, sliceW, sliceH);
+                    clusteredFriends.ids.push(friend.id);
+                    clusteredFriends.names.push(friend.name);
+                    clusteredFriends.bounds.extend(friend.latLng);
+                    if (++imagesLoaded === slices.length) {
+                      clusteredFriends.avatar = canvas.toDataURL('image/png');
+                      clusteredFriends.id = clusteredFriends.ids.join('/');
+                      clusteredFriends.name = clusteredFriends.names.join(', ');
+                      clusteredFriends.latLng = clusteredFriends.bounds.getCenter();
+                      placeMarker(clusteredFriends, true);
+                    }
+                    placeMarker(friend, false, false);
+                  };
+                  img.src = friend.avatar || DEFAULT_AVATAR;
+                },
+                error: function (e) {
+                  console.warn(e);
+                }
+              });
           });
         })();
       }
@@ -489,7 +542,7 @@ var CTLON = (function () {
 
   function setPosition(pos) {
     var data, pendingLocations, path;
-    console.log(pos.coords);
+    console.log('setPosition() ->', pos.coords);
     me.timestamp = Math.floor(pos.timestamp / 1000);
     me.latLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
     if (me.id === selectedUser) {
@@ -575,9 +628,8 @@ var CTLON = (function () {
             transferLocations(gpxParser.getTrack(), this.fileName, function gpxCallback(data) {
               $('#track-file-loader-icon').css('visibility', 'hidden');
               ++uploadedFiles;
-              console.log(uploadedFiles, files.length);
               if (uploadedFiles === files.length)
-                showDialog('Upload erfolgreich', 'Alle GPX-Dateien wurden erfolgreich hochgeladen.');
+                showPopup('Upload erfolgreich', 'Alle GPX-Dateien wurden erfolgreich hochgeladen.');
             });
           }.bind({ fileName: file.name }))
           .error(function (e) {

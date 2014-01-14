@@ -30,7 +30,7 @@ if (isset($_REQUEST['maxdist']))
 $checkdist = isset($reflat) && isset($reflng) && isset($maxdist);
 
 if ($dbh) {
-    $buddies = $dbh->query("SELECT `userid`, `name`, `avatar` FROM buddies");
+    $buddies = $dbh->query("SELECT `userid`, `name` FROM `buddies`");
     $location_query = $dbh->prepare("SELECT `timestamp`, `lat`, `lng`, `accuracy`, `altitude`, `altitudeaccuracy`, `heading`, `speed`" .
         " FROM `locations`" .
         " WHERE `userid` = :userid AND `timestamp` > :t0" .
@@ -39,7 +39,6 @@ if ($dbh) {
     foreach ($buddies as $buddy) {
         $buddy_id = $buddy[0];
         $buddy_name = $buddy[1];
-        $buddy_avatar = $buddy[2];
         $location_query->execute(array($buddy_id, $t0));
         foreach($location_query->fetchAll() as $row)  {
             $lat = floatval($row[1]);
@@ -51,11 +50,10 @@ if ($dbh) {
                 'lat' => $lat,
                 'lng' => $lng,
                 'accuracy' => floatval($row[3]),
-                'altitude' => floatval($row[4]),
-                'altitudeaccuracy' => floatval($row[5]),
-                'heading' => floatval($row[6]),
-                'speed' => floatval($row[7]),
-                'avatar' =>$buddy_avatar,
+                //'altitude' => floatval($row[4]),
+                //'altitudeaccuracy' => floatval($row[5]),
+                //'heading' => floatval($row[6]),
+                //'speed' => floatval($row[7]),
                 'name' => $buddy_name
             );
         }
@@ -63,7 +61,7 @@ if ($dbh) {
     
     $res['status'] = 'ok';
     $res['user_id'] = $_SESSION[$token]['user_id'];
-    $res['processing_time'] = round(microtime(true) - $T0, 3);
+    $res['processing_time'] = processingTime();
 }
 
 end:

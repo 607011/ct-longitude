@@ -45,6 +45,11 @@ function validateGoogleOauthToken($token) {
 }
 
 $T0 = microtime(true);
+function processingTime() {
+    global $T0;
+    $dt = round(microtime(true) - $T0, 3);
+    return ($dt < 0.001) ? '<1ms' : $dt . 's';
+}
 
 $dbh = new PDO("sqlite:$DB_NAME", null, null, array(
      PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,

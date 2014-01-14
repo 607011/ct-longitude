@@ -19,7 +19,7 @@ if ($dbh) {
         $dbh->exec("INSERT INTO `buddies` (`userid`, `sharetracks`) VALUES('$userid', 0)");
         $sth->execute();
         $row = $sth->fetch();
-        $res['info'] = 'user added';
+        $res['info'] = 'User hinzugefügt';
     }
     $res['sharetracks'] = intval($row[0]) != 0 ? 'true' : 'false';
     $res['avatar'] = $row[1];
@@ -34,7 +34,7 @@ if ($dbh) {
         $res['lat'] = floatval($row[0]);
         $res['lng'] = floatval($row[1]);
     }
-    $res['processing_time'] = round(microtime(true) - $T0, 3);
+    $res['processing_time'] = processingTime();
 }
 
 end:

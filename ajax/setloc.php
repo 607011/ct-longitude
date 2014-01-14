@@ -47,6 +47,7 @@ if ($dbh) {
     $res['lat'] = $lat;
     $res['lng'] = $lng;
     $res['timestamp'] = $timestamp;
+    $res['processing_time'] = processingTime();
 }
 else {
     $res['status'] = 'error';
