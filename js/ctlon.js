@@ -27,7 +27,7 @@ var CTLON = (function () {
     DevicePixelRatio = window.devicePixelRatio ? window.devicePixelRatio : 1,
     Avatar = { Width: 44, Height: 44, OptimalWidth: 88, OptimalHeight: 88, MaxWidth: 512, MaxHeight: 512, backgroundColor: '#000' },
     Symbol = { Width: 46, Height: 53 },
-    TrackColor = '#039',
+    TrackColor = 'rgba(0, 40, 100, 0.8)',
     appInitialized = false,
     firstLoad = true,
     geocoder = new google.maps.Geocoder(),
@@ -489,6 +489,7 @@ var CTLON = (function () {
 
   function setPosition(pos) {
     var data, pendingLocations, path;
+    console.log(pos.coords);
     me.timestamp = Math.floor(pos.timestamp / 1000);
     me.latLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
     if (me.id === selectedUser) {

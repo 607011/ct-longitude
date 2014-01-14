@@ -10,3 +10,4 @@ Features
 
 Fehler
 ======
+ * wenn sich der ausgewählte User in einer Gruppe befindet und sich aus ihr herausbewegt, wird sein Symbol nicht herausgelöst
