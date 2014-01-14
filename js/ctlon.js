@@ -1,6 +1,6 @@
 /*
     c't Longitude - A reimplementation of Googles discontinued Latitude app.
-    Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
+    Copyright (c) 2013-2014 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,7 +31,8 @@ var CTLON = (function () {
     appInitialized = false,
     firstLoad = true,
     geocoder = new google.maps.Geocoder(),
-    map = null, overlay = null, circle = null, polyline = null, infoWindow = null,
+    map = null, overlay = null, circle = null, polyline = null,
+    infoWindow = null, infoWindowClosed = false,
     markers = {},
     avatars = {},
     me = { id: undefined, latLng: null, avatar: null, name: null, oauth: { clientId: null, token: null, expiresAt: null, expiresIn: null }, profile: null },
@@ -145,7 +146,9 @@ var CTLON = (function () {
   }
 
 
-  function setInfoWindow(updated, name, latLng) {
+  function setInfoWindow(updated, name, latLng, reopen) {
+    if (!infoWindowClosed)
+      infoWindow.open(map);
     infoWindow.setPosition(latLng);
     infoWindow.setContent('<p><strong>' + updated + '</strong><br/>' + name + '</p>' + '<p id="address"></p>');
     geocoder.geocode({ 'latLng': latLng }, function (results, status) {
@@ -175,6 +178,7 @@ var CTLON = (function () {
     if (centerMap)
       map.setCenter(m.getPosition());
     setCircle(parseInt(buddy.attr('data-accuracy'), 10), m.getPosition());
+    infoWindowClosed = false;
     setInfoWindow(buddy.attr('data-last-update'), buddy.attr('data-name'), m.getPosition());
   }
 
@@ -250,6 +254,7 @@ var CTLON = (function () {
                 avatars[data.userid] = data.avatar;
               }
               else {
+                avatars[data.userid] = DEFAULT_AVATAR;
                 opts.error.call('Keinen Avatar für `' + data.userid + '` gefunden.');
               }
               process(friend, opts);
@@ -268,13 +273,12 @@ var CTLON = (function () {
           .attr('data-timestamp', friend.timestamp)
           .attr('data-last-update', friend.readableTimestamp)
           .attr('title', friend.name + ' - letzte Aktualisierung: ' + friend.readableTimestamp)
+          .css('background-image', 'url(' + avatars[friend.id] + ')')
           .click(function () {
             highlightFriend(friend.id, true);
           }.bind(friend));
         if (friend.id === me.id)
           buddy.css('display', 'none');
-        else
-          buddy.css('background-image', 'url(' + (avatars[friend.id] ? avatars[friend.id] : DEFAULT_AVATAR) + ')');
         if (friend.id === selectedUser) {
           latLng = new google.maps.LatLng(friend.lat, friend.lng);
           setCircle(friend.accuracy, latLng)
@@ -1053,9 +1057,10 @@ var CTLON = (function () {
       });
 
       infoWindow = new google.maps.InfoWindow({
-        map: map,
-        visible: false
+        map: null,
+        disableAutoPan: true,
       });
+      google.maps.event.addListener(infoWindow, 'closeclick', function () { infoWindowClosed = true; });
 
       overlay = new google.maps.OverlayView();
       overlay.draw = function () { };
