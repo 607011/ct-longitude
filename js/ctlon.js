@@ -36,9 +36,9 @@ var CTLON = (function () {
     infoWindow = null, infoWindowClosed = false,
     markers = {},
     avatars = {},
-    friends = [],
+    friends = {},
     clusters = [],
-    me = { id: undefined, latLng: null, avatar: null, name: null, oauth: { clientId: null, token: null, expiresAt: null, expiresIn: null }, profile: null },
+    me = { id: undefined, avatar: undefined, name: undefined, oauth: { clientId: null, token: null, expiresAt: null, expiresIn: null }, profile: undefined },
     getFriendsPending = false,
     watchId,
     selectedUser,
@@ -226,17 +226,29 @@ var CTLON = (function () {
 
 
   function processFriends(users) {
-    friends = users;
+    var ignoreMe = false;
+    if (typeof users === 'object') {
+      $('#buddies').empty().css('left', '0px');
+      if ($('#incognito').is(':checked')) {
+        users[me.id].lat = friends[me.id].lat;
+        users[me.id].lng = friends[me.id].lng;
+        users[me.id].timestamp = friends[me.id].timestamp;
+        users[me.id].accuracy = friends[me.id].accuracy;
+      }
+      friends = users;
+      ignoreMe = true;
+    }
+
+    removeAllMarkers();
+
     clusters = clusteredFriends(friends);
-    
+
     $.each(clusters, function (i, cluster) {
 
       function process(friend, opts) {
         var buddy, latLng;
         opts = opts || {};
         friend.readableTimestamp = new Date(friend.timestamp * 1000).toLocaleString();
-        if (me.latLng === null) // location queries disabled, use first friend's position for range calculation
-          me.latLng = new google.maps.LatLng(friend.lat, friend.lng);
         if (!avatars.hasOwnProperty(friend.id) && !opts.avatarRequestPending) {
           opts.avatarRequestPending = true;
           $.ajax({
@@ -277,39 +289,44 @@ var CTLON = (function () {
           });
           return;
         }
-        buddy = $('<span></span>')
-          .addClass('buddy').attr('id', 'buddy-' + friend.id)
-          .attr('data-name', friend.name)
-          .attr('data-lat', friend.lat)
-          .attr('data-lng', friend.lng)
-          .attr('data-accuracy', friend.accuracy)
-          .attr('data-timestamp', friend.timestamp)
-          .attr('data-last-update', friend.readableTimestamp)
-          .attr('title', friend.name + ' - letzte Aktualisierung: ' + friend.readableTimestamp)
-          .css('background-image', 'url(' + avatars[friend.id] + ')')
-          .click(function () {
-            highlightFriend(friend.id, true);
-          }.bind(friend));
-        if (friend.id === me.id)
+        if (ignoreMe) {
+          buddy = $('<span></span>')
+            .addClass('buddy').attr('id', 'buddy-' + friend.id)
+            .attr('data-name', friend.name)
+            .attr('data-lat', friend.lat)
+            .attr('data-lng', friend.lng)
+            .attr('data-accuracy', friend.accuracy)
+            .attr('data-timestamp', friend.timestamp)
+            .attr('data-last-update', friend.readableTimestamp)
+            .attr('title', friend.name + ' - letzte Aktualisierung: ' + friend.readableTimestamp)
+            .css('background-image', 'url(' + avatars[friend.id] + ')')
+            .click(function () {
+              highlightFriend(friend.id, true);
+            }.bind(friend));
+          if ($('#buddies').children().length === 0) {
+            $('#buddies').append(buddy);
+          }
+          else {
+            $('#buddies').children().each(function (i, b) {
+              if (friend.timestamp > parseInt($(b).attr('data-timestamp'), 10)) {
+                buddy.insertBefore(b);
+                return false;
+              }
+              if (($('#buddies').children().length - 1) === i)
+                $('#buddies').append(buddy);
+            });
+          }
+        }
+        else {
+          buddy = $('#buddy-' + friend.id);
+        }
+        if (friend.id === me.id) {
           buddy.css('display', 'none');
-        if (friend.id === selectedUser) {
+        }
+        if (friend.id === selectedUser && !ignoreMe) {
           latLng = new google.maps.LatLng(friend.lat, friend.lng);
           setCircle(friend.accuracy, latLng)
           setInfoWindow(friend.readableTimestamp, friend.name, latLng);
-          // getTrack(friend.id);
-        }
-        if ($('#buddies').children().length === 0) {
-          $('#buddies').append(buddy);
-        }
-        else {
-          $('#buddies').children().each(function (i, b) {
-            if (friend.timestamp > parseInt($(b).attr('data-timestamp'), 10)) {
-              buddy.insertBefore(b);
-              return false;
-            }
-            if (($('#buddies').children().length - 1) === i)
-              $('#buddies').append(buddy);
-          });
         }
         opts.success.call();
       }
@@ -469,11 +486,10 @@ var CTLON = (function () {
           return;
         }
         hideProgressInfo();
-        removeAllMarkers();
-        setTimeout(function () { getFriendsPending = false; }, 1000);
-        $('#buddies').empty().css('left', '0px');
         if (typeof data.users !== 'object')
           return;
+
+        setTimeout(function () { getFriendsPending = false; }, 1000);
 
         processFriends(data.users);
       }
@@ -575,38 +591,45 @@ var CTLON = (function () {
 
   function setPosition(pos) {
     var data, pendingLocations, path;
-    console.log('setPosition() ->', pos.coords);
-    me.timestamp = Math.floor(pos.timestamp / 1000);
-    me.latLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
+    data = {
+      userid: me.id,
+      oauth: me.oauth,
+      timestamp: Math.floor(pos.timestamp / 1000),
+      lat: typeof pos.coords.latitude === 'string' ? parseFloat(pos.coords.latitude) : pos.coords.latitude,
+      lng: typeof pos.coords.longitude === 'string' ? parseFloat(pos.coords.longitude) : pos.coords.longitude,
+      accuracy: pos.coords.accuracy ? (typeof pos.coords.accuracy === 'string' ? parseFloat(pos.coords.accuracy) : pos.coords.accuracy) : void 0,
+      heading: pos.coords.heading ? pos.coords.heading : void 0,
+      speed: pos.coords.speed ? pos.coords.speed : void 0,
+      altitude: pos.coords.altitude ? pos.coords.altitude : void 0,
+      altitudeaccuracy: pos.coords.altitudeAccuracy ? pos.coords.altitudeAccuracy : void 0
+    };
+    console.log('setPosition() ->', data);
+    friends[me.id].timestamp = data.timestamp;
+    friends[me.id].lat = data.lat;
+    friends[me.id].lng = data.lng;
+    friends[me.id].accuracy = data.accuracy;
+    friends[me.id].latLng = new google.maps.LatLng(data.lat, data.lng);
+    $('#buddy-' + me.id).attr('data-lat', data.lat).attr('data-lng', data.lng);
     if (me.id === selectedUser) {
-      infoWindow.setPosition(me.latLng);
-      circle.setCenter(me.latLng);
       if (polyline) {
         path = polyline.getPath();
-        path.push(me.latLng);
+        path.push(friends[me.id].latLng);
         polyline.setPath(path);
       }
     }
     if (markers.hasOwnProperty(me.id))
-      markers[me.id].setPosition(me.latLng);
-    if (firstLoad) {
-      map.setCenter(me.latLng);
+      markers[me.id].setPosition(friends[me.id].latLng);
+    localStorage.setItem('my-last-position', data.lat + ',' + data.lng);
+    $('#userid').attr('data-lat', data.lat).attr('data-lng', data.lng);
+
+    if (!firstLoad) {
+      processFriends();
+    }
+    else {
+      map.setCenter(friends[me.id].latLng);
       firstLoad = false;
     }
-    localStorage.setItem('my-last-position', pos.coords.latitude + ',' + pos.coords.longitude);
-    $('#userid').attr('data-lat', pos.coords.latitude).attr('data-lng', pos.coords.longitude);
-    data = {
-      userid: me.id,
-      oauth: me.oauth,
-      lat: pos.coords.latitude,
-      lng: pos.coords.longitude,
-      timestamp: me.timestamp
-    };
-    data.accuracy = pos.coords.accuracy ? pos.coords.accuracy : void 0;
-    data.heading = pos.coords.heading ? pos.coords.heading : void 0;
-    data.speed = pos.coords.speed ? pos.coords.speed : void 0;
-    data.altitude = pos.coords.altitude ? pos.coords.altitude : void 0;
-    data.altitudeaccuracy = pos.coords.altitudeAccuracy ? pos.coords.altitudeAccuracy : void 0;
+
     if (!navigator.onLine || $('#offline-mode').is(':checked')) {
       try {
         pendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
@@ -616,9 +639,9 @@ var CTLON = (function () {
         return;
       }
       pendingLocations.push({
-        lat: pos.coords.latitude,
-        lng: pos.coords.longitude,
-        timestamp: me.timestamp
+        lat: data.lat,
+        lng: data.lng,
+        timestamp: data.timestamp
       });
       localStorage.setItem('pending-locations', JSON.stringify(pendingLocations));
       $('#settings-icon').addClass('pending-locations');
@@ -643,9 +666,7 @@ var CTLON = (function () {
             return;
           }
           if (data.status === OK) {
-            if (isClustered(me.id)) {
-              // TODO: wenn sich der User in einer Gruppe befindet und aus ihr herausbewegt, muss sein Symbol aus der Gruppe herausgelöst werden
-            }
+            // XXX ?
           }
           else if (data.status === 'error') {
             criticalError('Fehler beim Übertragen deines Standorts: ' + data.error);
@@ -936,9 +957,11 @@ var CTLON = (function () {
 
       if (typeof data.userid === 'string') {
         me.id = data.userid;
+        friends[me.id] = {};
       }
       else {
         console.error('`me.php` returned an invalid or no userid');
+        return;
       }
 
       if (typeof data.name === 'string') {
@@ -951,17 +974,28 @@ var CTLON = (function () {
         $('#avatar').css('background-image', 'url(' + me.avatar + ')');
         $('#userid').css('background-image', 'url(' + me.avatar + ')');
       }
- 
+
       if (typeof data.lat === 'number' && typeof data.lng === 'number') {
-        me.latLng = new google.maps.LatLng(data.lat, data.lng);
+        friends[me.id].lat = data.lat;
+        friends[me.id].lng = data.lng;
       }
       else if (myPos = localStorage.getItem('my-last-position')) {
         myPos = myPos.split(',');
-        me.latLng = (myPos.length === 2) ? new google.maps.LatLng(myPos[0], myPos[1]) : new google.maps.LatLng(51, 10.3);
+        if (myPos.length === 2) {
+          friends[me.id].lat = parseFloat(myPos[0]);
+          friends[me.id].lng = parseFloat(myPos[1]);
+        }
+        else {
+          friends[me.id].lat = 51;
+          friends[me.id].lng = 10.3;
+        }
       }
-      else {
-        me.latLng = new google.maps.LatLng(51, 10.3); // last resort (center of Germany)
+      else { // last resort (center of Germany)
+        friends[me.id].lat = 51;
+        friends[me.id].lng = 10.3;
       }
+
+      friends[me.id].latLng = new google.maps.LatLng(friends[me.id].lat, friends[me.id].lng)
 
       $('#userid').click(function () {
         highlightFriend(me.id, true);
