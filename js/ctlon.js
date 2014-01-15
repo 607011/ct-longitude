@@ -20,6 +20,7 @@ var CTLON = (function () {
   "use strict";
 
   var OK = 'ok',
+    ERROR = 'error',
     MOBILE = navigator.userAgent.indexOf('Mobile') >= 0,
     DEFAULT_AVATAR = 'img/default-avatar.jpg',
     MaxDistance = 200 * 1000 /* meters */,
@@ -35,6 +36,7 @@ var CTLON = (function () {
     infoWindow = null, infoWindowClosed = false,
     markers = {},
     avatars = {},
+    friends = [],
     clusters = [],
     me = { id: undefined, latLng: null, avatar: null, name: null, oauth: { clientId: null, token: null, expiresAt: null, expiresIn: null }, profile: null },
     getFriendsPending = false,
@@ -224,7 +226,8 @@ var CTLON = (function () {
 
 
   function processFriends(users) {
-    clusters = clusteredFriends(users);
+    friends = users;
+    clusters = clusteredFriends(friends);
     
     $.each(clusters, function (i, cluster) {
 
@@ -875,7 +878,7 @@ var CTLON = (function () {
 
 
   function preloadImages() {
-    var imgFiles = [DEFAULT_AVATAR, 'img/loader-5-0.gif', 'img/single-symbol.png'];
+    var imgFiles = ['img/loader-5-0.gif', 'img/single-symbol.png'];
     $.each(imgFiles, function (i, f) {
       var img = new Image();
       img.src = f;
@@ -1102,8 +1105,8 @@ var CTLON = (function () {
       $(window).bind({
         online: goOnline,
         offline: goOffline,
-        blur: function (e) { console.log(e); },
-        focus: function (e) { console.log(e); }
+        blur: function (e) { },
+        focus: function (e) { }
       });
 
       google.maps.event.addListenerOnce(map, 'idle', getFriends);
