@@ -8,7 +8,7 @@ $res = array('status' => 'ok');
 
 if ($_SERVER['SERVER_NAME'] === 'localhost' && strpos($_SERVER['REQUEST_URI'], '/ctlat') === 0) {
     $GOOGLE_OAUTH_CLIENT_ID = '794079768346.apps.googleusercontent.com';
-    $DB_PATH = 'D:/Developer/xampp/';
+    $DB_PATH = 'D:/Developer/xampp';
 }
 else if ($_SERVER['SERVER_NAME'] === 'ersatzworld.net' && strpos($_SERVER['REQUEST_URI'], '/ct/ctlon')  === 0) {
     $GOOGLE_OAUTH_CLIENT_ID = '794079768346-q0ulv91h10cn46padtiqflpt184a7l5k.apps.googleusercontent.com';

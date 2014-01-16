@@ -24,7 +24,7 @@ var CTLON = (function () {
     MOBILE = navigator.userAgent.indexOf('Mobile') >= 0,
     DefaultAvatar = 'img/default-avatar.jpg',
     MaxDistance = 200 * 1000 /* meters */,
-    GoogleOAuthClientId = '', /* will be read from attribute "data-clientid" of <span class="g-signin"> in index.html */
+    GoogleOAuthClientId = '',
     DevicePixelRatio = window.devicePixelRatio ? window.devicePixelRatio : 1,
     Avatar = { Width: 44, Height: 44, OptimalWidth: 88, OptimalHeight: 88, MaxWidth: 512, MaxHeight: 512, backgroundColor: '#000' },
     Symbol = { Width: 46, Height: 53 },
@@ -36,6 +36,7 @@ var CTLON = (function () {
     overlay = null,
     circle = null,
     polyline = null,
+    tracks = new google.maps.MVCArray(),
     infoWindow = null,
     infoWindowClosed = false,
     markers = {},
@@ -106,6 +107,48 @@ var CTLON = (function () {
     });
   }
 
+  var TrackGroup = function (map) {
+    this.tracks = [];
+    this.map = map || null;
+    this.colorIdx = 0;
+  };
+  // TrackGroup.Colors = [ '#00640a', '#002b64', '#64005a', '#643c00' ];
+  TrackGroup.Colors = ['#b3008f', '#b37d00', '#00b324', '#0036b3'];
+  TrackGroup.prototype.clearLocations = function () {
+    var i;
+    for (i = 0; i < this.tracks.length; ++i) {
+      this.tracks[i].setMap(null);
+      this.tracks[i].getPath().clear();
+      delete this.tracks[i];
+    }
+    delete this.tracks;
+    this.tracks = [];
+  };
+  TrackGroup.prototype.setLocations = function (locations) {
+    var i, polyline, loc, lastId;
+    this.clearLocations();
+    this.tracks = [];
+    this.colorIdx = 0;
+    for (i = 0; i < locations.length; ++i) {
+      loc = locations[i];
+      if (lastId !== loc.id) {
+        console.log(loc.id);
+        polyline = new google.maps.Polyline({
+          map: this.map,
+          strokeColor: TrackGroup.Colors[this.colorIdx],
+          strokeOpacity: 0.8,
+          strokeWeight: 4,
+          geodesic: true
+        });
+        if (++this.colorIdx >= TrackGroup.Colors.length)
+          this.colorIdx = 0;
+        this.tracks.push(polyline);
+      }
+      polyline.getPath().push(new google.maps.LatLng(loc.lat, loc.lng));
+      lastId = loc.id;
+    }
+  };
+
 
   function getTrack(userid) {
     var maxAge = parseInt($('#max-waypoint-age').val(), 10),
@@ -132,29 +175,10 @@ var CTLON = (function () {
         return;
       }
       if (data.status === OK) {
-        if (polyline === null) {
-          polyline = new google.maps.Polyline({
-            map: map,
-            strokeColor: TrackColor,
-            strokeOpacity: 0.8,
-            strokeWeight: 2,
-            geodesic: true
-          });
-          google.maps.event.addListener(polyline, 'click', function (e) {
-            console.log('Klick auf Track', e);
-          });
-        }
-        polyline.setPath($.map(data.path, function (i, key) {
-          var loc = data.path[key];
-          return new google.maps.LatLng(loc.lat, loc.lng);
-        }));
-        polyline.setMap(map);
+        tracks.setLocations(data.path);
       }
       else {
-        if (polyline) {
-          polyline.setMap(null);
-          polyline = null;
-        }
+        tracks.clearLocations();
         console.warn(data.error);
       }
       hideProgressInfo();
@@ -632,11 +656,8 @@ var CTLON = (function () {
     friends[me.id].latLng = new google.maps.LatLng(data.lat, data.lng);
     $('#buddy-' + me.id).attr('data-lat', data.lat).attr('data-lng', data.lng);
     if (me.id === selectedUser) {
-      if (polyline) {
-        path = polyline.getPath();
-        path.push(friends[me.id].latLng);
-        polyline.setPath(path);
-      }
+      if (polyline)
+        polyline.getPath().push(friends[me.id].latLng);
     }
     if (markers.hasOwnProperty(me.id))
       markers[me.id].setPosition(friends[me.id].latLng);
@@ -1168,6 +1189,8 @@ var CTLON = (function () {
         computeDistanceBetween = google.maps.geometry.spherical.computeDistanceBetween;
       map.setCenter(me.latLng);
 
+      tracks = new TrackGroup(map);
+
       circle = new google.maps.Circle({
         map: map,
         visible: false,
@@ -1191,8 +1214,8 @@ var CTLON = (function () {
       $(window).bind({
         online: goOnline,
         offline: goOffline,
-        blur: pause,
-        focus: resume
+        //blur: pause,
+        //focus: resume
       });
 
       google.maps.event.addListenerOnce(map, 'idle', getFriends);

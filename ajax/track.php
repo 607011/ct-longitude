@@ -35,8 +35,8 @@ if ($dbh) {
             goto end;
         }
     }
-    $q = "SELECT `timestamp`, `lat`, `lng` FROM `locations` " .
-            "WHERE `userid` = '$requested_userid' " .
+    $q = "SELECT `timestamp`, `lat`, `lng`, `file_id` FROM `locations` " .
+            "WHERE `userid` = '$requested_userid'" .
             "  AND `timestamp` > $t0 " .
             "  AND `timestamp` < $t1 " .
             "ORDER BY `timestamp` ASC";
@@ -50,7 +50,8 @@ if ($dbh) {
                 $res['path'][] = array(
                  'timestamp' => intval($row[0]),
                  'lat' => floatval($row[1]),
-                 'lng' => floatval($row[2])
+                 'lng' => floatval($row[2]),
+                 'id' => $row[3]
                );
             }
             $res['status'] = 'ok';

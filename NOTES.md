@@ -1,6 +1,7 @@
 Features
 ========
-
+ 
+ * Klick auf User-Symbol blendet `InfoWindow` ein
  * CSS für iOS und Android
  * Klick auf Symbol sollte irgendeine sinnvolle Aktion auslösen
  * Fake-Standort durch Tippen/Klicken auf Karte setzen
