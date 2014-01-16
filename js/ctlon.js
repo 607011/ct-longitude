@@ -22,27 +22,43 @@ var CTLON = (function () {
   var OK = 'ok',
     ERROR = 'error',
     MOBILE = navigator.userAgent.indexOf('Mobile') >= 0,
-    DEFAULT_AVATAR = 'img/default-avatar.jpg',
+    DefaultAvatar = 'img/default-avatar.jpg',
     MaxDistance = 200 * 1000 /* meters */,
     GoogleOAuthClientId = '', /* will be read from attribute "data-clientid" of <span class="g-signin"> in index.html */
     DevicePixelRatio = window.devicePixelRatio ? window.devicePixelRatio : 1,
     Avatar = { Width: 44, Height: 44, OptimalWidth: 88, OptimalHeight: 88, MaxWidth: 512, MaxHeight: 512, backgroundColor: '#000' },
     Symbol = { Width: 46, Height: 53 },
-    TrackColor = 'rgba(0, 40, 100, 0.8)',
+    TrackColor = 'rgba(0, 40, 100, 0.9)',
     appInitialized = false,
     firstLoad = true,
     geocoder = new google.maps.Geocoder(),
-    map = null, overlay = null, circle = null, polyline = null,
-    infoWindow = null, infoWindowClosed = false,
+    map = null,
+    overlay = null,
+    circle = null,
+    polyline = null,
+    infoWindow = null,
+    infoWindowClosed = false,
     markers = {},
     avatars = {},
     friends = {},
     clusters = [],
-    me = { id: undefined, avatar: undefined, name: undefined, oauth: { clientId: null, token: null, expiresAt: null, expiresIn: null }, profile: undefined },
+    me = {
+      id: undefined,
+      avatar: undefined,
+      name: undefined,
+      profile: undefined,
+      oauth: {
+        clientId: null,
+        token: null,
+        expiresAt: null,
+        expiresIn: null
+      }
+    },
     getFriendsPending = false,
     watchId,
     selectedUser,
     pollingId,
+    reauthId,
     computeDistanceBetween = haversineDistance;
 
   function softError(msg) {
@@ -116,7 +132,7 @@ var CTLON = (function () {
         return;
       }
       if (data.status === OK) {
-        if (polyline === null)
+        if (polyline === null) {
           polyline = new google.maps.Polyline({
             map: map,
             strokeColor: TrackColor,
@@ -124,6 +140,10 @@ var CTLON = (function () {
             strokeWeight: 2,
             geodesic: true
           });
+          google.maps.event.addListener(polyline, 'click', function (e) {
+            console.log('Klick auf Track', e);
+          });
+        }
         polyline.setPath($.map(data.path, function (i, key) {
           var loc = data.path[key];
           return new google.maps.LatLng(loc.lat, loc.lng);
@@ -281,7 +301,7 @@ var CTLON = (function () {
                 avatars[data.userid] = data.avatar;
               }
               else {
-                avatars[data.userid] = DEFAULT_AVATAR;
+                avatars[data.userid] = DefaultAvatar;
                 opts.error.call('Keinen Avatar für `' + data.userid + '` gefunden.');
               }
               process(friend, opts);
@@ -338,7 +358,7 @@ var CTLON = (function () {
         if (typeof markers[friend.id] === 'undefined') {
           if (isClustered) {
             icon = {
-              url: friend.avatar ? friend.avatar : DEFAULT_AVATAR,
+              url: friend.avatar ? friend.avatar : DefaultAvatar,
               size: new google.maps.Size(Avatar.Width + 2, Avatar.Height + 2),
               anchor: new google.maps.Point(1 + Avatar.Width / 2, 1 + Avatar.Height / 2),
             };
@@ -374,7 +394,7 @@ var CTLON = (function () {
                   var canvas = document.createElement('canvas'),
                     ctx = canvas.getContext('2d'),
                     avatarImg = new Image(Avatar.OptimalWidth, Avatar.OptimalHeight);
-                  avatarImg.src = avatars[friend.id] || DEFAULT_AVATAR;
+                  avatarImg.src = avatars[friend.id] || DefaultAvatar;
                   canvas.width = Symbol.Width;
                   canvas.height = Symbol.Height;
                   ctx.drawImage(img, 0, 0);
@@ -431,7 +451,7 @@ var CTLON = (function () {
                     }
                     placeMarker(friend, false, false);
                   };
-                  img.src = avatars[friend.id] || DEFAULT_AVATAR;
+                  img.src = avatars[friend.id] || DefaultAvatar;
                 },
                 error: function (e) {
                   console.warn(e);
@@ -908,18 +928,49 @@ var CTLON = (function () {
   }
 
 
+  function stopPolling() {
+    if (pollingId !== null) {
+      clearInterval(pollingId);
+      pollingId = null;
+    }
+    if (navigator.geolocation && watchId !== null) {
+      navigator.geolocation.clearWatch(watchId);
+      watchId = null;
+    }
+  }
+
+
   function startPolling() {
+    stopPolling();
     if (navigator.geolocation) {
       watchId = navigator.geolocation.watchPosition(setPosition, function () {
         // alert('Standortabfrage fehlgeschlagen.');
         console.warn('Standortabfrage fehlgeschlagen.');
       });
-      if (pollingId)
-        clearInterval(pollingId);
       pollingId = setInterval(getFriends, 1000 * parseInt($('#polling-interval').val(), 10));
     }
     else {
       alert('Dein Browser stellt keine Standortabfragen zur Verfügung.');
+    }
+  }
+
+
+  function pause() {
+    console.log('pause()');
+    stopPolling();
+  }
+
+
+  function resume() {
+    console.log('resume()');
+    if ((me.oauth.expiresAt - Math.floor(Date.now() / 1000)) < 0) {
+      googleAuthorize(function (authResult) {
+        console.log('googleAuthorize() ready.');
+        googleSigninCallback(authResult);
+      });
+    }
+    else {
+      startPolling();
     }
   }
 
@@ -1140,8 +1191,8 @@ var CTLON = (function () {
       $(window).bind({
         online: goOnline,
         offline: goOffline,
-        blur: function (e) { },
-        focus: function (e) { }
+        blur: pause,
+        focus: resume
       });
 
       google.maps.event.addListenerOnce(map, 'idle', getFriends);
@@ -1162,7 +1213,9 @@ var CTLON = (function () {
       me.oauth.clientId = authResult.client_id;
       me.oauth.expiresAt = parseInt(authResult.expires_at, 10);
       me.oauth.expiresIn = parseInt(authResult.expires_in, 10);
-      setTimeout(googleAuthorize, 1000 * me.oauth.expiresIn);
+      if (reauthId)
+        clearTimeout(reauthId);
+      reauthId = setTimeout(googleAuthorize, 1000 * me.oauth.expiresIn);
       if (me.profile === null) {
         gapi.client.load('plus', 'v1', function loadProfile() {
           gapi.client.plus.people.get({
@@ -1224,13 +1277,15 @@ var CTLON = (function () {
   }
 
 
-  function googleAuthorize() {
+  function googleAuthorize(callback) {
+    console.log('googleAuthorize()');
     showProgressInfo();
+    callback = callback || googleSigninCallback;
     gapi.auth.authorize({
       immediate: true,
       client_id: GoogleOAuthClientId,
       scope: 'https://www.googleapis.com/auth/plus.login'
-    }, googleSigninCallback);
+    }, callback);
   }
 
 
