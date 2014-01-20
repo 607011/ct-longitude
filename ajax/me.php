@@ -34,6 +34,10 @@ if ($dbh) {
         $res['lat'] = floatval($row[0]);
         $res['lng'] = floatval($row[1]);
     }
+    else {
+        $res['lat'] = 51.133333;
+        $res['lng'] = 10.416667;
+    }
     $res['processing_time'] = processingTime();
 }
 

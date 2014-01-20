@@ -22,6 +22,8 @@ var CTLON = (function () {
   var OK = 'ok',
     ERROR = 'error',
     MOBILE = navigator.userAgent.indexOf('Mobile') >= 0,
+    DefaultLat = 51.0,
+    DefaultLng = 10.33333333,
     DefaultAvatar = 'img/default-avatar.jpg',
     MaxDistance = 200 * 1000 /* meters */,
     GoogleOAuthClientId = '',
@@ -112,8 +114,8 @@ var CTLON = (function () {
     this.map = map || null;
     this.colorIdx = 0;
   };
-  // TrackGroup.Colors = [ '#00640a', '#002b64', '#64005a', '#643c00' ];
-  TrackGroup.Colors = ['#b3008f', '#b37d00', '#00b324', '#0036b3'];
+  // TrackGroup.Colors = ['#b3008f', '#b37d00', '#00b324', '#0036b3'];
+  TrackGroup.Colors = ['#c700b6', '#c77400', '#00c711', '#0053c7'];
   TrackGroup.prototype.clearLocations = function () {
     var i;
     for (i = 0; i < this.tracks.length; ++i) {
@@ -1059,13 +1061,13 @@ var CTLON = (function () {
           friends[me.id].lng = parseFloat(myPos[1]);
         }
         else {
-          friends[me.id].lat = 51;
-          friends[me.id].lng = 10.3;
+          friends[me.id].lat = DefaultLat;
+          friends[me.id].lng = DefaultLng;
         }
       }
       else { // last resort (center of Germany)
-        friends[me.id].lat = 51;
-        friends[me.id].lng = 10.3;
+        friends[me.id].lat = DefaultLat;
+        friends[me.id].lng = DefaultLng;
       }
 
       friends[me.id].latLng = new google.maps.LatLng(friends[me.id].lat, friends[me.id].lng)

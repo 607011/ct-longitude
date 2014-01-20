@@ -16,9 +16,9 @@ if (!$dbh) {
     goto end;
 }
 
-if (isset($_REQUEST['filename'])) {
-    $filename = filter_var($_REQUEST['filename'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    $dbh->exec("INSERT INTO `files` (`filename`) VALUES('$filename')");
+if (isset($_REQUEST['name'])) {
+    $filename = filter_var($_REQUEST['name'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    $dbh->exec("INSERT INTO `files` (`name`) VALUES('$name')");
     $fileid = $dbh->lastInsertId();
 }
 else {

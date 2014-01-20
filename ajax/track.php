@@ -44,7 +44,6 @@ if ($dbh) {
     switch($format) {
         case 'json':
             $res['userid'] = $requested_userid;
-            // $res['query'] = $q;
             $res['path'] = array();
             foreach($rows as $row)  {
                 $res['path'][] = array(
@@ -55,6 +54,12 @@ if ($dbh) {
                );
             }
             $res['status'] = 'ok';
+            break;
+        case 'gpx':
+            // TODO
+            break;
+        case 'kml':
+            // TODO
             break;
     }
     $res['processing_time'] = processingTime();
