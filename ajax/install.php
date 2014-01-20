@@ -6,7 +6,7 @@ if ($dbh) {
         ' `id` INTEGER PRIMARY KEY AUTOINCREMENT,' .
         ' `name` TEXT NOT NULL' .
         ')');
-    $dbh->exec('CREATE INDEX IF NOT EXISTS `filename` ON `files` (`filename`)');
+    $dbh->exec('CREATE INDEX IF NOT EXISTS `filename` ON `files` (`name`)');
     echo "Table 'files' created.<br/>\n";
 
     $dbh->exec('CREATE TABLE IF NOT EXISTS `locations` (' .
@@ -20,7 +20,7 @@ if ($dbh) {
         ' `altitudeaccuracy` INTEGER,' .
         ' `speed` REAL,' . 
         ' `heading` REAL,' .
-        ' `file_id` INTEGER DEFAULT NULL REFERENCES files(id) ON UPDATE CASCADE ON DELETE SEt DEFAULT' .
+        ' `file_id` INTEGER DEFAULT NULL REFERENCES files(id) ON UPDATE CASCADE ON DELETE SET DEFAULT' .
         ')');
 
     $dbh->exec('CREATE INDEX IF NOT EXISTS `userid` ON `locations` (`userid`)');

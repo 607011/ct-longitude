@@ -3,7 +3,7 @@ require_once 'globals.php';
 
 if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['oauth']['token'])) {
     $res['status'] = 'error';
-    $res['error'] = 'Ung¸ltige Authentifizierungsdaten: OAuth-Token fehlt oder ist falsch.';
+    $res['error'] = 'Ung√ºltige Authentifizierungsdaten: OAuth-Token fehlt oder ist falsch.';
     goto end;
 }
 $token = $_REQUEST['oauth']['token'];
@@ -11,15 +11,18 @@ $userid = $_SESSION[$token]['user_id'];
 
 
 if ($dbh) {
-    $q = "SELECT `sharetracks`, `avatar`, `name` FROM `buddies` WHERE `userid` = '$userid'";
+    $q = "SELECT `sharetracks`, `avatar`, `name` FROM `buddies` WHERE `userid` = ?";
     $sth = $dbh->prepare($q);
-    $sth->execute();
+    $sth->execute(array($userid));
     $row = $sth->fetch();
+    $sth->closeCursor();
     if (!$row) {
-        $dbh->exec("INSERT INTO `buddies` (`userid`, `sharetracks`) VALUES('$userid', 0)");
-        $sth->execute();
+        $dbh->exec("INSERT INTO `buddies` (`userid`, `sharetracks`) VALUES('$userid', 1)");
+        $res['id'] = $dbh->lastInsertId();
+        $sth->execute(array($userid));
         $row = $sth->fetch();
-        $res['info'] = 'User hinzugef¸gt';
+        $sth->closeCursor();
+        $res['info'] = 'User hinzugef√ºgt';
     }
     $res['sharetracks'] = intval($row[0]) != 0 ? 'true' : 'false';
     $res['avatar'] = $row[1];

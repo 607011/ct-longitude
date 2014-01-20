@@ -8,21 +8,12 @@ if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['
 }
 $token = $_REQUEST['oauth']['token'];
 $userid = $_SESSION[$token]['user_id'];
-
+$filename = isset($_REQUEST['filename']) ? filter_var($_REQUEST['filename'], FILTER_SANITIZE_FULL_SPECIAL_CHARS | FILTER_SANITIZE_MAGIC_QUOTES) : null;
 
 if (!$dbh) {
     $res['status'] = 'error';
     $res['error'] = 'Verbindung zur Datenbank fehlgeschlagen.';
     goto end;
-}
-
-if (isset($_REQUEST['name'])) {
-    $filename = filter_var($_REQUEST['name'], FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    $dbh->exec("INSERT INTO `files` (`name`) VALUES('$name')");
-    $fileid = $dbh->lastInsertId();
-}
-else {
-    $fileid = null;
 }
 
 $sth = $dbh->prepare("INSERT INTO `locations` (`userid`, `timestamp`, `lat`, `lng`, `accuracy`, `altitude`, `altitudeaccuracy`, `heading`, `speed`, `file_id`) " .
@@ -39,7 +30,7 @@ $sth->bindParam(':speed', $speed);
 $sth->bindParam(':fileid', $fileid);
 
 try {
-    $locations = json_decode($_REQUEST['locations'], true);
+    $tracks = json_decode($_REQUEST['tracks'], true);
 }
 catch (Exception $e) {
     $res['status'] = 'error';
@@ -49,41 +40,53 @@ catch (Exception $e) {
 
 $dbh->exec('BEGIN TRANSACTION');
 $res['inserted'] = 0;
-foreach ($locations as $location) {
-    if (!isset($location['lat']) || !is_numeric($location['lat'])) {
-        $res['status'] = 'error';
-        $res['error'] = 'Ungültige oder fehlende Breitengradangabe.';
-        goto end;
+$trkIdx = 0;
+foreach ($tracks as $locations) {
+    if ($filename !== null) {
+        $name = (isset($locations['name']) && $locations['name'] !== '')? filter_var($locations['name'],  FILTER_SANITIZE_FULL_SPECIAL_CHARS) : ($filename . $trkIdx++);
+        $dbh->exec("INSERT INTO `files` (`name`) VALUES('$name')");
+        $fileid = $dbh->lastInsertId();
+        $res['tracks'][$fileid] = $name;
     }
-    $lat = floatval($location['lat']);
-
-    if (!isset($location['lng']) || !is_numeric($location['lng'])) {
-        $res['status'] = 'error';
-        $res['error'] = 'Ungültige oder fehlende Längengradangabe.';
-        goto end;
+    else {
+        $fileid = null;
     }
-    $lng = floatval($location['lng']);
+    foreach ($locations['path'] as $location) {
+        if (!isset($location['lat']) || !is_float($location['lat'])) {
+            $res['status'] = 'error';
+            $res['error'] = 'Ungültige oder fehlende Breitengradangabe.';
+            goto end;
+        }
+        $lat = floatval($location['lat']);
 
-    if (!isset($location['timestamp']) || !preg_match('/^\\d+$/', $location['timestamp'])) {
-        $res['status'] = 'error';
-        $res['error'] = 'Ungültiger oder fehlender Zeitstempel.';
-        goto end;
+        if (!isset($location['lng']) || !is_float($location['lng'])) {
+            $res['status'] = 'error';
+            $res['error'] = 'Ungültige oder fehlende Längengradangabe.';
+            goto end;
+        }
+        $lng = floatval($location['lng']);
+
+        if (!isset($location['timestamp']) || !is_int($location['timestamp'])) {
+            $res['status'] = 'error';
+            $res['error'] = 'Ungültiger oder fehlender Zeitstempel.';
+            goto end;
+        }
+        $timestamp = intval($location['timestamp']);
+
+        $accuracy = isset($location['accuracy']) ? intval($location['accuracy']) : null;
+        $altitude = isset($location['altitude']) ? floatval($location['altitude']) : null;
+        $altitudeaccuracy = isset($location['altitudeaccuracy']) ? intval($location['altitudeaccuracy']) : null;
+        $heading = isset($location['heading']) ? floatval($location['heading']) : null;
+        $speed = isset($location['speed']) ? floatval($location['speed']) : null;
+
+        $ok = $sth->execute();
+        if (!$ok) {
+            $res['status'] = 'error';
+            $res['error'] = $dbh->errorInfo();
+            goto end;
+        }
+        ++$res['inserted'];
     }
-    $timestamp = intval($location['timestamp']);
-
-    $accuracy = isset($location['accuracy']) ? intval($location['accuracy']) : null;
-    $altitude = isset($location['altitude']) ? floatval($location['altitude']) : null;
-    $altitudeaccuracy = isset($location['altitudeaccuracy']) ? intval($location['altitudeaccuracy']) : null;
-    $heading = isset($location['heading']) ? floatval($location['heading']) : null;
-    $speed = isset($location['speed']) ? floatval($location['speed']) : null;
-
-    $ok = $sth->execute();
-    if (!$ok) {
-        $res['status'] = 'error';
-        $res['error'] = $dbh->errorInfo();
-        goto end;
-    }
-    ++$res['inserted'];
 }
 $dbh->exec('END TRANSACTION');
 

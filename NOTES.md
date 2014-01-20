@@ -15,9 +15,8 @@ Features
      * aus einer Liste mit Datei- bzw. Tracknamen
      * per Datum und Datumsbereich
  * Hochladen von Tracks:
-   - `<trk>`/`<name>` auswerten und als Dateiname mit dem Track hochladen; alle `<trk>`s dabei als einzelne Dateien hochladen
-   - Fortschrittsbalken anzeigen
    - Vor dem Hochladen Auswahlliste anzeigen; aus dieser Liste lassen sich unerwünschte Tracks deselektieren sowie Tracks und Tracksegemente zusammenführen; außerdem lassen sich eigene Namen für Tracks vergeben
+   - Fortschrittsbalken anzeigen
 
 Fehler
 ======

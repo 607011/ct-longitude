@@ -1,5 +1,5 @@
 <?php
-include('globals.php');
+require_once 'globals.php';
 
 function haversineDistance($lat1, $lng1, $lat2, $lng2) {
   $latd = 0.5 * deg2rad($lat2 - $lat1);

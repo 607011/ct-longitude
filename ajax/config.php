@@ -17,7 +17,6 @@ else if ($_SERVER['SERVER_NAME'] === 'ersatzworld.net' && strpos($_SERVER['REQUE
 
 // set this option to true to enable persistent database connections; set to false for debugging
 $DB_PERSISTENT = false;
-
 $DB_NAME = "$DB_PATH/ctlon.sqlite";
 
 if (substr(str_replace("\\", '/', __FILE__), -strlen($_SERVER['PHP_SELF'])) === $_SERVER['PHP_SELF']) {

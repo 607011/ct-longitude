@@ -128,16 +128,54 @@ jQuery.fn.enableHorizontalSlider = function () {
 };
 
 
+
+var Location = function (timestamp, lat, lng, altitude) {
+  this.timestamp = timestamp;
+  this.lat = lat;
+  this.lng = lng;
+  this.altitude = altitude;
+}
+Location.prototype.toLatLng = function () {
+  return new google.maps.LatLng(this.lat, this.lng);
+};
+
+var Track = function () {
+  this.path = [];
+  this.name = null;
+};
+Track.Colors = ['#c700b6', '#c77400', '#00c711', '#0053c7'];
+Track.DrawMode = { Polyline: 1, Dots: 2 };
+Track.prototype.addLocation = function (location) {
+  this.path.push(location);
+};
+Track.prototype.setName = function (name) {
+  this.name = name;
+};
+Track.prototype.draw = function (map, options) {
+  options = options || {};
+  switch (options.drawMode) {
+    default:
+      // fall-through
+    case Track.DrawMode.Polyline:
+      break;
+    case Track.DrawMode.Dots:
+      break;
+  }
+}
+
+
+
 var GPXParser = function (opts) {
   "use strict";
-  opts = opts || {};
+  this.opts = opts || {};
   this.xml = null;
-  this.track = [];
-  this.successCallback = opts.success ? opts.success : function () { console.warning('GPXParser: You should define a callback with GPX.done().'); };
-  this.errorCallback = opts.error ? opts.error : function () { console.warning('GPXParser: You should define a callback with GPX.error().'); };
+  this.tracks = [];
+  this.currentTrack = null;
+  this.successCallback = this.opts.success ? this.opts.success : function () { console.warning('GPXParser: You should define a callback with GPX.done().'); };
+  this.errorCallback = this.opts.error ? this.opts.error : function () { console.warning('GPXParser: You should define a callback with GPX.error().'); };
 };
 GPXParser.prototype.parse = function (xmlDoc) {
-  var parser, tracks, reader, i;
+  var parser, tracks, name, reader, i;
   if (typeof xmlDoc === 'string') {
     if (window.DOMParser) {
       parser = new DOMParser();
@@ -189,13 +227,19 @@ GPXParser.prototype.parse = function (xmlDoc) {
   }
   return this;
 };
-GPXParser.prototype.addTrack = function (track) {
-  var segments = track.getElementsByTagName('trkseg'), i;
-  for (i = 0; i < segments.length; ++i)
-    this.addTrackSegment(segments[i]);
+GPXParser.prototype.addTrack = function (trackEl) {
+  var i, segments = trackEl.getElementsByTagName('trkseg'),
+    name = trackEl.getElementsByTagName('name');
+  if (segments.length > 0) {
+    this.currentTrack = new Track();
+    if (name.length > 0)
+      this.currentTrack.setName(name[0].textContent);
+    for (i = 0; i < segments.length; ++i)
+      this.addTrackSegment(segments[i]);
+  }
 };
 GPXParser.prototype.addTrackSegment = function (track) {
-  var trackpoints = track.getElementsByTagName('trkpt'), i, trkpt, altitude, timestamp, ele, time;
+  var trackpoints = track.getElementsByTagName('trkpt'), i, trkpt, altitude, timestamp, ele;
   for (i = 0; i < trackpoints.length; ++i) {
     trkpt = trackpoints[i];
     ele = trkpt.getElementsByTagName('ele');
@@ -203,21 +247,23 @@ GPXParser.prototype.addTrackSegment = function (track) {
     altitude = (ele.length > 0) ? Math.round(parseFloat(ele[0].textContent)) : undefined;
     timestamp = (t.length > 0) ? Math.floor(Date.parse(t[0].textContent) / 1000) : undefined;
     if (!!timestamp) {
-      this.track.push({
-        lat: parseFloat(trkpt.getAttribute('lat')),
-        lng: parseFloat(trkpt.getAttribute('lon')),
-        altitude: altitude,
-        timestamp: timestamp
-      });
+      this.currentTrack.addLocation(
+        new Location(timestamp,
+        parseFloat(trkpt.getAttribute('lat')),
+        parseFloat(trkpt.getAttribute('lon')),
+        altitude)
+      );
     }
     else {
       this.errorCallback({ error: 'Fehlende(r) Zeitstempel.' });
       return;
     }
   }
+  if (trackpoints.length > 0)
+    this.tracks.push(this.currentTrack);
 };
 GPXParser.prototype.getTrack = function () {
-  return this.track;
+  return this.tracks;
 };
 GPXParser.prototype.done = function (successCallback) {
   this.successCallback = successCallback;

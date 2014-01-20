@@ -27,7 +27,6 @@ var CTLON = (function () {
     DefaultAvatar = 'img/default-avatar.jpg',
     MaxDistance = 200 * 1000 /* meters */,
     GoogleOAuthClientId = '',
-    DevicePixelRatio = window.devicePixelRatio ? window.devicePixelRatio : 1,
     Avatar = { Width: 44, Height: 44, OptimalWidth: 88, OptimalHeight: 88, MaxWidth: 512, MaxHeight: 512, backgroundColor: '#000' },
     Symbol = { Width: 46, Height: 53 },
     TrackColor = 'rgba(0, 40, 100, 0.9)',
@@ -37,8 +36,7 @@ var CTLON = (function () {
     map = null,
     overlay = null,
     circle = null,
-    polyline = null,
-    tracks = new google.maps.MVCArray(),
+    tracks = null,
     infoWindow = null,
     infoWindowClosed = false,
     markers = {},
@@ -46,10 +44,10 @@ var CTLON = (function () {
     friends = {},
     clusters = [],
     me = {
-      id: undefined,
-      avatar: undefined,
-      name: undefined,
-      profile: undefined,
+      id: null,
+      avatar: null,
+      name: null,
+      profile: null,
       oauth: {
         clientId: null,
         token: null,
@@ -109,13 +107,12 @@ var CTLON = (function () {
     });
   }
 
-  var TrackGroup = function (map) {
-    this.tracks = [];
+  var TrackGroup = function (map, options) {
     this.map = map || null;
+    this.options = options || {};
+    this.tracks = [];
     this.colorIdx = 0;
   };
-  // TrackGroup.Colors = ['#b3008f', '#b37d00', '#00b324', '#0036b3'];
-  TrackGroup.Colors = ['#c700b6', '#c77400', '#00c711', '#0053c7'];
   TrackGroup.prototype.clearLocations = function () {
     var i;
     for (i = 0; i < this.tracks.length; ++i) {
@@ -134,21 +131,29 @@ var CTLON = (function () {
     for (i = 0; i < locations.length; ++i) {
       loc = locations[i];
       if (lastId !== loc.id) {
-        console.log(loc.id);
         polyline = new google.maps.Polyline({
           map: this.map,
-          strokeColor: TrackGroup.Colors[this.colorIdx],
+          strokeColor: Track.Colors[this.colorIdx],
           strokeOpacity: 0.8,
           strokeWeight: 4,
           geodesic: true
         });
-        if (++this.colorIdx >= TrackGroup.Colors.length)
+        if (++this.colorIdx >= Track.Colors.length)
           this.colorIdx = 0;
         this.tracks.push(polyline);
       }
       polyline.getPath().push(new google.maps.LatLng(loc.lat, loc.lng));
       lastId = loc.id;
     }
+  };
+  TrackGroup.prototype.addLocation = function (location) {
+    if (this.tracks.length > 0)
+      this.tracks[this.tracks.length - 1].getPath().push(location);
+  };
+  TrackGroup.prototype.setVisible = function (visible) {
+    var i;
+    for (i = 0; i < this.tracks.length; ++i)
+      this.tracks[i].setVisible(visible);
   };
 
 
@@ -222,12 +227,11 @@ var CTLON = (function () {
 
   function highlightFriend(userid, centerMap) {
     var m, userIDs, buddy, found = false;
+    console.log('highlightFriend(' + userid + ')');
     if (typeof userid !== 'string')
       return;
     m = markers[userid];
     buddy = getBuddyElement(userid);
-    if (polyline)
-      polyline.setMap(null);
     if ($('#show-tracks').is(':checked'))
       getTrack(userid);
     selectedUser = userid;
@@ -323,11 +327,10 @@ var CTLON = (function () {
                 console.error(data.error);
                 return;
               }
-              if (data.avatar.indexOf('data:image') === 0) {
+              if (data.avatar && data.avatar.indexOf('data:image') === 0) {
                 avatars[data.userid] = data.avatar;
               }
               else {
-                avatars[data.userid] = DefaultAvatar;
                 opts.error.call('Keinen Avatar für `' + data.userid + '` gefunden.');
               }
               process(friend, opts);
@@ -565,7 +568,7 @@ var CTLON = (function () {
       accepts: 'json',
       data: {
         userid: me.id,
-        locations: JSON.stringify(locations),
+        tracks: JSON.stringify(locations),
         filename: fileName,
         oauth: me.oauth
       }
@@ -658,8 +661,7 @@ var CTLON = (function () {
     friends[me.id].latLng = new google.maps.LatLng(data.lat, data.lng);
     $('#buddy-' + me.id).attr('data-lat', data.lat).attr('data-lng', data.lng);
     if (me.id === selectedUser) {
-      if (polyline)
-        polyline.getPath().push(friends[me.id].latLng);
+      tracks.addLocation(friends[me.id].latLng);
     }
     if (markers.hasOwnProperty(me.id))
       markers[me.id].setPosition(friends[me.id].latLng);
@@ -1114,8 +1116,8 @@ var CTLON = (function () {
         localStorage.setItem('show-tracks', checked);
         if (checked)
           getTrack(selectedUser);
-        if (polyline !== null)
-          polyline.setVisible(checked);
+        if (tracks !== null)
+          tracks.setVisible(checked);
       }).prop('checked', localStorage.getItem('show-tracks') === 'true');
 
       $('#share-my-tracks').change(function (e) {
@@ -1193,6 +1195,14 @@ var CTLON = (function () {
 
       tracks = new TrackGroup(map);
 
+      //polyline = new google.maps.Polyline({
+      //  map: map,
+      //  strokeColor: '#d60',
+      //  strokeOpacity: 0.8,
+      //  strokeWeight: 4,
+      //  geodesic: true
+      //});
+
       circle = new google.maps.Circle({
         map: map,
         visible: false,
@@ -1228,6 +1238,7 @@ var CTLON = (function () {
 
 
   function googleSigninCallback(authResult) {
+    console.log('googleSigninCallback()');
     $('#loader-icon').css('display', 'none');
     hideProgressInfo();
     if (authResult.status.signed_in) {
@@ -1240,12 +1251,13 @@ var CTLON = (function () {
       me.oauth.expiresIn = parseInt(authResult.expires_in, 10);
       if (reauthId)
         clearTimeout(reauthId);
-      reauthId = setTimeout(googleAuthorize, 1000 * me.oauth.expiresIn);
+      reauthId = setTimeout(googleAuthorize, 1000 * (me.oauth.expiresIn - 10));
       if (me.profile === null) {
         gapi.client.load('plus', 'v1', function loadProfile() {
           gapi.client.plus.people.get({
             'userId': 'me'
           }).execute(function loadProfileCallback(response) {
+            console.log('loadProfileCallback() -> ', response);
             var img;
             me.profile = response;
             if (me.avatar === null) {

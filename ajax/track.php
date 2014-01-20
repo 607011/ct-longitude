@@ -1,5 +1,5 @@
 <?php
-include('globals.php');
+require_once 'globals.php';
 
 if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['oauth']['token'])) {
     $res['status'] = 'error';

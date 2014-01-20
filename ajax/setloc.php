@@ -3,7 +3,7 @@ require_once 'globals.php';
 
 if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['oauth']['token'])) {
     $res['status'] = 'error';
-    $res['error'] = 'Ungültige Authentifizierungsdaten: OAuth-Token fehlt oder ist falsch.';
+    $res['error'] = 'UngÃ¼ltige Authentifizierungsdaten: OAuth-Token fehlt oder ist falsch.';
     goto end;
 }
 $token = $_REQUEST['oauth']['token'];
@@ -11,14 +11,14 @@ $userid = $_SESSION[$token]['user_id'];
 
 if (!isset($_REQUEST['lat']) || !is_numeric($_REQUEST['lat'])) {
     $res['status'] = 'error';
-    $res['error'] = 'Ungültige Breitengradangabe:' . $_REQUEST['lat'];
+    $res['error'] = 'UngÃ¼ltige Breitengradangabe:' . $_REQUEST['lat'];
     goto end;
 }
 $lat = floatval($_REQUEST['lat']);
 
 if (!isset($_REQUEST['lng']) || !is_numeric($_REQUEST['lng'])) {
     $res['status'] = 'error';
-    $res['error'] = 'Ungültige Längengradangabe:' . $_REQUEST['lng'];
+    $res['error'] = 'UngÃ¼ltige LÃ¤ngengradangabe:' . $_REQUEST['lng'];
     goto end;
 }
 $lng = floatval($_REQUEST['lng']);
@@ -26,21 +26,20 @@ $lng = floatval($_REQUEST['lng']);
 $timestamp = isset($_REQUEST['timestamp']) ? $_REQUEST['timestamp'] : time();
 if (!preg_match('/^\\d+$/', $timestamp)) {
     $res['status'] = 'error';
-    $res['error'] = 'Ungültiger Zeitstempel: ' . $timestamp;
+    $res['error'] = 'UngÃ¼ltiger Zeitstempel: ' . $timestamp;
     goto end;
 }
 $timestamp = intval($timestamp);
 
-$accuracy = isset($_REQUEST['accuracy']) ? intval($_REQUEST['accuracy']) : 'NULL';
-$altitude = isset($_REQUEST['altitude']) ? floatval($_REQUEST['altitude']) : 'NULL';
-$altitudeaccuracy = isset($_REQUEST['altitudeaccuracy']) ? intval($_REQUEST['altitudeaccuracy']) : 'NULL';
-$heading = isset($_REQUEST['heading']) ? floatval($_REQUEST['heading']) : 'NULL';
-$speed = isset($_REQUEST['speed']) ? floatval($_REQUEST['speed']) : 'NULL';
+$accuracy = isset($_REQUEST['accuracy']) ? intval($_REQUEST['accuracy']) : null;
+$altitude = isset($_REQUEST['altitude']) ? floatval($_REQUEST['altitude']) : null;
+$altitudeaccuracy = isset($_REQUEST['altitudeaccuracy']) ? intval($_REQUEST['altitudeaccuracy']) : null;
+$heading = isset($_REQUEST['heading']) ? floatval($_REQUEST['heading']) : null;
+$speed = isset($_REQUEST['speed']) ? floatval($_REQUEST['speed']) : null;
 
 if ($dbh) {
-    $q = "INSERT INTO `locations` (`userid`, `timestamp`, `lat`, `lng`, `accuracy`, `altitude`, `altitudeaccuracy`, `heading`, `speed`) " .
-         "VALUES('$userid', $timestamp, $lat, $lng, $accuracy, $altitude, $altitudeaccuracy, $heading, $speed)";
-    $dbh->exec($q);
+    $sth = $dbh->prepare('INSERT INTO `locations` (`userid`, `timestamp`, `lat`, `lng`, `accuracy`, `altitude`, `altitudeaccuracy`, `heading`, `speed`) VALUES(?,?,?,?,?,?,?,?,?)');
+    $sth->execute(array($userid, $timestamp, $lat, $lng, $accuracy, $altitude, $altitudeaccuracy, $heading, $speed));
     $res['id'] = $dbh->lastInsertId();
     $res['status'] = 'ok';
     $res['userid'] = $userid;

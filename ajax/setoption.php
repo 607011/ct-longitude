@@ -52,7 +52,7 @@ if ($dbh) {
                 $res['status'] = 'ok';
                 $res['userid'] = $userid;
                 $res['option'] = $option;
-                $res['value'] = '<...vorhanden...>';
+                $res['value'] = substr($value, 0, 42) . '...';
             }
             else {
                 $res['status'] = 'error';
