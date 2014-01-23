@@ -2,7 +2,7 @@
 require_once 'globals.php';
 
 if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['oauth']['token'])) {
-    $res['status'] = 'error';
+    $res['status'] = 'authfailed';
     $res['error'] = 'Ungültige Authentifizierungsdaten: OAuth-Token fehlt oder ist falsch.';
     goto end;
 }

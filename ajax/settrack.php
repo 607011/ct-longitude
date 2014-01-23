@@ -2,8 +2,8 @@
 require_once 'globals.php';
 
 if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['oauth']['token'])) {
-    $res['status'] = 'error';
-    $res['error'] = 'Ungültige Authentifizierungsdaten: OAuth-Token fehlt oder ist falsch.';
+    $res['status'] = 'authfailed';
+    $res['error'] = 'UngÃ¼ltige Authentifizierungsdaten: OAuth-Token fehlt oder ist falsch.';
     goto end;
 }
 $token = $_REQUEST['oauth']['token'];
@@ -40,10 +40,11 @@ catch (Exception $e) {
 
 $dbh->exec('BEGIN TRANSACTION');
 $res['inserted'] = 0;
+$res['filename'] = $filename;
 $trkIdx = 0;
 foreach ($tracks as $locations) {
     if ($filename !== null) {
-        $name = (isset($locations['name']) && $locations['name'] !== '')? filter_var($locations['name'],  FILTER_SANITIZE_FULL_SPECIAL_CHARS) : ($filename . $trkIdx++);
+        $name = (isset($locations['name']) && $locations['name'] !== null && $locations['name'] !== '')? filter_var($locations['name'],  FILTER_SANITIZE_FULL_SPECIAL_CHARS) : ($filename . $trkIdx++);
         $dbh->exec("INSERT INTO `files` (`name`) VALUES('$name')");
         $fileid = $dbh->lastInsertId();
         $res['tracks'][$fileid] = $name;
@@ -54,21 +55,21 @@ foreach ($tracks as $locations) {
     foreach ($locations['path'] as $location) {
         if (!isset($location['lat']) || !is_float($location['lat'])) {
             $res['status'] = 'error';
-            $res['error'] = 'Ungültige oder fehlende Breitengradangabe.';
+            $res['error'] = 'UngÃ¼ltige oder fehlende Breitengradangabe.';
             goto end;
         }
         $lat = floatval($location['lat']);
 
         if (!isset($location['lng']) || !is_float($location['lng'])) {
             $res['status'] = 'error';
-            $res['error'] = 'Ungültige oder fehlende Längengradangabe.';
+            $res['error'] = 'UngÃ¼ltige oder fehlende LÃ¤ngengradangabe.';
             goto end;
         }
         $lng = floatval($location['lng']);
 
         if (!isset($location['timestamp']) || !is_int($location['timestamp'])) {
             $res['status'] = 'error';
-            $res['error'] = 'Ungültiger oder fehlender Zeitstempel.';
+            $res['error'] = 'UngÃ¼ltiger oder fehlender Zeitstempel.';
             goto end;
         }
         $timestamp = intval($location['timestamp']);

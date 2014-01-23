@@ -19,8 +19,11 @@
 var CTLON = (function () {
   "use strict";
 
-  var OK = 'ok',
-    ERROR = 'error',
+  var Status = {
+      Ok: 'ok',
+      Error: 'error',
+      AuthFailed: 'authfailed'
+    },
     MOBILE = navigator.userAgent.indexOf('Mobile') >= 0,
     DefaultLat = 51.0,
     DefaultLng = 10.33333333,
@@ -93,16 +96,32 @@ var CTLON = (function () {
   }
 
 
-  function showPopup(title, msg) {
+  function showPopup(title, msg, timeoutSecs) {
     var popup = $('<div id="popup"><h1>' + title + ' </h1><p>' + msg + '</p><button id="ok-button">OK</div>');
     $('#app').append(popup);
+    function hidePopup() {
+      timeoutSecs = 0;
+      popup.animate({ opacity: 0 }, {
+        complete: function () { popup.remove(); }
+      });
+    }
+    function countDown() {
+      if (timeoutSecs > 0) {
+        $('#ok-button').html('OK &hellip;' + timeoutSecs);
+        --timeoutSecs;
+        setTimeout(countDown, 1000);
+      }
+      else {
+        hidePopup();
+      }
+    }
+    if (timeoutSecs) {
+      timeoutSecs >>= 0;
+      countDown();
+    }
     popup.animate({ opacity: 1 }, {
       complete: function () {
-        $('#ok-button').click(function () {
-          popup.animate({ opacity: 0 }, {
-            complete: function () { popup.remove(); }
-          });
-        });
+        $('#ok-button').click(hidePopup);
       }
     });
   }
@@ -181,7 +200,7 @@ var CTLON = (function () {
         console.error(e);
         return;
       }
-      if (data.status === OK) {
+      if (data.status === Status.Ok) {
         tracks.setLocations(data.path);
       }
       else {
@@ -323,7 +342,7 @@ var CTLON = (function () {
                 console.error(e);
                 return;
               }
-              if (data.status !== OK) {
+              if (data.status !== Status.Ok) {
                 console.error(data.error);
                 return;
               }
@@ -531,7 +550,7 @@ var CTLON = (function () {
           console.error(e);
           return;
         }
-        if (data.status !== OK) {
+        if (data.status !== Status.Ok) {
           console.error(data.error);
           return;
         }
@@ -562,23 +581,25 @@ var CTLON = (function () {
 
 
   function transferLocations(locations, fileName, callback) {
+    var data = {
+      userid: me.id,
+      tracks: JSON.stringify(locations),
+      oauth: me.oauth
+    };
+    if (fileName)
+      data.filename = fileName;
     $.ajax({
       url: 'ajax/settrack.php',
       type: 'POST',
       accepts: 'json',
-      data: {
-        userid: me.id,
-        tracks: JSON.stringify(locations),
-        filename: fileName,
-        oauth: me.oauth
-      }
+      data: data,
     }).done(function transferLocationsCallback(data) {
       try {
         data = JSON.parse(data);
       }
       catch (e) {
         console.error(e);
-        callback({ status: 'error', error: 'Fehlerhafte Antwort vom Server: JSON-Daten können nicht dekodiert werden.' });
+        callback({ status: Status.Error, error: 'Fehlerhafte Antwort vom Server: JSON-Daten können nicht dekodiert werden.' });
         return;
       }
       if (!data) {
@@ -586,11 +607,11 @@ var CTLON = (function () {
           callback(data);
         criticalError('Fehler beim Übertragen der zwischengespeicherten Standorte!');
       }
-      else if (data.status === OK) {
+      else if (data.status === Status.Ok) {
         if (typeof callback === 'function')
           callback(data);
       }
-      else if (data.status === 'error') {
+      else if (data.status === Status.Error) {
         if (typeof callback === 'function')
           callback(data);
         criticalError('Fehler beim Übertragen der zwischengespeicherten Standorte: ' + data.error);
@@ -615,9 +636,9 @@ var CTLON = (function () {
     }
     if (pendingLocations && pendingLocations.length > 0) {
       showProgressInfo();
-      transferLocations(pendingLocations, null, function transferLocationsCallback(data) {
+      transferLocations([ { path: pendingLocations, name: null } ], null, function transferLocationsCallback(data) {
         hideProgressInfo();
-        if (data.status === OK) {
+        if (data.status === Status.Ok) {
           localStorage.removeItem('pending-locations');
           $('#settings-icon').removeClass('pending-locations');
           console.log('Pending locations successfully transferred.');
@@ -711,13 +732,18 @@ var CTLON = (function () {
             console.error(e);
             return;
           }
-          if (data.status === OK) {
+          if (data.status === Status.Ok) {
             // XXX ?
           }
-          else if (data.status === 'error') {
+          else if (data.status === Status.Error) {
             criticalError('Fehler beim Übertragen deines Standorts: ' + data.error);
           }
-          
+          else if (data.status === Status.AuthFailed) {
+            googleAuthorize(function (authResult) {
+              showPopup('Reautorisierung', 'Ein neues OAuth-Token wurde abgeholt.', 5);
+              googleSigninCallback(authResult);
+            });
+          }          
         }
       }).error(function (jqXHR, textStatus, errorThrown) {
         criticalError('Fehler beim Übertragen deines Standorts [' + textStatus + ': ' + errorThrown + ']');
@@ -772,7 +798,7 @@ var CTLON = (function () {
             criticalError('Fehler beim Übertragen deines Avatars: ' + e);
             return;
           }
-          if (data.status === OK) {
+          if (data.status === Status.Ok) {
             avatar.empty().css('background-image', 'url(' + dataUrl + ')');
             $('#userid').css('background-image', 'url(' + dataUrl + ')');
           }
@@ -1238,7 +1264,7 @@ var CTLON = (function () {
 
 
   function googleSigninCallback(authResult) {
-    console.log('googleSigninCallback()');
+    console.log('googleSigninCallback()', authResult);
     $('#loader-icon').css('display', 'none');
     hideProgressInfo();
     if (authResult.status.signed_in) {
@@ -1257,7 +1283,6 @@ var CTLON = (function () {
           gapi.client.plus.people.get({
             'userId': 'me'
           }).execute(function loadProfileCallback(response) {
-            console.log('loadProfileCallback() -> ', response);
             var img;
             me.profile = response;
             if (me.avatar === null) {
@@ -1290,7 +1315,7 @@ var CTLON = (function () {
                   criticalError('Fehler beim Übertragen deines Namens: ' + e);
                   return;
                 }
-                if (data.status === OK) {
+                if (data.status === Status.Ok) {
                   // TODO?
                 }
                 else {
@@ -1306,6 +1331,7 @@ var CTLON = (function () {
       initApp();
     }
     else {
+      stopPolling();
       // Possible authResult['error'] values: "user_signed_out" (User is signed-out), "access_denied" (User denied access to your app), "immediate_failed" (Could not automatically log in the user)
       $('#logon').removeClass('hide').addClass('show');
       $('#app').removeClass('show').addClass('hide');
@@ -1341,7 +1367,7 @@ var CTLON = (function () {
             alert('Konfigurationsdaten fehlen. Abbruch.');
             return;
           }
-          else if (data.status === OK && data.GoogleOAuthClientId && typeof data.GoogleOAuthClientId === 'string') {
+          else if (data.status === Status.Ok && data.GoogleOAuthClientId && typeof data.GoogleOAuthClientId === 'string') {
             GoogleOAuthClientId = data.GoogleOAuthClientId;
             $('.g-signin').attr('data-clientid', GoogleOAuthClientId);
             $('<script>').attr('type', 'text/javascript').attr('async', true).attr('src', 'https://apis.google.com/js/client:plusone.js').insertBefore($('script'));
