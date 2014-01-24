@@ -25,6 +25,7 @@ var CTLON = (function () {
       AuthFailed: 'authfailed'
     },
     MOBILE = navigator.userAgent.indexOf('Mobile') >= 0,
+    DEBUG = true,
     DefaultLat = 51.0,
     DefaultLng = 10.33333333,
     DefaultAvatar = 'img/default-avatar.jpg',
@@ -97,7 +98,7 @@ var CTLON = (function () {
 
 
   function showPopup(title, msg, timeoutSecs) {
-    var popup = $('<div id="popup"><h1>' + title + ' </h1><p>' + msg + '</p><button id="ok-button">OK</div>');
+    var popup = $('<div id="popup"><h1>' + title + '</h1><p>' + msg + '</p><p class="stack">' + Log().info() + '</p><button id="ok-button">OK</div>');
     $('#app').append(popup);
     function hidePopup() {
       timeoutSecs = 0;
@@ -200,12 +201,20 @@ var CTLON = (function () {
         console.error(e);
         return;
       }
-      if (data.status === Status.Ok) {
-        tracks.setLocations(data.path);
-      }
-      else {
-        tracks.clearLocations();
-        console.warn(data.error);
+      switch (data.status) {
+        case Status.Ok:
+          tracks.setLocations(data.path);
+          break;
+        case Status.AuthFailed:
+          reauthorize();
+          break;
+        case Status.Error:
+          tracks.clearLocations();
+          console.warn(data.error);
+          break;
+        default:
+          console.warn('Unbekannter Fehlerstatus:', data.error);
+          break;
       }
       hideProgressInfo();
     });
@@ -342,17 +351,27 @@ var CTLON = (function () {
                 console.error(e);
                 return;
               }
-              if (data.status !== Status.Ok) {
-                console.error(data.error);
-                return;
+              switch (data.status) {
+                case Status.Ok:
+                  if (data.avatar && data.avatar.indexOf('data:image') === 0) {
+                    avatars[data.userid] = data.avatar;
+                  }
+                  else {
+                    if (typeof opts.error === 'function')
+                      opts.error.call('Keinen Avatar für `' + data.userid + '` gefunden.');
+                  }
+                  process(friend, opts);
+                  break;
+                case Status.Error:
+                  criticalError('Fehler beim Abfragen des Avatars: ' + data.error);
+                  break;
+                case Status.AuthFailed:
+                  reauthorize();
+                  break;
+                default:
+                  console.warn('Unbekannter Fehlerstatus:', data.status, data.error)
+                  break;
               }
-              if (data.avatar && data.avatar.indexOf('data:image') === 0) {
-                avatars[data.userid] = data.avatar;
-              }
-              else {
-                opts.error.call('Keinen Avatar für `' + data.userid + '` gefunden.');
-              }
-              process(friend, opts);
             }
           }).error(function (jqXHR, textStatus, errorThrown) {
             criticalError('Fehler beim Abfragen des Avatars [' + textStatus + ': ' + errorThrown + ']');
@@ -550,17 +569,24 @@ var CTLON = (function () {
           console.error(e);
           return;
         }
-        if (data.status !== Status.Ok) {
-          console.error(data.error);
-          return;
+        switch (data.status) {
+          case Status.Ok:
+            hideProgressInfo();
+            if (typeof data.users !== 'object')
+              return;
+            setTimeout(function () { getFriendsPending = false; }, 1000);
+            processFriends(data.users);
+            break;
+          case Status.Error:
+            criticalError('Fehler beim Abfragen der User-Liste: ' + data.error);
+            break;
+          case Status.AuthFailed:
+            reauthorize();
+            break;
+          default:
+            console.warn('Unbekannter Fehlerstatus:', data.status, data.error)
+            break;
         }
-        hideProgressInfo();
-        if (typeof data.users !== 'object')
-          return;
-
-        setTimeout(function () { getFriendsPending = false; }, 1000);
-
-        processFriends(data.users);
       }
     }).error(function (jqXHR, textStatus, errorThrown) {
       criticalError('Fehler beim Abfragen der User-Liste [' + textStatus + ': ' + errorThrown + ']');
@@ -607,14 +633,24 @@ var CTLON = (function () {
           callback(data);
         criticalError('Fehler beim Übertragen der zwischengespeicherten Standorte!');
       }
-      else if (data.status === Status.Ok) {
-        if (typeof callback === 'function')
-          callback(data);
-      }
-      else if (data.status === Status.Error) {
-        if (typeof callback === 'function')
-          callback(data);
-        criticalError('Fehler beim Übertragen der zwischengespeicherten Standorte: ' + data.error);
+      else {
+        switch (data.status) {
+          case Status.Ok:
+            if (typeof callback === 'function')
+              callback(data);
+            break;
+          case Status.Error:
+            if (typeof callback === 'function')
+              callback(data);
+            criticalError('Fehler beim Übertragen der zwischengespeicherten Standorte: ' + data.error);
+            break;
+          case Status.AuthFailed:
+            reauthorize();
+            break;
+          default:
+            console.warn('Unbekannter Fehlerstatus:', data.status, data.error)
+            break;
+        }
       }
     }).error(function (jqXHR, textStatus, errorThrown) {
       if (typeof callback === 'function')
@@ -732,18 +768,20 @@ var CTLON = (function () {
             console.error(e);
             return;
           }
-          if (data.status === Status.Ok) {
-            // XXX ?
+          switch (data.status) {
+            case Status.Ok:
+              // XXX ?
+              break;
+            case Status.Error:
+              criticalError('Fehler beim Übertragen deines Standorts: ' + data.error);
+              break;
+            case Status.AuthFailed:
+              reauthorize();
+              break;
+            default:
+              console.warn('Unbekannter Fehlerstatus:', data.status, data.error)
+              break;
           }
-          else if (data.status === Status.Error) {
-            criticalError('Fehler beim Übertragen deines Standorts: ' + data.error);
-          }
-          else if (data.status === Status.AuthFailed) {
-            googleAuthorize(function (authResult) {
-              showPopup('Reautorisierung', 'Ein neues OAuth-Token wurde abgeholt.', 5);
-              googleSigninCallback(authResult);
-            });
-          }          
         }
       }).error(function (jqXHR, textStatus, errorThrown) {
         criticalError('Fehler beim Übertragen deines Standorts [' + textStatus + ': ' + errorThrown + ']');
@@ -798,12 +836,20 @@ var CTLON = (function () {
             criticalError('Fehler beim Übertragen deines Avatars: ' + e);
             return;
           }
-          if (data.status === Status.Ok) {
-            avatar.empty().css('background-image', 'url(' + dataUrl + ')');
-            $('#userid').css('background-image', 'url(' + dataUrl + ')');
-          }
-          else {
-            criticalError('Fehler beim Speichern deines Avatars: ' + data.error);
+          switch (data.status) {
+            case Status.Ok:
+              avatar.empty().css('background-image', 'url(' + dataUrl + ')');
+              $('#userid').css('background-image', 'url(' + dataUrl + ')');
+              break;
+            case Status.Error:
+              criticalError('Fehler beim Speichern deines Avatars: ' + data.error);
+              break;
+            case Status.AuthFailed:
+              reauthorize();
+              break;
+            default:
+              console.warn('Unbekannter Fehlerstatus:', data.status, data.error)
+              break;
           }
         }).error(function (jqXHR, textStatus, errorThrown) {
           criticalError('Fehler beim Übertragen deines Avatars [' + textStatus + ': ' + errorThrown + ']');
@@ -1015,10 +1061,7 @@ var CTLON = (function () {
   function resume() {
     console.log('resume()');
     if ((me.oauth.expiresAt - Math.floor(Date.now() / 1000)) < 0) {
-      googleAuthorize(function (authResult) {
-        console.log('googleAuthorize() ready.');
-        googleSigninCallback(authResult);
-      });
+      reauthorize();
     }
     else {
       startPolling();
@@ -1026,25 +1069,228 @@ var CTLON = (function () {
   }
 
 
+  function setMe(data) {
+    var myPos, pendingLocations;
+    if (typeof data.userid === 'string') {
+      me.id = data.userid;
+      friends[me.id] = {};
+    }
+    else {
+      console.error('`me.php` returned an invalid or no userid');
+      return;
+    }
+
+    if (typeof data.name === 'string') {
+      me.name = data.name;
+      $('#userid').attr('title', 'angemeldet als ' + me.name);
+    }
+
+    if (typeof data.avatar === 'string' && data.avatar.indexOf('data:image') === 0) {
+      me.avatar = data.avatar;
+      $('#avatar').css('background-image', 'url(' + me.avatar + ')');
+      $('#userid').css('background-image', 'url(' + me.avatar + ')');
+    }
+
+    if (typeof data.lat === 'number' && typeof data.lng === 'number') {
+      friends[me.id].lat = data.lat;
+      friends[me.id].lng = data.lng;
+    }
+    else if (myPos = localStorage.getItem('my-last-position')) {
+      myPos = myPos.split(',');
+      if (myPos.length === 2) {
+        friends[me.id].lat = parseFloat(myPos[0]);
+        friends[me.id].lng = parseFloat(myPos[1]);
+      }
+      else {
+        friends[me.id].lat = DefaultLat;
+        friends[me.id].lng = DefaultLng;
+      }
+    }
+    else { // last resort (center of Germany)
+      friends[me.id].lat = DefaultLat;
+      friends[me.id].lng = DefaultLng;
+    }
+
+    friends[me.id].latLng = new google.maps.LatLng(friends[me.id].lat, friends[me.id].lng)
+
+    $('#userid').click(function () {
+      highlightFriend(me.id, true);
+    });
+
+    $('#avatar').css('width', Avatar.Width + 'px').css('height', Avatar.Height + 'px');
+
+    $('#avatar-optimal-width').text(Avatar.OptimalWidth);
+    $('#avatar-optimal-height').text(Avatar.OptimalHeight);
+
+    $('#settings-icon').click(showHideSettings);
+    if (!navigator.onLine)
+      $('#settings-icon').addClass('offline');
+    try {
+      pendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
+    }
+    catch (e) {
+      console.error('Ungültige Daten in localStorage["pending-locations"]', e);
+    }
+    if (pendingLocations && pendingLocations.length > 0) {
+      $('#settings-icon').addClass('pending-locations');
+      if (navigator.onLine)
+        transferPendingLocations();
+    }
+
+    $('#buddies').enableHorizontalSlider();
+
+    $('#settings').css('z-index', google.maps.Marker.MAX_ZINDEX + 1000);
+    $("#settings .colorpicker").spectrum({
+      color: Avatar.backgroundColor,
+      showInitial: true,
+      showInput: true,
+      localStorageKey: 'avatarColor',
+      change: function (color) {
+        Avatar.backgroundColor = color.toHexString();
+      }
+    });
+
+    $('#show-tracks').change(function (e) {
+      var checked = $('#show-tracks').is(':checked');
+      localStorage.setItem('show-tracks', checked);
+      if (checked)
+        getTrack(selectedUser);
+      if (tracks !== null)
+        tracks.setVisible(checked);
+    }).prop('checked', localStorage.getItem('show-tracks') === 'true');
+
+    $('#share-my-tracks').change(function (e) {
+      var checked = $('#share-my-tracks').is(':checked');
+      localStorage.setItem('share-my-tracks', checked);
+      $.ajax({
+        url: 'ajax/setoption.php',
+        type: 'POST',
+        data: {
+          oauth: me.oauth,
+          option: 'sharetracks',
+          value: encodeURIComponent(checked)
+        },
+        accepts: 'json'
+      });
+    }).prop('checked', data.sharetracks === 'true');
+
+    if (/(iOS|iPad|iPod|iPhone)/.test(navigator.userAgent))
+      $('.no-mobile').css('display', 'none');
+
+    $('#incognito').change(function (e) {
+      var checked = $('#incognito').is(':checked');
+      localStorage.setItem('incognito', checked);
+    }).prop('checked', localStorage.getItem('incognito') !== 'false');
+
+    $('#offline-mode').change(function (e) {
+      var checked = $('#offline-mode').is(':checked');
+      localStorage.setItem('offline-mode', checked);
+      if (checked) {
+        $('#settings-icon').addClass('offline');
+      }
+      else {
+        $('#settings-icon').removeClass('offline');
+        transferPendingLocations();
+      }
+    }).prop('checked', localStorage.getItem('offline-mode') === 'true');
+
+    $('#show-accuracy').change(function (e) {
+      var checked = $('#show-accuracy').is(':checked');
+      localStorage.setItem('show-accuracy', checked);
+      circle.setVisible(checked);
+    }).prop('checked', localStorage.getItem('show-accuracy') === 'true');
+
+    $('#max-location-age').change(function (e) {
+      localStorage.setItem('max-location-age', $('#max-location-age').val());
+      getFriends();
+    }).children('option').filter('[value=' + (localStorage.getItem('max-location-age') || '1800') + ']').prop('selected', true);
+
+    $('#max-waypoint-age').change(function (e) {
+      localStorage.setItem('max-waypoint-age', $('#max-waypoint-age').val());
+      getTrack(selectedUser);
+    }).children('option').filter('[value=' + (localStorage.getItem('max-waypoint-age') || '86400') + ']').prop('selected', true);
+
+    $('#polling-interval').change(function (e) {
+      localStorage.setItem('polling-interval', $('#polling-interval').val());
+      startPolling();
+    }).children('option').filter('[value=' + (localStorage.getItem('polling-interval') || '60') + ']').prop('selected', true);
+
+    $('#range-constraint').change(function (e) {
+      localStorage.setItem('range-constraint', $('#range-constraint').val());
+      getFriends();
+    }).children('option').filter('[value=' + (localStorage.getItem('range-constraint') || '-1') + ']').prop('selected', true);
+
+    // init Google Maps
+    map = new google.maps.Map(document.getElementById('map-canvas'), {
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
+      bounds_changed: function () {
+        google.maps.event.addListenerOnce(map, 'idle', getFriends);
+      },
+      zoom: 13
+    });
+    if (google.maps.geometry.spherical.computeDistanceBetween)
+      computeDistanceBetween = google.maps.geometry.spherical.computeDistanceBetween;
+    map.setCenter(me.latLng);
+
+    tracks = new TrackGroup(map);
+
+    //polyline = new google.maps.Polyline({
+    //  map: map,
+    //  strokeColor: '#d60',
+    //  strokeOpacity: 0.8,
+    //  strokeWeight: 4,
+    //  geodesic: true
+    //});
+
+    circle = new google.maps.Circle({
+      map: map,
+      visible: false,
+      strokeColor: '#f00',
+      strokeOpacity: 0.7,
+      strokeWeight: 2,
+      fillColor: '#f00',
+      fillOpacity: 0.1
+    });
+
+    infoWindow = new google.maps.InfoWindow({
+      map: null,
+      disableAutoPan: true,
+    });
+    google.maps.event.addListener(infoWindow, 'closeclick', function () { infoWindowClosed = true; });
+
+    overlay = new google.maps.OverlayView();
+    overlay.draw = function () { };
+    overlay.setMap(map);
+
+    $(window).bind({
+      online: goOnline,
+      offline: goOffline,
+      //blur: pause,
+      //focus: resume
+    });
+
+    google.maps.event.addListenerOnce(map, 'idle', getFriends);
+
+    startPolling();
+  }
+
+
   function initApp() {
     if (appInitialized)
       return;
     appInitialized = true;
-
     showProgressInfo();
-
     // get http basic auth user
     $.ajax({
       url: 'ajax/me.php',
       accepts: 'json',
+      type: 'POST',
       data: {
         oauth: me.oauth
-      },
-      type: 'POST'
+      }
     }).error(function (jqXHR, textStatus, errorThrown) {
       criticalError('Fehler beim Abfragen deiner Daten [' + textStatus + ': ' + errorThrown + ']');
     }).done(function (data) {
-      var myPos, pendingLocations;
       hideProgressInfo();
       if (!data) {
         criticalError('Fehler beim Abfragen deiner Daten!');
@@ -1057,208 +1303,20 @@ var CTLON = (function () {
         console.error(e);
         return;
       }
-
-      if (typeof data.userid === 'string') {
-        me.id = data.userid;
-        friends[me.id] = {};
+      switch (data.status) {
+        case Status.Ok:
+          setMe(data);
+          break;
+        case Status.Error:
+          criticalError('Fehler beim Abfragen deiner Daten: ' + data.error);
+          break;
+        case Status.AuthFailed:
+          reauthorize();
+          break;
+        default:
+          console.warn('Unbekannter Fehlerstatus:', data.status, data.error)
+          break;
       }
-      else {
-        console.error('`me.php` returned an invalid or no userid');
-        return;
-      }
-
-      if (typeof data.name === 'string') {
-        me.name = data.name;
-        $('#userid').attr('title', 'angemeldet als ' + me.name);
-      }
-
-      if (typeof data.avatar === 'string' && data.avatar.indexOf('data:image') === 0) {
-        me.avatar = data.avatar;
-        $('#avatar').css('background-image', 'url(' + me.avatar + ')');
-        $('#userid').css('background-image', 'url(' + me.avatar + ')');
-      }
-
-      if (typeof data.lat === 'number' && typeof data.lng === 'number') {
-        friends[me.id].lat = data.lat;
-        friends[me.id].lng = data.lng;
-      }
-      else if (myPos = localStorage.getItem('my-last-position')) {
-        myPos = myPos.split(',');
-        if (myPos.length === 2) {
-          friends[me.id].lat = parseFloat(myPos[0]);
-          friends[me.id].lng = parseFloat(myPos[1]);
-        }
-        else {
-          friends[me.id].lat = DefaultLat;
-          friends[me.id].lng = DefaultLng;
-        }
-      }
-      else { // last resort (center of Germany)
-        friends[me.id].lat = DefaultLat;
-        friends[me.id].lng = DefaultLng;
-      }
-
-      friends[me.id].latLng = new google.maps.LatLng(friends[me.id].lat, friends[me.id].lng)
-
-      $('#userid').click(function () {
-        highlightFriend(me.id, true);
-      });
-
-      $('#avatar').css('width', Avatar.Width + 'px').css('height', Avatar.Height + 'px');
-
-      $('#avatar-optimal-width').text(Avatar.OptimalWidth);
-      $('#avatar-optimal-height').text(Avatar.OptimalHeight);
-
-      $('#settings-icon').click(showHideSettings);
-      if (!navigator.onLine)
-        $('#settings-icon').addClass('offline');
-      try {
-        pendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
-      }
-      catch (e) {
-        console.error('Ungültige Daten in localStorage["pending-locations"]');
-      }
-      if (pendingLocations && pendingLocations.length > 0) {
-        $('#settings-icon').addClass('pending-locations');
-        if (navigator.onLine)
-          transferPendingLocations();
-      }
-
-      $('#buddies').enableHorizontalSlider();
-
-      $('#settings').css('z-index', google.maps.Marker.MAX_ZINDEX + 1000);
-      $("#settings .colorpicker").spectrum({
-        color: Avatar.backgroundColor,
-        showInitial: true,
-        showInput: true,
-        localStorageKey: 'avatarColor',
-        change: function (color) {
-          Avatar.backgroundColor = color.toHexString();
-        }
-      });
-
-      $('#show-tracks').change(function (e) {
-        var checked = $('#show-tracks').is(':checked');
-        localStorage.setItem('show-tracks', checked);
-        if (checked)
-          getTrack(selectedUser);
-        if (tracks !== null)
-          tracks.setVisible(checked);
-      }).prop('checked', localStorage.getItem('show-tracks') === 'true');
-
-      $('#share-my-tracks').change(function (e) {
-        var checked = $('#share-my-tracks').is(':checked');
-        localStorage.setItem('share-my-tracks', checked);
-        $.ajax({
-          url: 'ajax/setoption.php',
-          type: 'POST',
-          data: {
-            oauth: me.oauth,
-            option: 'sharetracks',
-            value: encodeURIComponent(checked)
-          },
-          accepts: 'json'
-        });
-      }).prop('checked', data.sharetracks === 'true');
-
-      if (/(iOS|iPad|iPod|iPhone)/.test(navigator.userAgent))
-        $('.no-mobile').css('display', 'none');
-
-      $('#incognito').change(function (e) {
-        var checked = $('#incognito').is(':checked');
-        localStorage.setItem('incognito', checked);
-      }).prop('checked', localStorage.getItem('incognito') === 'true');
-
-      $('#offline-mode').change(function (e) {
-        var checked = $('#offline-mode').is(':checked');
-        localStorage.setItem('offline-mode', checked);
-        if (checked) {
-          $('#settings-icon').addClass('offline');
-        }
-        else {
-          $('#settings-icon').removeClass('offline');
-          transferPendingLocations();
-        }
-      }).prop('checked', localStorage.getItem('offline-mode') === 'true');
-
-      $('#show-accuracy').change(function (e) {
-        var checked = $('#show-accuracy').is(':checked');
-        localStorage.setItem('show-accuracy', checked);
-        circle.setVisible(checked);
-      }).prop('checked', localStorage.getItem('show-accuracy') === 'true');
-
-      $('#max-location-age').change(function (e) {
-        localStorage.setItem('max-location-age', $('#max-location-age').val());
-        getFriends();
-      }).children('option').filter('[value=' + (localStorage.getItem('max-location-age') || '1800') + ']').prop('selected', true);
-
-      $('#max-waypoint-age').change(function (e) {
-        localStorage.setItem('max-waypoint-age', $('#max-waypoint-age').val());
-        getTrack(selectedUser);
-      }).children('option').filter('[value=' + (localStorage.getItem('max-waypoint-age') || '86400') + ']').prop('selected', true);
-
-      $('#polling-interval').change(function (e) {
-        localStorage.setItem('polling-interval', $('#polling-interval').val());
-        startPolling();
-      }).children('option').filter('[value=' + (localStorage.getItem('polling-interval') || '60') + ']').prop('selected', true);
-
-      $('#range-constraint').change(function (e) {
-        localStorage.setItem('range-constraint', $('#range-constraint').val());
-        getFriends();
-      }).children('option').filter('[value=' + (localStorage.getItem('range-constraint') || '-1') + ']').prop('selected', true);
-
-      // init Google Maps
-      map = new google.maps.Map(document.getElementById('map-canvas'), {
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        bounds_changed: function () {
-          google.maps.event.addListenerOnce(map, 'idle', getFriends);
-        },
-        zoom: 13
-      });
-      if (google.maps.geometry.spherical.computeDistanceBetween)
-        computeDistanceBetween = google.maps.geometry.spherical.computeDistanceBetween;
-      map.setCenter(me.latLng);
-
-      tracks = new TrackGroup(map);
-
-      //polyline = new google.maps.Polyline({
-      //  map: map,
-      //  strokeColor: '#d60',
-      //  strokeOpacity: 0.8,
-      //  strokeWeight: 4,
-      //  geodesic: true
-      //});
-
-      circle = new google.maps.Circle({
-        map: map,
-        visible: false,
-        strokeColor: '#f00',
-        strokeOpacity: 0.7,
-        strokeWeight: 2,
-        fillColor: '#f00',
-        fillOpacity: 0.1
-      });
-
-      infoWindow = new google.maps.InfoWindow({
-        map: null,
-        disableAutoPan: true,
-      });
-      google.maps.event.addListener(infoWindow, 'closeclick', function () { infoWindowClosed = true; });
-
-      overlay = new google.maps.OverlayView();
-      overlay.draw = function () { };
-      overlay.setMap(map);
-
-      $(window).bind({
-        online: goOnline,
-        offline: goOffline,
-        //blur: pause,
-        //focus: resume
-      });
-
-      google.maps.event.addListenerOnce(map, 'idle', getFriends);
-
-      startPolling();
     });
   }
 
@@ -1277,7 +1335,7 @@ var CTLON = (function () {
       me.oauth.expiresIn = parseInt(authResult.expires_in, 10);
       if (reauthId)
         clearTimeout(reauthId);
-      reauthId = setTimeout(googleAuthorize, 1000 * (me.oauth.expiresIn - 10));
+      reauthId = setTimeout(reauthorize, 1000 * (me.oauth.expiresIn - 10));
       if (me.profile === null) {
         gapi.client.load('plus', 'v1', function loadProfile() {
           gapi.client.plus.people.get({
@@ -1315,11 +1373,18 @@ var CTLON = (function () {
                   criticalError('Fehler beim Übertragen deines Namens: ' + e);
                   return;
                 }
-                if (data.status === Status.Ok) {
-                  // TODO?
-                }
-                else {
-                  criticalError('Fehler beim Speichern deines Namens: ' + data.error);
+                switch (data.status) {
+                  case Status.Ok:
+                    break;
+                  case Status.Error:
+                    criticalError('Fehler beim Speichern deines Namens: ' + data.error);
+                    break;
+                  case Status.AuthFailed:
+                    reauthorize();
+                    break;
+                  default:
+                    console.warn('Unbekannter Fehlerstatus:', data.status, data.error)
+                    break;
                 }
               }).error(function (jqXHR, textStatus, errorThrown) {
                 criticalError('Fehler beim Übertragen deines Namens [' + textStatus + ': ' + errorThrown + ']');
@@ -1352,6 +1417,14 @@ var CTLON = (function () {
   }
 
 
+  function reauthorize() {
+    googleAuthorize(function (authResult) {
+      showPopup('Reautorisierung', 'Ein neues OAuth-Token wurde abgeholt.', 5);
+      googleSigninCallback(authResult);
+    });
+  }
+
+
   return {
     init: function () {
       $.ajax('ajax/config.php')
@@ -1367,14 +1440,27 @@ var CTLON = (function () {
             alert('Konfigurationsdaten fehlen. Abbruch.');
             return;
           }
-          else if (data.status === Status.Ok && data.GoogleOAuthClientId && typeof data.GoogleOAuthClientId === 'string') {
-            GoogleOAuthClientId = data.GoogleOAuthClientId;
-            $('.g-signin').attr('data-clientid', GoogleOAuthClientId);
-            $('<script>').attr('type', 'text/javascript').attr('async', true).attr('src', 'https://apis.google.com/js/client:plusone.js').insertBefore($('script'));
-          }
-          else {
-            alert('Fehlerhafte Konfigurationsdaten. Abbruch.');
-            return;
+          switch (data.status) {
+            case Status.Ok:
+              if (data.GoogleOAuthClientId && typeof data.GoogleOAuthClientId === 'string') {
+                GoogleOAuthClientId = data.GoogleOAuthClientId;
+                $('.g-signin').attr('data-clientid', GoogleOAuthClientId);
+                $('<script>').attr('type', 'text/javascript').attr('async', true).attr('src', 'https://apis.google.com/js/client:plusone.js').insertBefore($('script'));
+              }
+              else {
+                alert('Fehlerhafte Konfigurationsdaten. Abbruch.');
+                return;
+              }
+              break;
+            case Status.Error:
+              criticalError('Fehler beim Abholen der Konfigurationsdaten: ' + data.error);
+              break;
+            case Status.AuthFailed:
+              reauthorize();
+              break;
+            default:
+              console.warn('Unbekannter Fehlerstatus:', data.status, data.error)
+              break;
           }
         })
         .error(function (e) {

@@ -8,7 +8,37 @@ html, body {
   font-family: -apple-system-font, Helvetica, Arial, Verdana, sans-serif;
   font-size: 17px;
   overflow: hidden;
-  background-color: #111;
+  background-color: #333;
+  color: #ddd;
+}
+
+  body.readme {
+    margin: 1ex 1em;
+  }
+
+    body.readme p {
+      margin: 1ex auto;
+    }
+
+    body.readme a {
+      color: #aaa;
+      text-decoration: none;
+    }
+
+    body.readme a:hover {
+      text-decoration: underline;
+    }
+
+    body.readme em {
+      background-color: #555;
+      padding-left: 0.3em;
+      padding-right: 0.3em;
+    }
+
+
+p.stack {
+  font-size: 9px !important;
+  font-family: 'Arial Narrow', 'Nimbus Sans L', sans-serif;
 }
 
 .hide {

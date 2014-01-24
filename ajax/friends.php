@@ -16,6 +16,7 @@ if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['
 }
 $token = $_REQUEST['oauth']['token'];
 $userid = $_SESSION[$token]['user_id'];
+$withavatar = isset($_REQUEST['avatar']) && $_REQUEST['avatar'] === 'true';
 
 $maxage = (isset($_REQUEST['maxage']) && is_numeric($_REQUEST['maxage'])) ? intval($_REQUEST['maxage']) : time();
 $t0 = time() - $maxage;
@@ -30,7 +31,7 @@ if (isset($_REQUEST['maxdist']))
 $checkdist = isset($reflat) && isset($reflng) && isset($maxdist);
 
 if ($dbh) {
-    $buddies = $dbh->query("SELECT `userid`, `name` FROM `buddies`");
+    $buddies = $dbh->query("SELECT `userid`, `name`" . ($withavatar ? ", `avatar`" : "") . " FROM `buddies`");
     $location_query = $dbh->prepare("SELECT `timestamp`, `lat`, `lng`, `accuracy`, `altitude`, `altitudeaccuracy`, `heading`, `speed`" .
         " FROM `locations`" .
         " WHERE `userid` = :userid AND `timestamp` > :t0" .
@@ -57,6 +58,8 @@ if ($dbh) {
                 'name' => $buddy_name
             );
         }
+        if ($withavatar)
+                $res['users'][$buddy_id]['avatar'] = $buddy[2];
     }
     
     $res['status'] = 'ok';

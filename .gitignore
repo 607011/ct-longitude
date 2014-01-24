@@ -1,2 +1,5 @@
 *~
 _ignore_*
+_bin/node_modules/*
+js/*-min.js
+css/*-min.css

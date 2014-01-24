@@ -26,7 +26,15 @@
 })();
 
 
-Math.sqr = function (x) { return x*x; };
+var Log = Error;
+Log.prototype.info = function () {
+  var args = Array.prototype.slice.call(arguments, 0),
+    suffix = this.lineNumber ? 'line: ' + this.lineNumber : 'stack: ' + this.stack;
+  return args.concat([suffix]);
+};
+
+
+Math.sqr = function (x) { return x * x; };
 
 
 /* Taken from jQuery Easing v1.3 - Copyright 2008 George McGinley Smith - http://gsgd.co.uk/sandbox/jquery/easing/ */
