@@ -72,5 +72,37 @@ Bedeutung der Felder:
 
 ## Anfragen des Avatars
 
-Der Aufruf von **`ajax/avatar.php`** liest das Avatar-Bild eines Buddies aus der Datenbanktabelle `buddies` aus und gibt seine Data-URL zurück.
+Der Aufruf von **`ajax/avatar.php`** liest das Avatar-Bild eines Buddies aus der Datenbanktabelle `buddies` aus und gibt dessen Data-URL zurück. Das Skript
+erwartet POST-Daten, die als JSON-Objekt beispielsweise wie folgt aussehen:
+
+	{
+		"userid": "100829969894177493033",
+		"oauth": { ... }
+	}
+
+Bedeutung der Parameter:
+
+ * `userid`: Kennung des Benutzers, von dem der Avatar abgerufen werden soll
+ * `oauth`: JSON-Objekt mit OAuth-Authentifizierungsinformation (s.o.)
+
+## Antwort vom Server
+
+Die Antwort ist ein JSON-Objekt. Beispiel (gekürzt):
+
+	{
+		"userid": "100829969894177493033",
+		"name": "Oliver Lau",
+        "status": "ok",
+        "avatar": "data:image/png;base64,iVBOR..."
+	}
+
+Bedeutung der Felder:
+
+ * `userid`: Kennung des Benutzers, für den der Avatar angefordert wurde.
+ * `name`: Name des Benutzers
+ * `status`:
+   - `"ok"`, wenn alles OK,
+   - `"error"`, wenn Fehler (Details stehen dann im Feld `"error"`);
+   - `"authfailed"`, wenn OAuth-Daten inkorrekt
+ * `avatar`: Daten-URL mit Bilddaten des Avatars
 
