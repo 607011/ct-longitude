@@ -20,3 +20,5 @@ Features
 
 Fehler
 ======
+
+ * `geocoder.geocode()` wird nicht mehr aufgerufen

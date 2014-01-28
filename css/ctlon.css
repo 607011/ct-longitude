@@ -1,35 +1,58 @@
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Roboto Regular'), local('Roboto-Regular'), url(http://themes.googleusercontent.com/static/fonts/roboto/v10/2UX7WLTfW3W8TclTUvlFyQ.woff) format('woff');
+}
+
 * {
   margin: 0;
   padding: 0;
 }
 
+
 html, body {
   height: 100%;
-  font-family: -apple-system-font, Helvetica, Arial, Verdana, sans-serif;
+  font-family: Roboto, -apple-system-font, Helvetica, Arial, Verdana, sans-serif;
   font-size: 17px;
   overflow: hidden;
   background-color: #333;
-  color: #ddd;
 }
 
-  body.readme {
-    margin: 1ex 1em;
-  }
+#actionbar {
+  font-size: 28px;
+  font-weight: bold;
+  color: #ddd;
+  margin: 0;
+  padding: 4px;
+  height: 32px;
+  vertical-align: top;
+  text-transform: uppercase;
+}
 
-    body.readme p {
+#up-button {
+  margin-right: 8px;
+}
+
+#content {
+    color: #ddd;
+    padding: 4px;
+}
+
+    #content p {
       margin: 1ex auto;
     }
 
-    body.readme a {
+    #content a {
       color: #aaa;
       text-decoration: none;
     }
 
-    body.readme a:hover {
+    #content a:hover {
       text-decoration: underline;
     }
 
-    body.readme em {
+    #content em {
       background-color: #555;
       padding-left: 0.3em;
       padding-right: 0.3em;

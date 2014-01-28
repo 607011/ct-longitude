@@ -2,6 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <title>c't Longitude - Referenz</title>
+  <link href="http://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css" />
   <script src="js/jquery-2.0.3.min.js"></script>
   <script src="js/Markdown.Converter.js" type="text/javascript"></script>
   <script src="js/Markdown.Sanitizer.js" type="text/javascript"></script>
@@ -41,21 +42,12 @@
     }
   </style>
   <script type="text/javascript">
-    var CTLON = (function() {
-      return {
-        displayMarkdown: function () {
-          var file = window.location.hash.substr(1),
-            convert = new Markdown.getSanitizingConverter().makeHtml;
-          $.ajax({
-            url: 'doc/' + file,
-            type: 'POST',
-          }).done(function (data) {
-            $('#content').append(convert(data));
-          });
-        }
-      };
-    })();
-    $(document).ready(CTLON.displayMarkdown);
+    function displayMarkdown () {
+      $.ajax({ url: 'doc/' + window.location.hash.substr(1) }).done(function (data) {
+        $('#content').append(Markdown.getSanitizingConverter().makeHtml(data));
+      });
+    }
+    $(document).ready(displayMarkdown);
   </script>
 </head>
 <body>
