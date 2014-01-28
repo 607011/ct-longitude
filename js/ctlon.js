@@ -1220,7 +1220,20 @@ var CTLON = (function () {
       getFriends();
     }).children('option').filter('[value=' + (localStorage.getItem('range-constraint') || '-1') + ']').prop('selected', true);
 
-    // init Google Maps
+    google.maps.event.addListenerOnce(map, 'idle', getFriends);
+
+    $(window).bind({
+      online: goOnline,
+      offline: goOffline,
+      //blur: pause,
+      //focus: resume
+    });
+
+    startPolling();
+  }
+
+
+  function initGoogleMaps() {
     map = new google.maps.Map(document.getElementById('map-canvas'), {
       mapTypeId: google.maps.MapTypeId.ROADMAP,
       bounds_changed: function () {
@@ -1262,16 +1275,6 @@ var CTLON = (function () {
     overlay.draw = function () { };
     overlay.setMap(map);
 
-    $(window).bind({
-      online: goOnline,
-      offline: goOffline,
-      //blur: pause,
-      //focus: resume
-    });
-
-    google.maps.event.addListenerOnce(map, 'idle', getFriends);
-
-    startPolling();
   }
 
 
@@ -1280,6 +1283,7 @@ var CTLON = (function () {
       return;
     appInitialized = true;
     showProgressInfo();
+
     // get http basic auth user
     $.ajax({
       url: 'ajax/me.php',
@@ -1427,6 +1431,8 @@ var CTLON = (function () {
 
   return {
     init: function () {
+      initGoogleMaps();
+      preloadImages();
       $.ajax('ajax/config.php')
         .done(function (data) {
           try {
@@ -1466,7 +1472,6 @@ var CTLON = (function () {
         .error(function (e) {
           alert('Konfiguration kann nicht geladen werden. Abbruch. [' + e + ']');
         });
-      preloadImages();
     },
     googleSigninCallback: googleSigninCallback
   };
