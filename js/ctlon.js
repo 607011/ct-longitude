@@ -60,6 +60,7 @@ var CTLON = (function () {
       }
     },
     getFriendsPending = false,
+    setLocationsPending = false,
     watchId,
     selectedUser,
     pollingId,
@@ -577,7 +578,7 @@ var CTLON = (function () {
             hideProgressInfo();
             if (typeof data.users !== 'object')
               return;
-            setTimeout(function () { getFriendsPending = false; }, 1000);
+            setTimeout(function () { getFriendsPending = false; }, 5000);
             processFriends(data.users);
             break;
           case Status.Error:
@@ -708,18 +709,6 @@ var CTLON = (function () {
   }
 
 
-  function isClustered(userid) {
-    var inCluster = false;
-    $.each(clusters, function (i, cluster) {
-      if (cluster.filter(function (buddy) { return buddy.id === userid; }).length > 0) {
-        inCluster = true;
-        return false;
-      }
-    });
-    return inCluster;
-  }
-
-
   function setPosition(pos) {
     var originalData, path;
     originalData = {
@@ -760,14 +749,16 @@ var CTLON = (function () {
     if (!navigator.onLine || $('#offline-mode').is(':checked')) {
       addToPendingLocations(originalData);
     }
-    else if (!$('#incognito').is(':checked') && !$('#offline.mode').is(':checked')) {
+    else if (!$('#incognito').is(':checked') && !$('#offline.mode').is(':checked') && !setLocationsPending) {
       // send own data to server
+      setLocationsPending = true;
       $.ajax({
         url: 'ajax/setloc.php',
         type: 'POST',
         accepts: 'json',
         data: originalData
       }).done(function (data) {
+        setLocationsPending = false;
         if (!data) {
           addToPendingLocations(originalData);
           softError('Fehler beim Übertragen deines Standorts');
@@ -800,6 +791,7 @@ var CTLON = (function () {
           }
         }
       }).error(function (jqXHR, textStatus, errorThrown) {
+        setLocationsPending = false;
         console.error('Fehler beim Übertragen des Standorts [' + textStatus + ': ' + errorThrown + ']');
         addToPendingLocations(originalData);
       });
@@ -1044,6 +1036,7 @@ var CTLON = (function () {
 
 
   function stopPolling() {
+    console.info('stopPolling()');
     if (pollingId !== null) {
       clearInterval(pollingId);
       pollingId = null;
@@ -1057,6 +1050,7 @@ var CTLON = (function () {
 
   function startPolling() {
     stopPolling();
+    console.info('startPolling()');
     if (navigator.geolocation) {
       watchId = navigator.geolocation.watchPosition(setPosition, function () {
         // alert('Standortabfrage fehlgeschlagen.');
