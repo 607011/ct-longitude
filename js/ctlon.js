@@ -696,9 +696,27 @@ var CTLON = (function () {
   }
 
 
+  function addToPendingLocations(pos) {
+    var pendingLocations;
+    try {
+      pendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
+    }
+    catch (e) {
+      console.error(e);
+      return;
+    }
+    pendingLocations.push({
+      lat: pos.lat,
+      lng: pos.lng,
+      timestamp: pos.timestamp
+    });
+    localStorage.setItem('pending-locations', JSON.stringify(pendingLocations));
+  }
+
+
   function setPosition(pos) {
-    var data, pendingLocations, path;
-    data = {
+    var originalData, path;
+    originalData = {
       userid: me.id,
       oauth: me.oauth,
       timestamp: Math.floor(pos.timestamp / 1000),
@@ -710,20 +728,20 @@ var CTLON = (function () {
       altitude: pos.coords.altitude ? pos.coords.altitude : void 0,
       altitudeaccuracy: pos.coords.altitudeAccuracy ? pos.coords.altitudeAccuracy : void 0
     };
-    console.log('setPosition() ->', data);
-    friends[me.id].timestamp = data.timestamp;
-    friends[me.id].lat = data.lat;
-    friends[me.id].lng = data.lng;
-    friends[me.id].accuracy = data.accuracy;
-    friends[me.id].latLng = new google.maps.LatLng(data.lat, data.lng);
-    $('#buddy-' + me.id).attr('data-lat', data.lat).attr('data-lng', data.lng);
+    console.log('setPosition() ->', originalData);
+    friends[me.id].timestamp = originalData.timestamp;
+    friends[me.id].lat = originalData.lat;
+    friends[me.id].lng = originalData.lng;
+    friends[me.id].accuracy = originalData.accuracy;
+    friends[me.id].latLng = new google.maps.LatLng(originalData.lat, originalData.lng);
+    $('#buddy-' + me.id).attr('data-lat', originalData.lat).attr('data-lng', originalData.lng);
     if (me.id === selectedUser) {
       tracks.addLocation(friends[me.id].latLng);
     }
     if (markers.hasOwnProperty(me.id))
       markers[me.id].setPosition(friends[me.id].latLng);
-    localStorage.setItem('my-last-position', data.lat + ',' + data.lng);
-    $('#userid').attr('data-lat', data.lat).attr('data-lng', data.lng);
+    localStorage.setItem('my-last-position', originalData.lat + ',' + originalData.lng);
+    $('#userid').attr('data-lat', originalData.lat).attr('data-lng', originalData.lng);
 
     if (!firstLoad) {
       processFriends();
@@ -734,19 +752,7 @@ var CTLON = (function () {
     }
 
     if (!navigator.onLine || $('#offline-mode').is(':checked')) {
-      try {
-        pendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
-      }
-      catch (e) {
-        console.error(e);
-        return;
-      }
-      pendingLocations.push({
-        lat: data.lat,
-        lng: data.lng,
-        timestamp: data.timestamp
-      });
-      localStorage.setItem('pending-locations', JSON.stringify(pendingLocations));
+      addToPendingLocations(originalData);
       $('#settings-icon').addClass('pending-locations');
     }
     else if (!$('#incognito').is(':checked') && !$('#offline.mode').is(':checked')) {
@@ -755,9 +761,10 @@ var CTLON = (function () {
         url: 'ajax/setloc.php',
         type: 'POST',
         accepts: 'json',
-        data: data
+        data: originalData
       }).done(function (data) {
         if (!data) {
+          addToPendingLocations(originalData);
           criticalError('Fehler beim Übertragen deines Standorts');
         }
         else {
@@ -773,18 +780,22 @@ var CTLON = (function () {
               // XXX ?
               break;
             case Status.Error:
-              criticalError('Fehler beim Übertragen deines Standorts: ' + data.error);
+              addToPendingLocations(originalData);
+              console.error('Fehler beim Übertragen deines Standorts: ' + data.error);
               break;
             case Status.AuthFailed:
+              addToPendingLocations(originalData);
               reauthorize();
               break;
             default:
-              console.warn('Unbekannter Fehlerstatus:', data.status, data.error)
+              addToPendingLocations(originalData);
+              console.error('Unbekannter Fehlerstatus:', data.status, data.error)
               break;
           }
         }
       }).error(function (jqXHR, textStatus, errorThrown) {
-        criticalError('Fehler beim Übertragen deines Standorts [' + textStatus + ': ' + errorThrown + ']');
+        console.error('Fehler beim Übertragen des Standorts [' + textStatus + ': ' + errorThrown + ']');
+        addToPendingLocations(originalData);
       });
     }
   }
