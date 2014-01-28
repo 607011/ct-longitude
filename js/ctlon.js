@@ -714,25 +714,25 @@ var CTLON = (function () {
   }
 
 
-  function setPositionFailed(e) {
-    console.error('navigator.geolocation.getCurrentPosition() oder navigator.geolocation.watchPosition() fehlgeschlagen:', e);
+  function geoLocationErrorCallback(e) {
+    console.error('navigator.geolocation.getCurrentPosition()/.watchPosition() fehlgeschlagen:', e);
   }
 
 
   function setPosition(pos) {
-    var originalData, path;
-    originalData = {
-      userid: me.id,
-      oauth: me.oauth,
-      timestamp: Math.floor(pos.timestamp / 1000),
-      lat: typeof pos.coords.latitude === 'string' ? parseFloat(pos.coords.latitude) : pos.coords.latitude,
-      lng: typeof pos.coords.longitude === 'string' ? parseFloat(pos.coords.longitude) : pos.coords.longitude,
-      accuracy: pos.coords.accuracy ? (typeof pos.coords.accuracy === 'string' ? parseFloat(pos.coords.accuracy) : pos.coords.accuracy) : void 0,
-      heading: pos.coords.heading ? pos.coords.heading : void 0,
-      speed: pos.coords.speed ? pos.coords.speed : void 0,
-      altitude: pos.coords.altitude ? pos.coords.altitude : void 0,
-      altitudeaccuracy: pos.coords.altitudeAccuracy ? pos.coords.altitudeAccuracy : void 0
-    };
+    var path,
+      originalData = {
+        userid: me.id,
+        oauth: me.oauth,
+        timestamp: Math.floor(pos.timestamp / 1000),
+        lat: typeof pos.coords.latitude === 'string' ? parseFloat(pos.coords.latitude) : pos.coords.latitude,
+        lng: typeof pos.coords.longitude === 'string' ? parseFloat(pos.coords.longitude) : pos.coords.longitude,
+        accuracy: pos.coords.accuracy ? (typeof pos.coords.accuracy === 'string' ? parseFloat(pos.coords.accuracy) : pos.coords.accuracy) : void 0,
+        heading: pos.coords.heading ? pos.coords.heading : void 0,
+        speed: pos.coords.speed ? pos.coords.speed : void 0,
+        altitude: pos.coords.altitude ? pos.coords.altitude : void 0,
+        altitudeaccuracy: pos.coords.altitudeAccuracy ? pos.coords.altitudeAccuracy : void 0
+      };
     console.log('setPosition() ->', originalData);
     friends[me.id].timestamp = originalData.timestamp;
     friends[me.id].lat = originalData.lat;
@@ -1062,7 +1062,7 @@ var CTLON = (function () {
     stopPolling();
     console.info('startPolling()');
     if (navigator.geolocation) {
-      watchId = navigator.geolocation.watchPosition(setPosition, setPositionFailed, PositionOptions);
+      watchId = navigator.geolocation.watchPosition(setPosition, geoLocationErrorCallback, PositionOptions);
       pollingId = setInterval(getFriends, 1000 * parseInt($('#polling-interval').val(), 10));
     }
     else {
@@ -1309,7 +1309,7 @@ var CTLON = (function () {
     else {
       $('#xfer-current-location').click(function (e) {
         console.log('navigator.geolocation.getCurrentPosition = ', navigator.geolocation.getCurrentPosition)
-        navigator.geolocation.getCurrentPosition(setPosition, setPositionFailed, PositionOptions);
+        navigator.geolocation.getCurrentPosition(setPosition, geoLocationErrorCallback, PositionOptions);
       });
     }
 
