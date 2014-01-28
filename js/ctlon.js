@@ -709,6 +709,11 @@ var CTLON = (function () {
   }
 
 
+  function setPositionFailed(e) {
+    console.error('navigator.geolocation.getCurrentPosition() oder navigator.geolocation.watchPosition() fehlgeschlagen:', e);
+  }
+
+
   function setPosition(pos) {
     var originalData, path;
     originalData = {
@@ -1052,9 +1057,7 @@ var CTLON = (function () {
     stopPolling();
     console.info('startPolling()');
     if (navigator.geolocation) {
-      watchId = navigator.geolocation.watchPosition(setPosition, function () {
-        alert('Standortabfrage fehlgeschlagen.');
-      });
+      watchId = navigator.geolocation.watchPosition(setPosition, setPositionFailed);
       pollingId = setInterval(getFriends, 1000 * parseInt($('#polling-interval').val(), 10));
     }
     else {
@@ -1300,7 +1303,8 @@ var CTLON = (function () {
     }
     else {
       $('#xfer-current-location').click(function (e) {
-        navigator.geolocation.getCurrentPosition(setPosition);
+        console.log('navigator.geolocation.getCurrentPosition = ', navigator.geolocation.getCurrentPosition)
+        navigator.geolocation.getCurrentPosition(setPosition, setPositionFailed);
       });
     }
 
