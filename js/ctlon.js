@@ -1053,8 +1053,7 @@ var CTLON = (function () {
     console.info('startPolling()');
     if (navigator.geolocation) {
       watchId = navigator.geolocation.watchPosition(setPosition, function () {
-        // alert('Standortabfrage fehlgeschlagen.');
-        console.warn('Standortabfrage fehlgeschlagen.');
+        alert('Standortabfrage fehlgeschlagen.');
       });
       pollingId = setInterval(getFriends, 1000 * parseInt($('#polling-interval').val(), 10));
     }
@@ -1088,7 +1087,7 @@ var CTLON = (function () {
       friends[me.id] = {};
     }
     else {
-      console.error('`me.php` returned an invalid or no userid');
+      console.error('me.php returned an invalid or no userid');
       return;
     }
 
@@ -1295,6 +1294,15 @@ var CTLON = (function () {
       return;
     appInitialized = true;
     showProgressInfo();
+
+    if (!navigator.geolocation) {
+      $('#xfer-current-location').prop('disabled', true);
+    }
+    else {
+      $('#xfer-current-location').click(function (e) {
+        navigator.geolocation.getCurrentPosition(setPosition);
+      });
+    }
 
     // get http basic auth user
     $.ajax({
