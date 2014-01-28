@@ -1112,6 +1112,7 @@ var CTLON = (function () {
     }
 
     friends[me.id].latLng = new google.maps.LatLng(friends[me.id].lat, friends[me.id].lng)
+    map.setCenter(friends[me.id].latLng);
 
     $('#userid').click(function () {
       highlightFriend(me.id, true);
@@ -1243,7 +1244,6 @@ var CTLON = (function () {
     });
     if (google.maps.geometry.spherical.computeDistanceBetween)
       computeDistanceBetween = google.maps.geometry.spherical.computeDistanceBetween;
-    map.setCenter(me.latLng);
 
     tracks = new TrackGroup(map);
 
