@@ -26,6 +26,11 @@ var CTLON = (function () {
     },
     MOBILE = navigator.userAgent.indexOf('Mobile') >= 0,
     DEBUG = true,
+    PositionOptions = {
+      enableHighAccuracy: false,
+      timeout: 10 * 1000,
+      maximumAge: Infinity
+    },
     DefaultLat = 51.0,
     DefaultLng = 10.33333333,
     DefaultAvatar = 'img/default-avatar.jpg',
@@ -1057,7 +1062,7 @@ var CTLON = (function () {
     stopPolling();
     console.info('startPolling()');
     if (navigator.geolocation) {
-      watchId = navigator.geolocation.watchPosition(setPosition, setPositionFailed);
+      watchId = navigator.geolocation.watchPosition(setPosition, setPositionFailed, PositionOptions);
       pollingId = setInterval(getFriends, 1000 * parseInt($('#polling-interval').val(), 10));
     }
     else {
@@ -1304,7 +1309,7 @@ var CTLON = (function () {
     else {
       $('#xfer-current-location').click(function (e) {
         console.log('navigator.geolocation.getCurrentPosition = ', navigator.geolocation.getCurrentPosition)
-        navigator.geolocation.getCurrentPosition(setPosition, setPositionFailed);
+        navigator.geolocation.getCurrentPosition(setPosition, setPositionFailed, PositionOptions);
       });
     }
 
