@@ -1,10 +1,9 @@
 <?php
 require_once 'config.php';
 
-function validateGoogleOauthToken($token) {
-    global $GOOGLE_OAUTH_CLIENT_ID;
+function validateGoogleOauthToken($token, $clientid) {
     session_start();
-    $result = isset($_SESSION[$token]) ? $_SESSION[$token] : array();
+    $result = isset($_SESSION[$token]) ? $_SESSION[$token] : array('clientId' => $clientid);
     $must_validate = !isset($result) || !isset($result['expires_at']) || time() > $result['expires_at'];
     if ($must_validate) {
         $service_url = 'https://www.googleapis.com/oauth2/v1/tokeninfo?id_token=' . filter_var($token, FILTER_SANITIZE_STRING);
@@ -24,8 +23,8 @@ function validateGoogleOauthToken($token) {
     }
     $result['revalidated'] = $must_validate;
     if (isset($result['user_id']) && isset($result['expires_in'])
-        && isset($result['audience']) && $result['audience'] === $GOOGLE_OAUTH_CLIENT_ID
-        && isset($result['issued_to']) && $result['issued_to'] === $GOOGLE_OAUTH_CLIENT_ID
+        && isset($result['audience']) && $result['audience'] === $clientid
+        && isset($result['issued_to']) && $result['issued_to'] === $clientid
         && isset($result['issuer']) && $result['issuer'] === 'accounts.google.com')
     {
         $result['expires_at'] = time() + $result['expires_in'];
