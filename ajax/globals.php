@@ -1,9 +1,15 @@
 <?php
 require_once 'config.php';
 
+function DEBUG($msg) {
+    $timestamp = date('D M j H:i:s.u Y');
+    file_put_contents('php://stdout', "[$timestamp] [ctlon:debug] $msg\n");
+}
+
 function validateGoogleOauthToken($token, $clientid) {
     session_start();
-    $result = isset($_SESSION[$token]) ? $_SESSION[$token] : array('clientId' => $clientid);
+    $success = false;
+    $result = isset($_SESSION[$token]) ? $_SESSION[$token] : array();
     $must_validate = !isset($result) || !isset($result['expires_at']) || time() > $result['expires_at'];
     if ($must_validate) {
         $service_url = 'https://www.googleapis.com/oauth2/v1/tokeninfo?id_token=' . filter_var($token, FILTER_SANITIZE_STRING);
@@ -32,16 +38,17 @@ function validateGoogleOauthToken($token, $clientid) {
         $result['time_left'] = $result['expires_in'] + $result['issued_at'] - time();
         // cache result
         $_SESSION[$token] = $result;
-        return true;
+        $success = true;
     }
-    return false;
+    DEBUG(json_encode($result));
+    return $success;
 }
 
 $T0 = microtime(true);
 function processingTime() {
     global $T0;
     $dt = round(microtime(true) - $T0, 3);
-    return ($dt < 0.001) ? '<1ms' : $dt . 's';
+    return ($dt < 0.001) ? '<1ms' : '~' . $dt . 's';
 }
 
 $dbh = new PDO("sqlite:$DB_NAME", null, null, array(
