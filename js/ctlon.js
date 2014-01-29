@@ -43,6 +43,7 @@ var CTLON = (function () {
     tracks = null,
     infoWindow = null,
     infoWindowClosed = false,
+    version,
     markers = {},
     avatars = {},
     friends = {},
@@ -1488,7 +1489,13 @@ var CTLON = (function () {
           alert('Konfiguration kann nicht geladen werden. Abbruch. [' + e + ']');
         });
     },
-    googleSigninCallback: googleSigninCallback
+    googleSigninCallback: googleSigninCallback,
+    setVersion: function (v) {
+      version = v;
+      $(document).ready(function () {
+        $('#version').text(version);
+      });
+    }
   };
 })();
 
