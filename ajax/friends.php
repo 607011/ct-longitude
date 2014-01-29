@@ -11,7 +11,7 @@ function haversineDistance($lat1, $lng1, $lat2, $lng2) {
 
 if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['oauth']['token'])) {
     $res['status'] = 'authfailed';
-    $res['error'] = 'Ungültige Authentifizierungsdaten: OAuth-Token fehlt oder ist falsch.';
+    $res['error'] = 'Ungueltige Authentifizierungsdaten: OAuth-Token fehlt oder ist falsch.';
     goto end;
 }
 $token = $_REQUEST['oauth']['token'];

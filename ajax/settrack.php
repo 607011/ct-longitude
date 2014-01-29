@@ -3,7 +3,7 @@ require_once 'globals.php';
 
 if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['oauth']['token'])) {
     $res['status'] = 'authfailed';
-    $res['error'] = 'Ungültige Authentifizierungsdaten: OAuth-Token fehlt oder ist falsch.';
+    $res['error'] = 'Ungueltige Authentifizierungsdaten: OAuth-Token fehlt oder ist falsch.';
     goto end;
 }
 $token = $_REQUEST['oauth']['token'];
@@ -55,14 +55,14 @@ foreach ($tracks as $locations) {
     foreach ($locations['path'] as $location) {
         if (!isset($location['lat']) || !is_float($location['lat'])) {
             $res['status'] = 'error';
-            $res['error'] = 'Ungültige oder fehlende Breitengradangabe.';
+            $res['error'] = 'Ungueltige oder fehlende Breitengradangabe.';
             goto end;
         }
         $lat = floatval($location['lat']);
 
         if (!isset($location['lng']) || !is_float($location['lng'])) {
             $res['status'] = 'error';
-            $res['error'] = 'Ungültige oder fehlende Längengradangabe.';
+            $res['error'] = 'Ungueltige oder fehlende Längengradangabe.';
             goto end;
         }
         $lng = floatval($location['lng']);

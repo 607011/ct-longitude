@@ -673,7 +673,7 @@ var CTLON = (function () {
       pendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
     }
     catch (e) {
-      console.error('Ungültige Daten in localStorage["pending-locations"]');
+      console.error('Ungueltige Daten in localStorage["pending-locations"]');
       return;
     }
     if (pendingLocations && pendingLocations.length > 0) {
@@ -1142,7 +1142,7 @@ var CTLON = (function () {
       pendingLocations = JSON.parse(localStorage.getItem('pending-locations') || '[]');
     }
     catch (e) {
-      console.error('Ungültige Daten in localStorage["pending-locations"]', e);
+      console.error('Ungueltige Daten in localStorage["pending-locations"]', e);
     }
     if (pendingLocations && pendingLocations.length > 0) {
       if (navigator.onLine)

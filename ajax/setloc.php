@@ -3,7 +3,7 @@ require_once 'globals.php';
 
 if (!isset($_REQUEST['oauth']['token']) || !validateGoogleOauthToken($_REQUEST['oauth']['token'])) {
     $res['status'] = 'authfailed';
-    $res['error'] = 'Ungültige Authentifizierungsdaten: OAuth-Token fehlt oder ist falsch.';
+    $res['error'] = 'Ungueltige Authentifizierungsdaten: OAuth-Token fehlt oder ist falsch.';
     goto end;
 }
 $token = $_REQUEST['oauth']['token'];
@@ -11,14 +11,14 @@ $userid = $_SESSION[$token]['user_id'];
 
 if (!isset($_REQUEST['lat']) || !is_numeric($_REQUEST['lat'])) {
     $res['status'] = 'error';
-    $res['error'] = 'Ungültige Breitengradangabe:' . $_REQUEST['lat'];
+    $res['error'] = 'Ungueltige Breitengradangabe:' . $_REQUEST['lat'];
     goto end;
 }
 $lat = floatval($_REQUEST['lat']);
 
 if (!isset($_REQUEST['lng']) || !is_numeric($_REQUEST['lng'])) {
     $res['status'] = 'error';
-    $res['error'] = 'Ungültige Längengradangabe:' . $_REQUEST['lng'];
+    $res['error'] = 'Ungueltige Längengradangabe:' . $_REQUEST['lng'];
     goto end;
 }
 $lng = floatval($_REQUEST['lng']);
