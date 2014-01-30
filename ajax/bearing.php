@@ -38,7 +38,8 @@ if ($dbh) {
         $lng = floatval($row[1]);
         $bearing = bearing($reflat, $reflng, $lat, $lng);
         $b = ($bearing < 0) ? $bearing + 320 : $bearing;
-        $res['direction'] = array('N', 'NO', 'O', 'SO', 'S', 'SW', 'W', 'NW', 'N')[round($b / 45)];
+        $dir = array('N', 'NO', 'O', 'SO', 'S', 'SW', 'W', 'NW', 'N');
+        $res['direction'] = $dir[round($b / 45)];
         $res['bearing'] = round(bearing($reflat, $reflng, $lat, $lng), 1);
         $res['bearing_units'] = 'deg';
         $res['distance'] = round(haversineDistance($reflat, $reflng, $lat, $lng), 1);
