@@ -152,3 +152,56 @@ Bedeutung der Felder:
    - `"authfailed"`, wenn OAuth-Daten inkorrekt
  * `avatar`: Daten-URL mit Bilddaten des Avatars
 
+
+## Anfragen von Entfernung und Richtung eines Buddies
+
+Der Aufruf von **`ajax/bearing.php`** berechnet die Entfernung und Richtung eines Buddies relativ zur übermittelten Position. Das Skript
+erwartet POST-Daten, die als JSON-Objekt beispielsweise wie folgt aussehen:
+
+	{
+		"userid": "100829969894177493033",
+        "lat": 52.24379,
+        "lng": 9.723570
+		"oauth": { ... }
+	}
+
+Bedeutung der Parameter:
+
+ * `userid`: Kennung des Buddies, zu dem Entfernung und Richtung berechnet werden sollen
+ * `lat`: Breitengrad der Position, die als Referenz dienen soll
+ * `lon`: Längengrad der Position, die als Referenz dienen soll
+ * `oauth`: Authentifizierungsinformationen wie beim Aufruf von **`ajax/me.php`** (s.o.)
+
+### Antwort vom Server
+
+Die Antwort ist ein JSON-Objekt. Beispiel (gekürzt):
+
+	{
+		"user_id": "100829969894177493033"
+		"buddy_id": "106537406819187054768"
+		"bearing": 109.6
+		"bearing_units": "deg"
+		"direction": "O"
+		"distance": 947.3
+		"distance_units": "m"
+		"lat": 52.373032972686
+		"lng": 9.745155740998
+		"status": "ok"
+	}
+
+Bedeutung der Felder:
+
+ * `user_id`: Kennung des angemeldeten Benutzers
+ * `buddy_id`: Kennung des Buddies
+ * `bearing`: Richtung des Buddies. 0 weist direkt nach Norden, Werte kleiner 0 weisen nach Westen, größer 0 nach Osten
+ * `bearing_units`: Einheit von `bearing`, derzeit nur `"deg"`, also Grad (&minus;180...+180)
+ * `direction`: grobe Richtungsangabe: N, NO, O, SO, S, SW, W, NW
+ * `distance`: Entfernung des Buddies
+ * `distance_unit`: Einheit der Entfernung, derzeit nur `"m"` (Meter)
+ * `lat`: letzter bekannter Breitengrad des Buddies
+ * `lon`: letzter bekannter Längengrad des Buddies
+ * `status`:
+   - `"ok"`, wenn alles OK,
+   - `"error"`, wenn Fehler (Details stehen dann im Feld `"error"`);
+   - `"authfailed"`, wenn OAuth-Daten inkorrekt
+ 
