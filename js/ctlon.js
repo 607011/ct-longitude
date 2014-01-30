@@ -435,8 +435,23 @@ var CTLON = (function () {
             map: map
           });
           google.maps.event.addListener(markers[friend.id], 'click', function () {
-            // TODO: do something useful when symbol is clicked
+            var data = {
+              userid: friend.id,
+              lat: friends[me.id].lat,
+              lng: friends[me.id].lng,
+              oauth: me.oauth
+            };
             console.log('clicked on ' + (isClustered ? 'einige deiner Freunde' : friend.name));
+            $.ajax({
+              url: 'ajax/bearing.php',
+              type: 'POST',
+              accepts: 'json',
+              data: data,
+            }).done(function (data) {
+              console.log('bearing.php ->', data);
+            }).error(function (data) {
+              console.log('Fehler beim Aufruf von bearing.php.');
+            });
           });
         }
         markers[friend.id].setPosition(friend.latLng);

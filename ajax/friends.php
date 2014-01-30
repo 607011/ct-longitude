@@ -1,14 +1,6 @@
 <?php
 require_once 'globals.php';
 
-function haversineDistance($lat1, $lng1, $lat2, $lng2) {
-  $latd = 0.5 * deg2rad($lat2 - $lat1);
-  $lond = 0.5 * deg2rad($lng2 - $lng1);
-  $a = sin($latd) * sin($latd) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($lond) * sin($lond);
-  $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-  return 1000 * 6371.0 * $c;
-}
-
 if (!isset($_REQUEST['oauth']['token']) || !isset($_REQUEST['oauth']['clientId']) || !validateGoogleOauthToken($_REQUEST['oauth']['token'], $_REQUEST['oauth']['clientId'])) {
     $res['status'] = 'authfailed';
     $res['error'] = 'Ungueltige Authentifizierungsdaten: OAuth-Token fehlt oder ist falsch.';
