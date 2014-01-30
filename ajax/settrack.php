@@ -102,6 +102,6 @@ if (isset($res['status']) && $res['status'] === 'error') {
     $res['inserted'] = 0;
 }
 
-
+header('Content-Type: text/json');
 echo json_encode($res);
 ?>

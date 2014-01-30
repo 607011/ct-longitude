@@ -21,6 +21,7 @@ $DB_NAME = "$DB_PATH/ctlon.sqlite";
 
 if (substr(str_replace("\\", '/', __FILE__), -strlen($_SERVER['PHP_SELF'])) === $_SERVER['PHP_SELF']) {
     $res['GoogleOAuthClientId'] = $GOOGLE_OAUTH_CLIENT_ID;
+    header('Content-Type: text/json');
     if (!isset($GOOGLE_OAUTH_CLIENT_ID))
         $res['status'] = 'error';
     echo json_encode($res);

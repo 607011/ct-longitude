@@ -197,13 +197,6 @@ var CTLON = (function () {
         oauth: me.oauth
     }
     }).done(function (data) {
-      try {
-        data = JSON.parse(data);
-      }
-      catch (e) {
-        console.error(e);
-        return;
-      }
       switch (data.status) {
         case Status.Ok:
           tracks.setLocations(data.path);
@@ -344,39 +337,27 @@ var CTLON = (function () {
               oauth: me.oauth
             }
           }).done(function (data) {
-            if (!data) {
-              softError('Fehler beim Abfragen des Avatars!');
-            }
-            else {
-              try {
-                data = JSON.parse(data);
-              }
-              catch (e) {
-                console.error(e);
-                return;
-              }
-              switch (data.status) {
-                case Status.Ok:
-                  if (data.avatar && data.avatar.indexOf('data:image') === 0) {
-                    avatars[data.userid] = data.avatar;
-                  }
-                  else {
-                    if (typeof opts.error === 'function')
-                      opts.error.call('Keinen Avatar für `' + data.userid + '` gefunden.');
-                  }
-                  process(friend, opts);
-                  break;
-                case Status.Error:
-                  softError('Fehler beim Abfragen des Avatars: ' + data.error);
-                  break;
-                case Status.AuthFailed:
-                  console.error('Authentifizierung fehlgeschlagen', data.status, data.error)
-                  reauthorize();
-                  break;
-                default:
-                  console.warn('Unbekannter Fehlerstatus:', data.status, data.error)
-                  break;
-              }
+            switch (data.status) {
+              case Status.Ok:
+                if (data.avatar && data.avatar.indexOf('data:image') === 0) {
+                  avatars[data.userid] = data.avatar;
+                }
+                else {
+                  if (typeof opts.error === 'function')
+                    opts.error.call('Keinen Avatar für `' + data.userid + '` gefunden.');
+                }
+                process(friend, opts);
+                break;
+              case Status.Error:
+                softError('Fehler beim Abfragen des Avatars: ' + data.error);
+                break;
+              case Status.AuthFailed:
+                console.error('Authentifizierung fehlgeschlagen', data.status, data.error)
+                reauthorize();
+                break;
+              default:
+                console.warn('Unbekannter Fehlerstatus:', data.status, data.error)
+                break;
             }
           }).error(function (jqXHR, textStatus, errorThrown) {
             softError('Fehler beim Abfragen des Avatars [' + textStatus + ': ' + errorThrown + ']');
@@ -563,36 +544,24 @@ var CTLON = (function () {
       data: data,
       accepts: 'json'
     }).done(function (data) {
-      if (!data) {
-        softError('Fehler beim Abfragen der User-Liste!');
-      }
-      else {
-        try {
-          data = JSON.parse(data);
-        }
-        catch (e) {
-          console.error(e);
-          return;
-        }
-        switch (data.status) {
-          case Status.Ok:
-            hideProgressInfo();
-            if (typeof data.users !== 'object')
-              return;
-            setTimeout(function () { getFriendsPending = false; }, 5000);
-            processFriends(data.users);
-            break;
-          case Status.Error:
-            softError('Fehler beim Abfragen der User-Liste: ' + data.error);
-            break;
-          case Status.AuthFailed:
-            console.error('Authentifizierung fehlgeschlagen', data.status, data.error)
-            reauthorize();
-            break;
-          default:
-            console.warn('Unbekannter Fehlerstatus:', data.status, data.error)
-            break;
-        }
+      switch (data.status) {
+        case Status.Ok:
+          hideProgressInfo();
+          if (typeof data.users !== 'object')
+            return;
+          setTimeout(function () { getFriendsPending = false; }, 5000);
+          processFriends(data.users);
+          break;
+        case Status.Error:
+          softError('Fehler beim Abfragen der User-Liste: ' + data.error);
+          break;
+        case Status.AuthFailed:
+          console.error('Authentifizierung fehlgeschlagen', data.status, data.error)
+          reauthorize();
+          break;
+        default:
+          console.warn('Unbekannter Fehlerstatus:', data.status, data.error)
+          break;
       }
     }).error(function (jqXHR, textStatus, errorThrown) {
       softError('Fehler beim Abfragen der User-Liste [' + textStatus + ': ' + errorThrown + ']');
@@ -626,38 +595,23 @@ var CTLON = (function () {
       accepts: 'json',
       data: data,
     }).done(function transferLocationsCallback(data) {
-      try {
-        data = JSON.parse(data);
-      }
-      catch (e) {
-        console.error(e);
-        callback({ status: Status.Error, error: 'Fehlerhafte Antwort vom Server: JSON-Daten können nicht dekodiert werden.' });
-        return;
-      }
-      if (!data) {
-        if (typeof callback === 'function')
-          callback(data);
-        softError('Fehler beim Übertragen der zwischengespeicherten Standorte!');
-      }
-      else {
-        switch (data.status) {
-          case Status.Ok:
-            if (typeof callback === 'function')
-              callback(data);
-            break;
-          case Status.Error:
-            if (typeof callback === 'function')
-              callback(data);
-            softError('Fehler beim Übertragen der zwischengespeicherten Standorte: ' + data.error);
-            break;
-          case Status.AuthFailed:
-            console.error('Authentifizierung fehlgeschlagen', data.status, data.error)
-            reauthorize();
-            break;
-          default:
-            console.warn('Unbekannter Fehlerstatus:', data.status, data.error)
-            break;
-        }
+      switch (data.status) {
+        case Status.Ok:
+          if (typeof callback === 'function')
+            callback(data);
+          break;
+        case Status.Error:
+          if (typeof callback === 'function')
+            callback(data);
+          softError('Fehler beim Übertragen der zwischengespeicherten Standorte: ' + data.error);
+          break;
+        case Status.AuthFailed:
+          console.error('Authentifizierung fehlgeschlagen', data.status, data.error)
+          reauthorize();
+          break;
+        default:
+          console.warn('Unbekannter Fehlerstatus:', data.status, data.error)
+          break;
       }
     }).error(function (jqXHR, textStatus, errorThrown) {
       if (typeof callback === 'function')
@@ -760,36 +714,23 @@ var CTLON = (function () {
         data: originalData
       }).done(function (data) {
         setLocationsPending = false;
-        if (!data) {
-          addToPendingLocations(originalData);
-          softError('Fehler beim Übertragen deines Standorts');
-        }
-        else {
-          try {
-            data = JSON.parse(data);
-          }
-          catch (e) {
-            console.error(e);
-            return;
-          }
-          switch (data.status) {
-            case Status.Ok:
-              // XXX ?
-              break;
-            case Status.Error:
-              console.error('Fehler beim Übertragen deines Standorts', data.error);
-              addToPendingLocations(originalData);
-              break;
-            case Status.AuthFailed:
-              console.error('Authentifizierung fehlgeschlagen', data.status, data.error)
-              addToPendingLocations(originalData);
-              reauthorize();
-              break;
-            default:
-              console.error('Unbekannter Fehlerstatus', data.status, data.error)
-              addToPendingLocations(originalData);
-              break;
-          }
+        switch (data.status) {
+          case Status.Ok:
+            // XXX ?
+            break;
+          case Status.Error:
+            console.error('Fehler beim Übertragen deines Standorts', data.error);
+            addToPendingLocations(originalData);
+            break;
+          case Status.AuthFailed:
+            console.error('Authentifizierung fehlgeschlagen', data.status, data.error)
+            addToPendingLocations(originalData);
+            reauthorize();
+            break;
+          default:
+            console.error('Unbekannter Fehlerstatus', data.status, data.error)
+            addToPendingLocations(originalData);
+            break;
         }
       }).error(function (jqXHR, textStatus, errorThrown) {
         setLocationsPending = false;
@@ -828,6 +769,7 @@ var CTLON = (function () {
       send = function () {
         $.ajax({
           url: 'ajax/setoption.php',
+          accepts: 'json',
           type: 'POST',
           data: {
             oauth: me.oauth,
@@ -835,17 +777,6 @@ var CTLON = (function () {
             value: dataUrl
           }
         }).done(function (data) {
-          if (!data) {
-            softError('Fehler beim Übertragen deines Avatars!');
-            return;
-          }
-          try {
-            data = JSON.parse(data);
-          }
-          catch (e) {
-            softError('Fehler beim Übertragen deines Avatars: ' + e);
-            return;
-          }
           switch (data.status) {
             case Status.Ok:
               avatar.empty().css('background-image', 'url(' + dataUrl + ')');
@@ -1178,12 +1109,12 @@ var CTLON = (function () {
       $.ajax({
         url: 'ajax/setoption.php',
         type: 'POST',
+        accepts: 'json',
         data: {
           oauth: me.oauth,
           option: 'sharetracks',
           value: encodeURIComponent(checked)
-        },
-        accepts: 'json'
+        }
       });
     }).prop('checked', data.sharetracks === 'true');
 
@@ -1309,17 +1240,6 @@ var CTLON = (function () {
       softError('Fehler beim Abfragen deiner Daten [' + textStatus + ': ' + errorThrown + ']');
     }).done(function (data) {
       hideProgressInfo();
-      if (!data) {
-        softError('Fehler beim Abfragen deiner Daten!');
-        return;
-      }
-      try {
-        data = JSON.parse(data);
-      }
-      catch (e) {
-        console.error(e);
-        return;
-      }
       switch (data.status) {
         case Status.Ok:
           setMe(data);
@@ -1374,23 +1294,13 @@ var CTLON = (function () {
               $.ajax({
                 url: 'ajax/setoption.php',
                 type: 'POST',
+                accepts: 'json',
                 data: {
                   oauth: me.oauth,
                   option: 'name',
                   value: me.name
                 }
               }).done(function (data) {
-                if (!data) {
-                  softError('Fehler beim Übertragen deines Namens!');
-                  return;
-                }
-                try {
-                  data = JSON.parse(data);
-                }
-                catch (e) {
-                  softError('Fehler beim Übertragen deines Namens: ' + e);
-                  return;
-                }
                 switch (data.status) {
                   case Status.Ok:
                     break;
@@ -1448,43 +1358,34 @@ var CTLON = (function () {
     init: function () {
       initGoogleMaps();
       preloadImages();
-      $.ajax('ajax/config.php')
-        .done(function (data) {
-          try {
-            data = JSON.parse(data);
-          }
-          catch (e) {
-            alert('Konfiguration kann nicht geladen werden. Abbruch.');
-            return;
-          }
-          if (!data) {
-            alert('Konfigurationsdaten fehlen. Abbruch.');
-            return;
-          }
-          switch (data.status) {
-            case Status.Ok:
-              if (data.GoogleOAuthClientId && typeof data.GoogleOAuthClientId === 'string') {
-                GoogleOAuthClientId = data.GoogleOAuthClientId;
-                $('.g-signin').attr('data-clientid', GoogleOAuthClientId);
-                $('<script>').attr('type', 'text/javascript').attr('async', true).attr('src', 'https://apis.google.com/js/client:plusone.js').insertBefore($('script'));
-              }
-              else {
-                alert('Fehlerhafte Konfigurationsdaten. Abbruch.');
-                return;
-              }
-              break;
-            case Status.Error:
-              softError('Fehler beim Abholen der Konfigurationsdaten: ' + data.error);
-              break;
-            case Status.AuthFailed:
-              console.error('Authentifizierung fehlgeschlagen', data.status, data.error)
-              reauthorize();
-              break;
-            default:
-              console.warn('Unbekannter Fehlerstatus:', data.status, data.error)
-              break;
-          }
-        })
+      $.ajax({
+        url: 'ajax/config.php',
+        accepts: 'json'
+      }).done(function (data) {
+        switch (data.status) {
+          case Status.Ok:
+            if (data.GoogleOAuthClientId && typeof data.GoogleOAuthClientId === 'string') {
+              GoogleOAuthClientId = data.GoogleOAuthClientId;
+              $('.g-signin').attr('data-clientid', GoogleOAuthClientId);
+              $('<script>').attr('type', 'text/javascript').attr('async', true).attr('src', 'https://apis.google.com/js/client:plusone.js').insertBefore($('script'));
+            }
+            else {
+              alert('Fehlerhafte Konfigurationsdaten. Abbruch.');
+              return;
+            }
+            break;
+          case Status.Error:
+            softError('Fehler beim Abholen der Konfigurationsdaten: ' + data.error);
+            break;
+          case Status.AuthFailed:
+            console.error('Authentifizierung fehlgeschlagen', data.status, data.error)
+            reauthorize();
+            break;
+          default:
+            console.warn('Unbekannter Fehlerstatus:', data.status, data.error)
+            break;
+        }
+      })
         .error(function (e) {
           alert('Konfiguration kann nicht geladen werden. Abbruch. [' + e + ']');
         });

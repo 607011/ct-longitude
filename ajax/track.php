@@ -66,6 +66,7 @@ if ($dbh) {
 }
 
 end:
+header('Content-Type: text/json');
 echo json_encode($res);
 
 ?>
