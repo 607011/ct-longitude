@@ -24,7 +24,7 @@ if ($dbh) {
         $sth->closeCursor();
         $res['info'] = 'User hinzugefügt';
     }
-    $res['sharetracks'] = intval($row[0]) != 0 ? 'true' : 'false';
+    $res['sharetracks'] = intval($row[0]) != 0;
     $res['avatar'] = $row[1];
     $res['userid'] = $userid;
     $res['name'] = $row[2];

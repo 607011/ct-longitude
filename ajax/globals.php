@@ -29,10 +29,10 @@ function validateGoogleOauthToken($token, $clientid) {
         $result = json_decode($curl_response, true);
     }
     $result['revalidated'] = $must_validate;
-    if (isset($result['user_id']) && isset($result['expires_in'])
-        //&& isset($result['audience']) && $result['audience'] === $clientid
-        //&& isset($result['issued_to']) && $result['issued_to'] === $clientid
-        //&& isset($result['issuer']) && $result['issuer'] === 'accounts.google.com'
+    if (isset($result['user_id'])
+        && isset($result['expires_in'])
+        && isset($result['issued_to']) && $result['issued_to'] === $clientid
+        && isset($result['issuer']) && $result['issuer'] === 'accounts.google.com'
         )
     {
         $result['expires_at'] = time() + $result['expires_in'];
@@ -40,9 +40,9 @@ function validateGoogleOauthToken($token, $clientid) {
         $result['time_left'] = $result['expires_in'] + $result['issued_at'] - time();
         // cache result
         $_SESSION[$token] = $result;
-        $res['validateGoogleOauthToken'] = $result;
         $success = true;
     }
+    $res['validateGoogleOauthToken'] = $result;
     return $success;
 }
 

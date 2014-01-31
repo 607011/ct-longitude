@@ -1138,7 +1138,7 @@ var CTLON = (function () {
           value: encodeURIComponent(checked)
         }
       });
-    }).prop('checked', data.sharetracks === 'true');
+    }).prop('checked', data.sharetracks);
 
     if (/(iOS|iPad|iPod|iPhone)/.test(navigator.userAgent))
       $('.no-mobile').css('display', 'none');
@@ -1212,14 +1212,6 @@ var CTLON = (function () {
 
     tracks = new TrackGroup(map);
 
-    //polyline = new google.maps.Polyline({
-    //  map: map,
-    //  strokeColor: '#d60',
-    //  strokeOpacity: 0.8,
-    //  strokeWeight: 4,
-    //  geodesic: true
-    //});
-
     circle = new google.maps.Circle({
       map: map,
       visible: false,
@@ -1260,7 +1252,6 @@ var CTLON = (function () {
       });
     }
 
-    // get http basic auth user
     $.ajax({
       url: 'ajax/me.php',
       accepts: 'json',
