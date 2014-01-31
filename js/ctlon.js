@@ -71,7 +71,8 @@ var CTLON = (function () {
     selectedUser,
     pollingId,
     reauthId,
-    computeDistanceBetween = haversineDistance;
+    computeBearing = Geo.bearing, 
+    computeDistanceBetween = Geo.haversineDistance;
 
 
   function softError(msg) {

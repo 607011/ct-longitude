@@ -328,11 +328,26 @@ Rect.prototype.partitioned = function (numTiles) {
   return partitions;
 };
 
+function deg2rad(angle) { return 0.017453292519943295 * angle; }
+function rad2deg(rad) { return 57.29577951308232 * rad; }
 
-function haversineDistance(latLng1, latLng2) {
-  var latd = 0.5 * deg2rad(latLng2.lat() - latLng1.lat()),
-    lond = 0.5 * deg2rad(latLng2.lng() - latLng1.lng()),
-    a = Math.sin(latd) * Math.sin(latd) + Math.cos(deg2rad(latLng1.lat())) * Math.cos(deg2rad(latLng2.lat())) * Math.sin(lond) * Math.sin(lond),
-    c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return 1000 * 6371.0 * c;
-}
+var Geo = {
+  haversineDistance: function (latLng1, latLng2) {
+    var latd = 0.5 * deg2rad(latLng2.lat() - latLng1.lat()),
+      lond = 0.5 * deg2rad(latLng2.lng() - latLng1.lng()),
+      a = Math.sin(latd) * Math.sin(latd) + Math.cos(deg2rad(latLng1.lat())) * Math.cos(deg2rad(latLng2.lat())) * Math.sin(lond) * Math.sin(lond),
+      c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return 1000 * 6371.0 * c;
+  },
+  bearing: function (latLng1, latLng2) {
+    var lat1 = deg2rad(latLng1.lat()),
+      lat2 = deg2rad(latLng2.lat()),
+      dLng = deg2rad(latLng2.lng() - latLng1.lng()),
+      y = Math.sin(dLng) * Math.cos(lat2),
+      x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+    return rad2deg(Math.atan2(y, x));
+  },
+  direction: function (bearing) {
+    return (['N', 'NO', 'O', 'SO', 'S', 'SW', 'W', 'NW', 'N'])[Math.round(bearing / 45)];
+  }
+};
