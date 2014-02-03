@@ -47,6 +47,8 @@ Die zu übertragenden Daten müssen als HTTP-POST-Variablen-Array formatiert sei
 
     $.ajax({
       url: 'http://example.com/ajax/me.php',
+      accepts: 'json',
+      type: 'POST,
       data: {
         oauth: {
           clientId: '794079768346-fni9u6e07i9gkb7...',
