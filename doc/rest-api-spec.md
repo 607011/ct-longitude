@@ -1,18 +1,63 @@
-﻿
-# REST-API-Reference
-
+﻿# REST-API-Reference
 
 ## Anfragen der Daten des per OAuth angemeldeten Benutzers
 
+### Anfrage
+
 Der Aufruf von **`ajax/me.php`** liest die Daten des angemeldeten Benutzers aus den Datenbanktabellen `buddies` und `locations` auf dem Server. Das Skript erwartet POST-Daten, die als JSON beispielhaft wie folgt aussehen:
 
-	{
-	   "oauth": {
-		 "clientId": "794079768346-fni9u6e07i9gkb7...",
-		 "token": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjFm...",
-	   }
-	}
+    {
+       "oauth": {
+    	 "clientId": "794079768346-fni9u6e07i9gkb7...",
+    	 "token": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjFm...",
+       }
+    }
 
+Die zu übertragenden Daten müssen als HTTP-POST-Variablen-Array formatiert sein, beispielsweise wie folgt (OAuth-Client-Id und -Token sind wie oben gekürzt wiedergegeben):
+
+	oauth%5BclientId%5D=794079768346-fni9u6e07i9gkb7...&oauth%5Btoken%5D=eyJhbGciOiJSUzI1NiIsImtpZCI6IjFm...
+
+#### Beispielcode
+
+##### Java
+
+    import org.apache.http.client.methods.HttpPost;
+    import org.apache.http.HttpEntity;
+    import org.apache.http.HttpResponse;
+    import org.apache.http.NameValuePair;
+    import org.apache.http.message.BasicNameValuePair;
+    import org.apache.http.util.EntityUtils;
+    import java.util.ArrayList;
+    import java.util.List;
+    HttpPost httpPost = new HttpPost("http://example.com/ajax/me.php");
+    try {
+    	List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+    	nameValuePairs.add(new BasicNameValuePair("oauth[clientId]", "794079768346-fni9u6e07i9gkb7..."));
+    	nameValuePairs.add(new BasicNameValuePair("oauth[token]", "eyJhbGciOiJSUzI1NiIsImtpZCI6IjFm...));
+    	httpPost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+    	HttpResponse response = httpClient.execute(httpPost, httpContext);
+    	HttpEntity entity = response.getEntity();
+    	String result = EntityUtils.toString(entity);
+    	// ...
+    } catch (Exception e) {
+    	// ...
+    }
+
+##### JavaScript + jQuery
+
+    $.ajax({
+      url: 'http://example.com/ajax/me.php',
+      data: {
+        oauth: {
+          clientId: '794079768346-fni9u6e07i9gkb7...',
+          token: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjFm...',
+        }
+      }
+    }).done(function successHandler(data) {
+      // ...
+    }).error(function errorHandler(e) { 
+      // ...
+    });
 
 Bedeutung der Parameter:
 
@@ -24,15 +69,15 @@ Bedeutung der Parameter:
 
 Die Antwort ist ein JSON-Objekt. Beispiel (gekürzt):
 
-	{
-		"avatar": "data:image/png;base64,iVBOR...",
-		"lat": 52.374630760218,
-		"lng": 9.7331315633683,
-		"name": "Oliver Lau",
-		"sharetracks: "true"
-		"status": "ok"
-		"userid": "100829969894177493033"	
-	}
+    {
+    	"avatar": "data:image/png;base64,iVBOR...",
+    	"lat": 52.374630760218,
+    	"lng": 9.7331315633683,
+    	"name": "Oliver Lau",
+    	"sharetracks: "true"
+    	"status": "ok"
+    	"userid": "100829969894177493033"	
+    }
 
 Bedeutung der Felder:
 
@@ -55,17 +100,19 @@ Dieses Cookie ist bei allen weiteren HTTP-Anfragen an das REST-API mitzuschicken
 
 ## Anfragen der Buddy-Liste
 
+### Anfrage
+
 Der Aufruf von **`ajax/friends.php`** liest die Buddy-Liste aus der Datenbank aus und filtert das Ergebnis nach optionalen Kriterien. Das Skript
 erwartet POST-Daten, die als JSON-Objekt beispielsweise wie folgt aussehen:
 
-	{
-	   "lat":52.3745,
-	   "lng":9.73278,
-	   "maxdist": 1000,
-	   "maxage": 7200,
+    {
+       "lat":52.3745,
+       "lng":9.73278,
+       "maxdist": 1000,
+       "maxage": 7200,
        "avatar": "true",
-	   "oauth": { ... }
-	}
+       "oauth": { ... }
+    }
 
 Bedeutung der Parameter:
 
@@ -84,20 +131,20 @@ Beispiel-POST-Daten (OAuth-Client-Id und -Token sind wie oben gekürzt wiedergeg
 
 Die Antwort ist ein JSON-Objekt. Beispiel (gekürzt):
 
-	{
-	   "status": "ok",
-	   "user_id": "100829969894177493033",
-	   "users": [
-		 {
-		   "lat": 52.374539061375,
-		   "lng": 9.7327828761963,
-		   "name": "Oliver Lau",
-		   "timestamp": 1390497502,
+    {
+       "status": "ok",
+       "user_id": "100829969894177493033",
+       "users": [
+    	 {
+    	   "lat": 52.374539061375,
+    	   "lng": 9.7327828761963,
+    	   "name": "Oliver Lau",
+    	   "timestamp": 1390497502,
            "avatar": "data:image/png,base64:iVBOR..."
-		 },
-		 { ... }
-	   ]
-	}
+    	 },
+    	 { ... }
+       ]
+    }
 
 
 Bedeutung der Felder:
@@ -118,13 +165,15 @@ Bedeutung der Felder:
 
 ## Anfragen des Avatars
 
+### Anfrage
+
 Der Aufruf von **`ajax/avatar.php`** liest das Avatar-Bild eines Buddies aus der Datenbanktabelle `buddies` aus und gibt dessen Data-URL zurück. Das Skript
 erwartet POST-Daten, die als JSON-Objekt beispielsweise wie folgt aussehen:
 
-	{
-		"userid": "100829969894177493033",
-		"oauth": { ... }
-	}
+    {
+    	"userid": "100829969894177493033",
+    	"oauth": { ... }
+    }
 
 Bedeutung der Parameter:
 
@@ -135,12 +184,12 @@ Bedeutung der Parameter:
 
 Die Antwort ist ein JSON-Objekt. Beispiel (gekürzt):
 
-	{
-		"userid": "100829969894177493033",
-		"name": "Oliver Lau",
+    {
+    	"userid": "100829969894177493033",
+    	"name": "Oliver Lau",
         "status": "ok",
         "avatar": "data:image/png;base64,iVBOR..."
-	}
+    }
 
 Bedeutung der Felder:
 
@@ -158,12 +207,12 @@ Bedeutung der Felder:
 Der Aufruf von **`ajax/bearing.php`** berechnet die Entfernung und Richtung eines Buddies relativ zur übermittelten Position. Das Skript
 erwartet POST-Daten, die als JSON-Objekt beispielsweise wie folgt aussehen:
 
-	{
-		"userid": "100829969894177493033",
+    {
+    	"userid": "100829969894177493033",
         "lat": 52.24379,
         "lng": 9.723570
-		"oauth": { ... }
-	}
+    	"oauth": { ... }
+    }
 
 Bedeutung der Parameter:
 
@@ -176,18 +225,18 @@ Bedeutung der Parameter:
 
 Die Antwort ist ein JSON-Objekt. Beispiel (gekürzt):
 
-	{
-		"user_id": "100829969894177493033"
-		"buddy_id": "106537406819187054768"
-		"bearing": 109.6
-		"bearing_units": "deg"
-		"direction": "O"
-		"distance": 947.3
-		"distance_units": "m"
-		"lat": 52.373032972686
-		"lng": 9.745155740998
-		"status": "ok"
-	}
+    {
+    	"user_id": "100829969894177493033"
+    	"buddy_id": "106537406819187054768"
+    	"bearing": 109.6
+    	"bearing_units": "deg"
+    	"direction": "O"
+    	"distance": 947.3
+    	"distance_units": "m"
+    	"lat": 52.373032972686
+    	"lng": 9.745155740998
+    	"status": "ok"
+    }
 
 Bedeutung der Felder:
 
