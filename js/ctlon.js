@@ -43,6 +43,7 @@ var CTLON = (function () {
     tracks = null,
     infoWindow = null,
     infoWindowClosed = false,
+    rhythmControl = null,
     version,
     markers = {},
     avatars = {},
@@ -533,6 +534,16 @@ var CTLON = (function () {
   }
 
 
+  function animateRhythmControl() {
+    if (!rhythmControl.hasClass('pulse')) {
+      rhythmControl.addClass('pulse');
+      setTimeout(function () {
+        rhythmControl.removeClass('pulse');
+      }, 350);
+    }
+  }
+
+
   function getFriends() {
     var maxAge,
     rangeConstraint = parseInt($('#range-constraint').val(), 10),
@@ -681,7 +692,19 @@ var CTLON = (function () {
 
 
   function watchPositionErrorCallback(e) {
-    alert('navigator.geolocation.watchPosition() fehlgeschlagen: ' + e.message + ' (code: ' + e.code + ')');
+    switch (e.code) {
+      case e.TIMEOUT:
+        alert('Zeitüberschreitung bei navigator.geolocation.watchPosition(): ' + e.message + ' (code: ' + e.code + ')');
+        // try fallback
+        navigator.geolocation.getCurrentPosition(setPosition, getCurrentPositionErrorCallback);
+        break;
+      case e.PERMISSION_DENIED:
+        alert('Standortabfragen via navigator.geolocation.watchPosition() sind nicht gestattet: ' + e.message + ' (code: ' + e.code + ').');
+        break;
+      case e.POSITION_UNAVAILABLE:
+        alert('Standortinformationen via navigator.geolocation.watchPosition() sind nicht verfügbar: ' + e.message + ' (code: ' + e.code + ')');
+        break;
+    }
   }
 
   
@@ -691,7 +714,6 @@ var CTLON = (function () {
 
 
   function setPosition(pos) {
-    console.log('setPosition(' + pos + ')');
     var path,
       originalData = {
         userid: me.id,
@@ -705,6 +727,7 @@ var CTLON = (function () {
         altitude: pos.coords.altitude ? pos.coords.altitude : void 0,
         altitudeaccuracy: pos.coords.altitudeAccuracy ? pos.coords.altitudeAccuracy : void 0
       };
+    animateRhythmControl();
     console.log('setPosition() ->', originalData);
     friends[me.id].timestamp = originalData.timestamp;
     friends[me.id].lat = originalData.lat;
@@ -1235,6 +1258,11 @@ var CTLON = (function () {
     overlay.setMap(map);
 
     geocoder = new google.maps.Geocoder();
+
+    rhythmControl = $('<div id="rhythm-control"></div>');
+    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(rhythmControl[0]);
+    if (navigator.geolocation)
+      rhythmControl.addClass('active');
   }
 
 
@@ -1250,7 +1278,7 @@ var CTLON = (function () {
     else {
       $('#xfer-current-location').click(function (e) {
         console.log('Aufruf von navigator.geolocation.getCurrentPosition() ...');
-        navigator.geolocation.getCurrentPosition(setPosition, getCurrentPositionErrorCallback);
+        navigator.geolocation.getCurrentPosition(setPosition, getCurrentPositionErrorCallback, { timeout: 10 * 1000 });
       });
     }
 
@@ -1381,6 +1409,8 @@ var CTLON = (function () {
 
   return {
     init: function () {
+      if (!('geolocation' in navigator))
+        alert('Dein Browser stellt keine Standortinformationen zur Verfügung!');
       initGoogleMaps();
       preloadImages();
       $.ajax({

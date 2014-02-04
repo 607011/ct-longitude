@@ -71,6 +71,31 @@ button:active {
   text-transform: uppercase;
 }
 
+#rhythm-control {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border: 1px solid black;
+  background-color: rgba(50, 50, 50, 1.0);
+  -moz-transition: background-color ease 0.35s, border-color ease 0.35s;
+  -o-transition: background-color ease 0.35s, border-color ease 0.35s;
+  -webkit-transition: background-color ease 0.35s, border-color ease 0.35s;
+  transition: background-color ease 0.35s, border-color ease 0.35s;
+}
+
+  #rhythm-control.active {
+    background-color: rgb(12, 160, 37);
+  }
+
+  #rhythm-control.pulse {
+    -moz-transition: background-color ease 0.35s, border-color ease 0.35s;
+    -o-transition: background-color ease 0.35s, border-color ease 0.35s;
+    -webkit-transition: background-color ease 0.35s, border-color ease 0.35s;
+    transition: background-color ease 0.35s, border-color ease 0.35s;
+    background-color: rgb(160, 255, 160);
+    border-color: #ccc;
+  }
+
 #up-button {
   margin-right: 8px;
 }
