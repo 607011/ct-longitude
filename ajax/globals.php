@@ -42,7 +42,7 @@ function validateGoogleOauthToken($token, $clientid) {
     if (isset($result['user_id'])
         && isset($result['expires_in']) && $result['expires_in'] > 0
         && isset($result['issuer']) && $result['issuer'] === 'accounts.google.com'
-        && isset($result['audience']) && $result['audience'] === $OAUTH_AUDIENCE_CLIENT_ID
+        && isset($result['audience']) && in_array($result['audience'], $VALID_OAUTH_CLIENT_IDS)
         && isset($result['issued_to']) && in_array($result['issued_to'], $VALID_OAUTH_CLIENT_IDS)
         )
     {

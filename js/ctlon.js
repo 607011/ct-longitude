@@ -26,11 +26,6 @@ var CTLON = (function () {
     },
     MOBILE = navigator.userAgent.indexOf('Mobile') >= 0,
     DEBUG = true,
-    PositionOptions = {
-      //enableHighAccuracy: false,
-      //timeout: 10 * 1000,
-      //maximumAge: Infinity
-    },
     DefaultLat = 51.0,
     DefaultLng = 10.33333333,
     DefaultAvatar = 'img/default-avatar.jpg',
@@ -696,6 +691,7 @@ var CTLON = (function () {
 
 
   function setPosition(pos) {
+    console.log('setPosition(' + pos + ')');
     var path,
       originalData = {
         userid: me.id,
@@ -1015,7 +1011,7 @@ var CTLON = (function () {
     stopPolling();
     console.info('startPolling()');
     if (navigator.geolocation) {
-      watchId = navigator.geolocation.watchPosition(setPosition, watchPositionErrorCallback, PositionOptions);
+      watchId = navigator.geolocation.watchPosition(setPosition, watchPositionErrorCallback);
       pollingId = setInterval(getFriends, 1000 * parseInt($('#polling-interval').val(), 10));
     }
     else {
@@ -1249,11 +1245,12 @@ var CTLON = (function () {
     showProgressInfo();
 
     if (!navigator.geolocation) {
-      $('#xfer-current-location').prop('disabled', true);
+      $('#xfer-current-location').attr('disabled', true);
     }
     else {
       $('#xfer-current-location').click(function (e) {
-        navigator.geolocation.getCurrentPosition(setPosition, getCurrentPositionErrorCallback, PositionOptions);
+        console.log('Aufruf von navigator.geolocation.getCurrentPosition() ...');
+        navigator.geolocation.getCurrentPosition(setPosition, getCurrentPositionErrorCallback);
       });
     }
 
