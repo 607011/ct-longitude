@@ -1,16 +1,23 @@
 <?php
 require_once 'globals.php';
 
-if (!isset($_REQUEST['oauth']['token']) || !isset($_REQUEST['oauth']['clientId']) || !validateGoogleOauthToken($_REQUEST['oauth']['token'], $_REQUEST['oauth']['clientId'])) {
+if (!isset($_REQUEST['oauth']['token']) ||
+    !isset($_REQUEST['oauth']['clientId']) ||
+    !validateGoogleOauthToken($_REQUEST['oauth']['token'], $_REQUEST['oauth']['clientId']))
+{
     $res['status'] = 'authfailed';
     $res['error'] = 'Ungueltige Authentifizierungsdaten: OAuth-Token fehlt oder ist falsch.';
     goto end;
 }
+
 $token = $_REQUEST['oauth']['token'];
 $userid = $_SESSION[$token]['user_id'];
-$withavatar = isset($_REQUEST['avatar']) && $_REQUEST['avatar'] === 'true';
+$with_avatar = isset($_REQUEST['avatar']) && $_REQUEST['avatar'] === 'true';
+$as_array = isset($_REQUEST['as_array']) && $_REQUEST['as_array'] === 'true';
 
-$maxage = (isset($_REQUEST['maxage']) && is_numeric($_REQUEST['maxage'])) ? intval($_REQUEST['maxage']) : time();
+$maxage = (isset($_REQUEST['maxage']) && is_numeric($_REQUEST['maxage']))
+    ? intval($_REQUEST['maxage'])
+    : time();
 $t0 = time() - $maxage;
 
 if (isset($_REQUEST['lat']))
@@ -38,20 +45,25 @@ if ($dbh) {
             $lng = floatval($row[2]);
             if ($checkdist && haversineDistance($reflat, $reflng, $lat, $lng) > $maxdist)
                 continue;
-            $res['users'][$buddy_id] = array(
-                'timestamp' => intval($row[0]),
-                'lat' => $lat,
-                'lng' => $lng,
-                'accuracy' => floatval($row[3]),
-                //'altitude' => floatval($row[4]),
-                //'altitudeaccuracy' => floatval($row[5]),
-                //'heading' => floatval($row[6]),
-                //'speed' => floatval($row[7]),
-                'name' => $buddy_name
-            );
+	    $data = array(
+                  'userid' => $buddy_id,
+                  'name' => $buddy_name,
+                  'timestamp' => intval($row[0]),
+                  'lat' => $lat,
+                  'lng' => $lng,
+                  'accuracy' => floatval($row[3]),
+                  //'altitude' => floatval($row[4]),
+                  //'altitudeaccuracy' => floatval($row[5]),
+                  //'heading' => floatval($row[6]),
+                  //'speed' => floatval($row[7])
+              );
+	    if ($as_array)
+              $res['users'][] = $data;
+            else
+              $res['users'][$buddy_id] = $data;
         }
-        if ($withavatar)
-                $res['users'][$buddy_id]['avatar'] = $buddy[2];
+        if ($with_avatar)
+            $res['users'][$buddy_id]['avatar'] = $buddy[2];
     }
     
     $res['status'] = 'ok';
