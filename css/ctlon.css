@@ -77,10 +77,10 @@ button:active {
   height: 8px;
   border: 1px solid black;
   background-color: rgba(50, 50, 50, 1.0);
-  -moz-transition: background-color ease 0.35s, border-color ease 0.35s;
-  -o-transition: background-color ease 0.35s, border-color ease 0.35s;
-  -webkit-transition: background-color ease 0.35s, border-color ease 0.35s;
-  transition: background-color ease 0.35s, border-color ease 0.35s;
+  -moz-transition: background-color ease 0.17s, border-color ease 0.17s;
+  -o-transition: background-color ease 0.17s, border-color ease 0.17s;
+  -webkit-transition: background-color ease 0.17s, border-color ease 0.17s;
+  transition: background-color ease 0.17s, border-color ease 0.17s;
 }
 
   #rhythm-control.active {
@@ -88,10 +88,10 @@ button:active {
   }
 
   #rhythm-control.pulse {
-    -moz-transition: background-color ease 0.35s, border-color ease 0.35s;
-    -o-transition: background-color ease 0.35s, border-color ease 0.35s;
-    -webkit-transition: background-color ease 0.35s, border-color ease 0.35s;
-    transition: background-color ease 0.35s, border-color ease 0.35s;
+    -moz-transition: background-color ease 0.17s, border-color ease 0.17s;
+    -o-transition: background-color ease 0.17s, border-color ease 0.17s;
+    -webkit-transition: background-color ease 0.17s, border-color ease 0.17s;
+    transition: background-color ease 0.17s, border-color ease 0.17s;
     background-color: rgb(160, 255, 160);
     border-color: #ccc;
   }

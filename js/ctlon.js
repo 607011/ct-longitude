@@ -539,7 +539,7 @@ var CTLON = (function () {
       rhythmControl.addClass('pulse');
       setTimeout(function () {
         rhythmControl.removeClass('pulse');
-      }, 350);
+      }, 170);
     }
   }
 
