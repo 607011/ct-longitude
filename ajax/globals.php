@@ -6,8 +6,18 @@ function DEBUG($msg) {
     file_put_contents('php://stdout', "[$timestamp] [ctlon:debug] $msg\n");
 }
 
+    
+
 function validateGoogleOauthToken($token, $clientid) {
     global $res;
+    $VALID_OAUTH_CLIENT_IDS = array(
+        '794079768346.apps.googleusercontent.com',
+        '794079768346-d1mmapjp6uc9ai5s7n98n0cnhehcd0lo.apps.googleusercontent.com',
+        '794079768346-q0ulv91h10cn46padtiqflpt184a7l5k.apps.googleusercontent.com',
+        '794079768346-fni9u6e07i9gkb7hhttjn83etlln68pe.apps.googleusercontent.com',
+        '794079768346-87k3612qe1qo887v3br7o8rjpnq62gpf.apps.googleusercontent.com'
+    );
+    $OAUTH_AUDIENCE_CLIENT_ID = '794079768346.apps.googleusercontent.com';
     session_start();
     $success = false;
     $result = isset($_SESSION[$token]) ? $_SESSION[$token] : array();
@@ -30,9 +40,10 @@ function validateGoogleOauthToken($token, $clientid) {
     }
     $result['revalidated'] = $must_validate;
     if (isset($result['user_id'])
-        && isset($result['expires_in'])
-        && isset($result['issued_to']) && $result['issued_to'] === $clientid
+        && isset($result['expires_in']) && $result['expires_in'] > 0
         && isset($result['issuer']) && $result['issuer'] === 'accounts.google.com'
+        && isset($result['audience']) && $result['audience'] === $OAUTH_AUDIENCE_CLIENT_ID
+        && isset($result['issued_to']) && in_array($result['issued_to'], $VALID_OAUTH_CLIENT_IDS)
         )
     {
         $result['expires_at'] = time() + $result['expires_in'];
