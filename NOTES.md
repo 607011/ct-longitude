@@ -22,3 +22,4 @@ Fehler
 ======
 
  * `geocoder.geocode()` wird nicht mehr aufgerufen
+ * Auf Mobilgeräten (iPhone 5, Android 4.0.x) werden die Standorte nicht aktualisiert (wird `setPosition()` nicht mehr aufgerufen?)
