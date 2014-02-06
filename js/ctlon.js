@@ -1332,6 +1332,7 @@ var CTLON = (function () {
           gapi.client.plus.people.get({
             'userId': 'me'
           }).execute(function loadProfileCallback(response) {
+            console.log('loadProfileCallback() ->', response);
             var img;
             me.profile = response;
             if (me.avatar === null) {
@@ -1422,7 +1423,7 @@ var CTLON = (function () {
             if (data.GoogleOAuthClientId && typeof data.GoogleOAuthClientId === 'string') {
               GoogleOAuthClientId = data.GoogleOAuthClientId;
               $('.g-signin').attr('data-clientid', GoogleOAuthClientId);
-              $('<script>').attr('type', 'text/javascript').attr('async', true).attr('src', 'https://apis.google.com/js/client:plusone.js').insertBefore($('script'));
+              $('<script>').attr('type', 'text/javascript').attr('async', true).attr('src', 'https://apis.google.com/js/client:plusone.js').appendTo($('head'));
             }
             else {
               alert('Fehlerhafte Konfigurationsdaten. Abbruch.');

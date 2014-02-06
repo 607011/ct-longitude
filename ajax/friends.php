@@ -30,7 +30,7 @@ if (isset($_REQUEST['maxdist']))
 $checkdist = isset($reflat) && isset($reflng) && isset($maxdist);
 
 if ($dbh) {
-    $buddies = $dbh->query("SELECT `userid`, `name`" . ($withavatar ? ", `avatar`" : "") . " FROM `buddies`");
+    $buddies = $dbh->query("SELECT `userid`, `name`" . ($with_avatar ? ", `avatar`" : "") . " FROM `buddies`");
     $location_query = $dbh->prepare("SELECT `timestamp`, `lat`, `lng`, `accuracy`, `altitude`, `altitudeaccuracy`, `heading`, `speed`" .
         " FROM `locations`" .
         " WHERE `userid` = :userid AND `timestamp` > :t0" .
