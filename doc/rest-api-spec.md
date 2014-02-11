@@ -148,7 +148,6 @@ Die Antwort ist ein JSON-Objekt. Beispiel (gekürzt):
        ]
     }
 
-
 Bedeutung der Felder:
 
  * `status`:
@@ -220,7 +219,7 @@ Bedeutung der Parameter:
 
  * `userid`: Kennung des Buddies, zu dem Entfernung und Richtung berechnet werden sollen
  * `lat`: Breitengrad der Position, die als Referenz dienen soll
- * `lon`: Längengrad der Position, die als Referenz dienen soll
+ * `lng`: Längengrad der Position, die als Referenz dienen soll
  * `oauth`: Authentifizierungsinformationen wie beim Aufruf von **`ajax/me.php`** (s.o.)
 
 ### Antwort vom Server
@@ -250,9 +249,66 @@ Bedeutung der Felder:
  * `distance`: Entfernung des Buddies
  * `distance_unit`: Einheit der Entfernung, derzeit nur `"m"` (Meter)
  * `lat`: letzter bekannter Breitengrad des Buddies
- * `lon`: letzter bekannter Längengrad des Buddies
+ * `lng`: letzter bekannter Längengrad des Buddies
  * `status`:
    - `"ok"`, wenn alles OK,
    - `"error"`, wenn Fehler (Details stehen dann im Feld `"error"`);
    - `"authfailed"`, wenn OAuth-Daten inkorrekt
  
+
+
+## Senden des aktuellen Standorts
+
+Der Aufruf von **`ajax/setloc.php`** überträgt den aktuellen Standort des angemeldeten Nutzers nebst Zeitstempel zum Server, wo er in die Datenbanktabelle `locations` geschrieben wird.
+Das Skript erwartet POST-Daten, die als JSON-Objekt beispielsweise wie folgt aussehen:
+
+    {
+        "userid": "100829969894177493033",
+        "lat": 52.38810841908317,
+        "lng": 9.811677372160375,
+        "timestamp": 1392109289,
+        "oauth": { ... },
+        "accuracy": 77.01892934065764,
+        "heading": 42,
+        "speed": 4.51,
+        "altitude": 55.1,
+        "altitudeaccuracy": 20
+    }
+
+Bedeutung der Parameter:
+
+ * `userid`: Kennung des angemeldeten Benutzers
+ * `lat`: Breitengrad der Position, die als Referenz dienen soll
+ * `lng`: Längengrad der Position, die als Referenz dienen soll
+ * `timestamp`: Unix-Timestamp des Zeitpunkts, an dem der Standort ermittelt wurde
+ * `oauth`: Authentifizierungsinformationen wie beim Aufruf von **`ajax/me.php`** (s.o.)
+ * `accuracy` (optional): Genauigkeit des Standorts in Metern
+ * `heading` (optional): Bewegungsrichtung in Grad (0 = Norden, 90 = Osten, 180 = Süden, 270 = Westen)
+ * `speed` (optional): Geschwindigkeit in km/h
+ * `altitude` (optional): Höhe in Metern ü.NN. (eigentlich Höhe über Geoid)
+ * `altitudeaccuracy` (optional): Genauigkeit der Höhe in Metern
+
+### Antwort vom Server
+
+Die Antwort ist ein JSON-Objekt. Beispiel (gekürzt):
+
+    {
+        "status":"ok",
+        "id":"51773",
+        "userid":"100829969894177493033",
+        "lat":52.388108419083,
+        "lng":9.8116773721604,
+        "timestamp":1392109747
+    }
+
+Bedeutung der Felder:
+
+ * `status`:
+   - `"ok"`, wenn alles OK,
+   - `"error"`, wenn Fehler (Details stehen dann im Feld `"error"`);
+   - `"authfailed"`, wenn OAuth-Daten inkorrekt
+ * `userid`: Kennung des angemeldeten Benutzers (Kopie des gleichnamigen Parameters zu Kontrollzwecken)
+ * `lat`: Breitengrad (Kopie des gleichnamigen Parameters zu Kontrollzwecken)
+ * `lng`: Längengrad (Kopie des gleichnamigen Parameters zu Kontrollzwecken)
+ * `timestamp`: Zeitstempel (Kopie des gleichnamigen Parameters zu Kontrollzwecken)
+
