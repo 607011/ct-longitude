@@ -15,7 +15,8 @@ function validateGoogleOauthToken($token, $clientid) {
         '794079768346-d1mmapjp6uc9ai5s7n98n0cnhehcd0lo.apps.googleusercontent.com',
         '794079768346-q0ulv91h10cn46padtiqflpt184a7l5k.apps.googleusercontent.com',
         '794079768346-fni9u6e07i9gkb7hhttjn83etlln68pe.apps.googleusercontent.com',
-        '794079768346-87k3612qe1qo887v3br7o8rjpnq62gpf.apps.googleusercontent.com'
+        '794079768346-87k3612qe1qo887v3br7o8rjpnq62gpf.apps.googleusercontent.com',
+        '83843003673.apps.googleusercontent.com'
     );
     $OAUTH_AUDIENCE_CLIENT_ID = '794079768346.apps.googleusercontent.com';
     session_start();
