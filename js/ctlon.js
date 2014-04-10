@@ -56,7 +56,8 @@ var CTLON = (function () {
       profile: null,
       oauth: {
         clientId: null,
-        token: null,
+        accessToken: null,
+        idToken: null,
         expiresAt: null,
         expiresIn: null
       }
@@ -1321,6 +1322,8 @@ var CTLON = (function () {
       $('#app').removeClass('hide').addClass('show').css('visibility', 'visible');
       $('#googleSigninButton').removeClass('show').addClass('hide');
       me.oauth.token = authResult.id_token;
+      me.oauth.idToken = authResult.id_token;
+      me.oauth.accessToken = authResult.access_token;
       me.oauth.clientId = authResult.client_id;
       me.oauth.expiresAt = parseInt(authResult.expires_at, 10);
       me.oauth.expiresIn = parseInt(authResult.expires_in, 10);
