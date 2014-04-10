@@ -22,6 +22,7 @@ else if ($_SERVER['SERVER_NAME'] === 'ct-ola.azurewebsites.net' && strpos($_SERV
 // set this option to true to enable persistent database connections; set to false for debugging
 $DB_PERSISTENT = false;
 $DB_NAME = "$DB_PATH/ct-longitude.sqlite";
+$CACERT_NAME = "$DB_PATH/cacert.pem";
 
 if (substr(str_replace("\\", '/', __FILE__), -strlen($_SERVER['PHP_SELF'])) === $_SERVER['PHP_SELF']) {
     $res['GoogleOAuthClientId'] = $GOOGLE_OAUTH_CLIENT_ID;

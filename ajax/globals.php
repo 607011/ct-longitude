@@ -30,6 +30,8 @@ function validateGoogleOauthToken($token, $clientid) {
         curl_setopt($curl, CURLOPT_URL, $service_url);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($curl, CURLOPT_CAINFO, $CACERT_NAME);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($curl, CURLOPT_HEADER, 0);
         $curl_response = curl_exec($curl);
         if ($curl_response === false) {
