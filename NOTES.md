@@ -1,6 +1,13 @@
+Verbesserungen
+==============
+
+ * Umstellen auf Zugriffstoken bei Authentifizierung ggü. Server
+ * Abmeldeknopf implementieren 
+
+
 Features
 ========
- 
+
  * Klick auf User-Symbol blendet `InfoWindow` ein
  * CSS für iOS und Android
  * Klick auf Symbol sollte irgendeine sinnvolle Aktion auslösen
@@ -23,3 +30,5 @@ Fehler
 
  * `geocoder.geocode()` wird nicht mehr aufgerufen
  * Auf Mobilgeräten (iPhone 5, Android 4.0.x) werden die Standorte nicht aktualisiert (wird `setPosition()` nicht mehr aufgerufen?)
+
+ 
