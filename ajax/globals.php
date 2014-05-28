@@ -9,6 +9,7 @@ function DEBUG($msg) {
     
 
 function validateGoogleOauthToken($token, $clientid) {
+    global $CACERT_NAME;
     global $res;
     $VALID_OAUTH_CLIENT_IDS = array(
         '794079768346.apps.googleusercontent.com',
