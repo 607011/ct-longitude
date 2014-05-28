@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-var CTLON = (function () {
+var CTLON = (function (jQuery, window) {
   "use strict";
 
   var Status = {
@@ -1261,7 +1261,7 @@ var CTLON = (function () {
     geocoder = new google.maps.Geocoder();
 
     rhythmControl = $('<div id="rhythm-control"></div>');
-    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(rhythmControl[0]);
+    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(rhythmControl.get(0));
     if (navigator.geolocation)
       rhythmControl.addClass('active');
   }
@@ -1457,7 +1457,7 @@ var CTLON = (function () {
       });
     }
   };
-})();
+})(jQuery, window);
 
 
 function googleSigninCallback(authResult) {
