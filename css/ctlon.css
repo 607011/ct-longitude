@@ -316,6 +316,7 @@ p.stack {
 
 #buddy-container {
   position: absolute;
+  top: 0;
   right: 44px;
   left: 44px;
   overflow: hidden;
