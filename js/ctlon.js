@@ -1427,7 +1427,7 @@ var CTLON = (function (jQuery, window) {
       dataType: 'jsonp'
     }).done(function (nullResponse) {
       window.location.reload(true);
-    })
+    });
   }
 
 
