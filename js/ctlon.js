@@ -19,12 +19,12 @@
 var CTLON = (function (jQuery, window) {
   "use strict";
 
-  var Status = {
+  var MOBILE = navigator.userAgent.indexOf('Mobile') >= 0,
+    Status = {
       Ok: 'ok',
       Error: 'error',
       AuthFailed: 'authfailed'
     },
-    MOBILE = navigator.userAgent.indexOf('Mobile') >= 0,
     DEBUG = true,
     DefaultLat = 51.0,
     DefaultLng = 10.33333333,
@@ -198,7 +198,7 @@ var CTLON = (function (jQuery, window) {
         t0: t0,
         t1: t1,
         oauth: me.oauth
-    }
+      }
     }).done(function (data) {
       switch (data.status) {
         case Status.Ok:
@@ -1226,13 +1226,15 @@ var CTLON = (function (jQuery, window) {
 
 
   function initGoogleMaps() {
-    map = new google.maps.Map(document.getElementById('map-canvas'), {
-      mapTypeId: google.maps.MapTypeId.ROADMAP,
-      bounds_changed: function () {
-        google.maps.event.addListenerOnce(map, 'idle', getFriends);
-      },
-      zoom: 13
-    });
+    var element = document.getElementById('map-canvas'),
+      mapOptions = {
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        bounds_changed: function () {
+          google.maps.event.addListenerOnce(map, 'idle', getFriends);
+        },
+        zoom: 13
+      };
+    map = new google.maps.Map(element, mapOptions);
     if (google.maps.geometry.spherical.computeDistanceBetween)
       computeDistanceBetween = google.maps.geometry.spherical.computeDistanceBetween;
 
@@ -1321,6 +1323,7 @@ var CTLON = (function (jQuery, window) {
       $('#logon').removeClass('show').addClass('hide');
       $('#app').removeClass('hide').addClass('show').css('visibility', 'visible');
       $('#googleSigninButton').removeClass('show').addClass('hide');
+      $('button#logout').removeClass('hide').addClass('show');
       me.oauth.token = authResult.id_token;
       me.oauth.idToken = authResult.id_token;
       me.oauth.accessToken = authResult.access_token;
@@ -1417,6 +1420,7 @@ var CTLON = (function (jQuery, window) {
         alert('Dein Browser stellt keine Standortinformationen zur Verfügung!');
       initGoogleMaps();
       preloadImages();
+      $('button#logout').removeClass('show').addClass('hide');
       $.ajax({
         url: 'ajax/config.php',
         accepts: 'json'
