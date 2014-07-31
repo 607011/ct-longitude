@@ -30,7 +30,7 @@ var CTLON = (function (jQuery, window) {
     DefaultLng = 10.33333333,
     DefaultAvatar = 'img/default-avatar.jpg',
     MaxDistance = 200 * 1000 /* meters */,
-    GoogleOAuthClientId = '',
+    GoogleOAuthClientId,
     Avatar = { Width: 44, Height: 44, OptimalWidth: 88, OptimalHeight: 88, MaxWidth: 512, MaxHeight: 512, backgroundColor: '#000' },
     Symbol = { Width: 46, Height: 53 },
     TrackColor = 'rgba(0, 40, 100, 0.9)',
@@ -1394,12 +1394,14 @@ var CTLON = (function (jQuery, window) {
   }
 
 
-  function googleAuthorize(callback) {
+  function googleAuthorize(callback, immediate) {
     console.log('googleAuthorize()');
     showProgressInfo();
     callback = callback || googleSigninCallback;
+    if (typeof immediate === 'undefined')
+      immediate = true;
     gapi.auth.authorize({
-      immediate: true,
+      immediate: immediate,
       client_id: GoogleOAuthClientId,
       scope: 'https://www.googleapis.com/auth/plus.login'
     }, callback);
@@ -1414,13 +1416,29 @@ var CTLON = (function (jQuery, window) {
   }
 
 
+  function disconnectUser() {
+    console.log('disconnectUser()');
+    gapi.auth.setToken(null);
+    $.ajax({
+      url: 'https://accounts.google.com/o/oauth2/revoke?token=' + me.oauth.accessToken,
+      type: 'GET',
+      async: false,
+      contentType: 'application/json',
+      dataType: 'jsonp'
+    }).done(function (nullResponse) {
+      window.location.reload(true);
+    })
+  }
+
+
   return {
     init: function () {
       if (!('geolocation' in navigator))
         alert('Dein Browser stellt keine Standortinformationen zur Verfügung!');
       initGoogleMaps();
       preloadImages();
-      $('button#logout').removeClass('show').addClass('hide');
+      $('button#logout').removeClass('show').addClass('hide')
+        .click(disconnectUser);
       $.ajax({
         url: 'ajax/config.php',
         accepts: 'json'
