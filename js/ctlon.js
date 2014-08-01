@@ -439,7 +439,7 @@ var CTLON = (function (jQuery, window) {
               lng: friends[me.id].lng,
               oauth: me.oauth
             };
-            console.log('clicked on ' + (isClustered ? 'einige deiner Freunde' : friend.name));
+            console.log('Klick auf ' + (isClustered ? 'einige deiner Freunde' : friend.name));
             $.ajax({
               url: 'ajax/bearing.php',
               type: 'POST',
@@ -877,7 +877,10 @@ var CTLON = (function (jQuery, window) {
         send();
       };
 
-    avatar.css('background-image', 'none').css('background-color', 'white').append($('<span></span>').addClass('loader-5-0'));
+    avatar
+      .css('background-image', 'none')
+      .css('background-color', 'white')
+      .append($('<span></span>').addClass('loader-5-0'));
 
     if (blob instanceof Image) { // blob contains image
       img = blob;
@@ -1254,7 +1257,10 @@ var CTLON = (function (jQuery, window) {
       map: null,
       disableAutoPan: true,
     });
-    google.maps.event.addListener(infoWindow, 'closeclick', function () { infoWindowClosed = true; });
+    google.maps.event.addListener(infoWindow,
+      'closeclick',
+      function () { infoWindowClosed = true; }
+    );
 
     overlay = new google.maps.OverlayView();
     overlay.draw = function () { };
@@ -1281,7 +1287,11 @@ var CTLON = (function (jQuery, window) {
     else {
       $('#xfer-current-location').click(function (e) {
         console.log('Aufruf von navigator.geolocation.getCurrentPosition() ...');
-        navigator.geolocation.getCurrentPosition(setPosition, getCurrentPositionErrorCallback, { timeout: 10 * 1000 });
+        navigator.geolocation.getCurrentPosition(
+          setPosition,
+          getCurrentPositionErrorCallback,
+          { timeout: 10 * 1000 }
+        );
       });
     }
 
@@ -1323,7 +1333,6 @@ var CTLON = (function (jQuery, window) {
       $('#logon').removeClass('show').addClass('hide');
       $('#app').removeClass('hide').addClass('show').css('visibility', 'visible');
       $('#googleSigninButton').removeClass('show').addClass('hide');
-      $('button#logout').removeClass('hide').addClass('show');
       me.oauth.token = authResult.id_token;
       me.oauth.idToken = authResult.id_token;
       me.oauth.accessToken = authResult.access_token;
@@ -1417,7 +1426,6 @@ var CTLON = (function (jQuery, window) {
 
 
   function disconnectUser() {
-    console.log('disconnectUser()');
     gapi.auth.setToken(null);
     $.ajax({
       url: 'https://accounts.google.com/o/oauth2/revoke?token=' + me.oauth.accessToken,
@@ -1437,8 +1445,7 @@ var CTLON = (function (jQuery, window) {
         alert('Dein Browser stellt keine Standortinformationen zur Verfügung!');
       initGoogleMaps();
       preloadImages();
-      $('button#logout').removeClass('show').addClass('hide')
-        .click(disconnectUser);
+      $('button#logout').click(disconnectUser);
       $.ajax({
         url: 'ajax/config.php',
         accepts: 'json'
@@ -1447,8 +1454,13 @@ var CTLON = (function (jQuery, window) {
           case Status.Ok:
             if (data.GoogleOAuthClientId && typeof data.GoogleOAuthClientId === 'string') {
               GoogleOAuthClientId = data.GoogleOAuthClientId;
-              $('.g-signin').attr('data-clientid', GoogleOAuthClientId);
-              $('<script>').attr('type', 'text/javascript').attr('async', true).attr('src', 'https://apis.google.com/js/client:plusone.js').appendTo($('head'));
+              $('.g-signin')
+                .attr('data-clientid', GoogleOAuthClientId);
+              $('<script>')
+                .attr('type', 'text/javascript')
+                .attr('async', true)
+                .attr('src', 'https://apis.google.com/js/client:plusone.js')
+                .appendTo($('head'));
             }
             else {
               alert('Fehlerhafte Konfigurationsdaten. Abbruch.');
