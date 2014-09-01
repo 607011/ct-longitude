@@ -235,9 +235,10 @@ var CTLON = (function (jQuery, window) {
     if (!latLng.equals(infoWindow.getPosition())) {
       infoWindow.setPosition(latLng);
       geocoder.geocode({ 'latLng': latLng }, function (results, status) {
+        console.log(typeof results, results instanceof Array, results, status);
         if (status === google.maps.GeocoderStatus.OK) {
-          if (results[1]) {
-            $('#address').text(results[1].formatted_address);
+          if (results instanceof Array && results.length > 0) {
+            $('#address').text(results[0].formatted_address);
           }
         }
         else {
@@ -432,7 +433,8 @@ var CTLON = (function (jQuery, window) {
             icon: icon,
             map: map
           });
-          google.maps.event.addListener(markers[friend.id], 'click', function () {
+          google.maps.event.addListener(markers[friend.id], 'click', function (e) {
+            console.log(e);
             var data = {
               userid: friend.id,
               lat: friends[me.id].lat,
@@ -1254,7 +1256,6 @@ var CTLON = (function (jQuery, window) {
     });
 
     infoWindow = new google.maps.InfoWindow({
-      map: null,
       disableAutoPan: true,
     });
     google.maps.event.addListener(infoWindow,

@@ -14,7 +14,7 @@ else if ($_SERVER['SERVER_NAME'] === 'ersatzworld.net' && strpos($_SERVER['REQUE
     $GOOGLE_OAUTH_CLIENT_ID = '794079768346-q0ulv91h10cn46padtiqflpt184a7l5k.apps.googleusercontent.com';
     $DB_PATH = '/var/www/sqlite';
 }
-else if ($_SERVER['SERVER_NAME'] === 'ct-ola.azurewebsites.net' && strpos($_SERVER['REQUEST_URI'], '/longitude') === 0) {
+else if ($_SERVER['SERVER_NAME'] === 'ct-ola.azurewebsites.net' && strpos($_SERVER['REQUEST_URI'], '/') === 0) {
     $GOOGLE_OAUTH_CLIENT_ID = '794079768346-ltsn89d7dbmv8dbr5pj9d6ju72i8mp1k.apps.googleusercontent.com';
     $DB_PATH = 'D:/home/site/wwwroot';
 }
