@@ -44,7 +44,6 @@ var CTLON = (function (jQuery, window) {
     infoWindow = null,
     infoWindowClosed = false,
     rhythmControl = null,
-    version,
     markers = {},
     avatars = {},
     friends = {},
@@ -1485,12 +1484,6 @@ var CTLON = (function (jQuery, window) {
         });
     },
     googleSigninCallback: googleSigninCallback,
-    setVersion: function (v) {
-      version = v;
-      $(document).ready(function () {
-        $('#version').text(version);
-      });
-    }
   };
 })(jQuery, window);
 
