@@ -4,3 +4,5 @@ _bin/node_modules/*
 js/*-min.js
 css/*-min.css
 js/version.js
+App_Data/*
+*.publishproj
